@@ -25,8 +25,7 @@ namespace GTACoOp
     public class Main : Script
     {
         public static PlayerSettings PlayerSettings;
-        public static ServerSettings ServerSettings;
-        public static ScriptVersion LocalScriptVersion = ScriptVersion.VERSION_0_9_4;
+        public static ScriptVersion LocalScriptVersion = ScriptVersion.VERSION_0_9_3;
 
         private readonly UIMenu _mainMenu;
         public UIMenu _serverBrowserMenu;
@@ -110,7 +109,6 @@ namespace GTACoOp
         public Main()
         {
             PlayerSettings = Util.ReadSettings(Program.Location + Path.DirectorySeparatorChar + "ClientSettings.xml");
-            ServerSettings = Util.ReadServerSettings(Program.Location + Path.DirectorySeparatorChar + "ServerSettings.xml");
             //ServerSettings = new ServerSettings();
             _threadJumping = new Queue<Action>();
 
@@ -470,175 +468,6 @@ namespace GTACoOp
             _settingsMenu.AddItem(modeItem);
             _settingsMenu.AddItem(spawnItem);
 
-
-            var serverNameItem = new UIMenuItem("Server Name");
-            serverNameItem.SetRightLabel(ServerSettings.Name);
-            serverNameItem.Activated += (menu, item) =>
-            {
-                string _Name = Game.GetUserInput(32);
-                if (!string.IsNullOrWhiteSpace(_Name)) {
-                    ServerSettings.Name = _Name;
-                    serverNameItem.SetRightLabel(ServerSettings.Name);
-                    Util.SaveServerSettings(Program.Location + "ServerSettings.xml");
-                }
-            };
-
-            var serverMaxPlayersItem = new UIMenuItem("Server Max Players");
-            serverMaxPlayersItem.SetRightLabel(ServerSettings.MaxPlayers.ToString());
-            serverMaxPlayersItem.Activated += (menu, item) =>
-            {
-                string newPlayers = Game.GetUserInput(2);
-                int nPlayers;
-                bool success = int.TryParse(newPlayers, out nPlayers);
-                if (!success)
-                {
-                    UI.Notify("Wrong player number format");
-                    return;
-                }
-                ServerSettings.MaxPlayers = nPlayers;
-                serverMaxPlayersItem.SetRightLabel(ServerSettings.MaxPlayers.ToString());
-                Util.SaveServerSettings(Program.Location + "ServerSettings.xml");
-            };
-
-            var serverPortItem = new UIMenuItem("Server Port");
-            serverPortItem.SetRightLabel(ServerSettings.Port.ToString());
-            serverPortItem.Activated += (menu, item) =>
-            {
-                string newPort = Game.GetUserInput(4);
-                int nPort;
-                bool success = int.TryParse(newPort, out nPort);
-                if (!success)
-                {
-                    UI.Notify("Wrong port format");
-                    return;
-                }
-                ServerSettings.Port = nPort;
-                serverPortItem.SetRightLabel(ServerSettings.Port.ToString());
-                Util.SaveServerSettings(Program.Location + "ServerSettings.xml");
-            };
-
-            var serverPasswordEnabledItem = new UIMenuCheckboxItem("Password enabled", ServerSettings.PasswordProtected);
-            serverPasswordEnabledItem.CheckboxEvent += (item, check) =>
-            {
-                ServerSettings.PasswordProtected = check;
-            };
-
-            var serverPasswordTextItem = new UIMenuItem("Password");
-            serverPasswordTextItem.Activated += (menu, item) =>
-            {
-                string _input = Game.GetUserInput(255);
-                if (!string.IsNullOrEmpty(_input))
-                {
-                    ServerSettings.Name = _input;
-                    if (PlayerSettings.HidePasswords)
-                    {
-                        passItem.SetRightLabel(new String('*', ServerSettings.Password.Length));
-                    }
-                    else
-                    {
-                        passItem.SetRightLabel(ServerSettings.Password.ToString());
-                    }
-                    Util.SaveServerSettings(Program.Location + "ServerSettings.xml");
-                }
-            };
-
-            var serverAnnounceItem = new UIMenuCheckboxItem("Announce to Master Server", ServerSettings.Announce);
-            serverAnnounceItem.CheckboxEvent += (item, check) =>
-            {
-                ServerSettings.Announce = check;
-                Util.SaveServerSettings(Program.Location + "ServerSettings.xml");
-            };
-
-            var serverMasterItem = new UIMenuItem("Master Server Adress");
-            serverMasterItem.SetRightLabel(ServerSettings.MasterServer);
-            serverMasterItem.Activated += (menu, item) =>
-            {
-                var _input = Game.GetUserInput(255);
-                if (!string.IsNullOrWhiteSpace(_masterIP))
-                {
-                    PlayerSettings.MasterServerAddress = _input;
-                    Util.SaveSettings(null);
-                    serverMasterItem.SetRightLabel(ServerSettings.MasterServer);
-                }
-            };
-
-            var serverBackupMasterItem = new UIMenuItem("Backup Master Server");
-            serverBackupMasterItem.SetRightLabel(ServerSettings.BackupMasterServer);
-            serverBackupMasterItem.Activated += (menu, item) =>
-            {
-                var _input = Game.GetUserInput(255);
-                if (!string.IsNullOrWhiteSpace(_input))
-                {
-                    PlayerSettings.BackupMasterServerAddress = _input;
-                    Util.SaveSettings(null);
-                    serverBackupMasterItem.SetRightLabel(ServerSettings.BackupMasterServer);
-                }
-            };
-
-            var serverAllowDisplayNamesItem = new UIMenuCheckboxItem("Allow Nicknames", ServerSettings.AllowNickNames);
-            serverAllowDisplayNamesItem.CheckboxEvent += (item, check) =>
-            {
-                ServerSettings.AllowNickNames = check;
-                Util.SaveServerSettings(Program.Location + "ServerSettings.xml");
-            };
-            var serverAutoStartItem = new UIMenuCheckboxItem("Auto Start Server", PlayerSettings.AutoStartServer);
-            serverAutoStartItem.CheckboxEvent += (item, check) =>
-            {
-                PlayerSettings.AutoStartServer = check;
-                Util.SaveSettings(null);
-            };
-            var serverStartItem = new UIMenuItem("Start Server");
-            serverStartItem.Activated += (menu, item) =>
-            {
-                if (!_serverRunning)
-                {
-                    //Program.ServerInstance = new GameServer(ServerSettings.Port, ServerSettings.Name, "freeroam");
-                    /*Program.ServerInstance = new GameServer
-                    {
-                        Port = ServerSettings.Port,
-                        Name = ServerSettings.Name,
-                        GamemodeName = ServerSettings.Gamemode,
-                        PasswordProtected = ServerSettings.PasswordProtected,
-                        Password = ServerSettings.Password,
-                        AnnounceSelf = ServerSettings.Announce,
-                        MasterServer = ServerSettings.MasterServer,
-                        BackupMasterServer = ServerSettings.BackupMasterServer,
-                        MaxPlayers = ServerSettings.MaxPlayers,
-                        AllowNickNames = ServerSettings.AllowNickNames
-                    };*/
-
-                    if (IsOnServer())
-                    {
-                        if (_client != null) _client.Disconnect("Connecting to local server...");
-                    }
-                    _serverRunning = true;
-                    //string[] filterscripts = new string[] { };
-                    //try { Program.ServerInstance.Start(ServerSettings.Filterscripts); } catch(Exception ex) { UI.Notify("Can't start server: " +ex.Message); }
-                    try { ConnectToServer("localhost", ServerSettings.Port); } catch (Exception ex) { UI.Notify("Can't connect to local server: " + ex.Message); }
-                    UI.Notify("For others to access the server, you may have to port forward.");
-                }
-                else
-                {
-                    //Program.ServerInstance.Stop();
-                    _serverRunning = false;
-                }
-
-            };
-            /*
-            _serverMenu.AddItem(serverNameItem);
-            _serverMenu.AddItem(serverMaxPlayersItem);
-            _serverMenu.AddItem(serverPortItem);
-            _serverMenu.AddItem(serverPasswordEnabledItem);
-            _serverMenu.AddItem(serverPasswordTextItem);
-            _serverMenu.AddItem(serverAnnounceItem);
-            _serverMenu.AddItem(serverMasterItem);
-            _serverMenu.AddItem(serverBackupMasterItem);
-            _serverMenu.AddItem(serverAllowDisplayNamesItem);
-            _serverMenu.AddItem(serverAutoStartItem);
-            _serverMenu.AddItem(serverStartItem);
-            */
-
-
             _playersMenu.OnIndexChange += (sender, index) =>
             {
                 KeyValuePair<long, SyncPed> newPlayer = new KeyValuePair<long, SyncPed>();
@@ -657,42 +486,17 @@ namespace GTACoOp
 
             _mainMenu.RefreshIndex();
             _settingsMenu.RefreshIndex();
-            //_serverMenu.RefreshIndex();
 
             _menuPool.Add(_mainMenu);
             _menuPool.Add(_serverBrowserMenu);
             _menuPool.Add(_settingsMenu);
             _menuPool.Add(_playersMenu);
-            //_menuPool.Add(_serverMenu);
             #endregion
 
             _debug = new DebugWindow();
-            UI.Notify("~g~GTA V Coop mod v" + ReadableScriptVersion() + " by Guad, Bluscream and wolfmitchell loaded successfully.~w~");
+            UI.Notify("~g~GTA V Coop mod v" + ReadableScriptVersion() + " by Guad, Bluscream, TheIndra and wolfmitchell loaded successfully.~w~");
             if (PlayerSettings.AutoConnect && !String.IsNullOrWhiteSpace(PlayerSettings.LastIP) && PlayerSettings.LastPort != -1 && PlayerSettings.LastPort != 0) { 
                 ConnectToServer(PlayerSettings.LastIP.ToString(), PlayerSettings.LastPort);
-            }else if(PlayerSettings.AutoStartServer){
-                /*Program.ServerInstance = new GameServer
-                {
-                    Port = ServerSettings.Port,
-                    Name = ServerSettings.Name,
-                    GamemodeName = ServerSettings.Gamemode,
-                    PasswordProtected = ServerSettings.PasswordProtected,
-                    Password = ServerSettings.Password,
-                    AnnounceSelf = ServerSettings.Announce,
-                    MasterServer = ServerSettings.MasterServer,
-                    MaxPlayers = ServerSettings.MaxPlayers,
-                    AllowNickNames = ServerSettings.AllowNickNames
-                };*/
-
-                if (IsOnServer())
-                {
-                    if (_client != null) _client.Disconnect("Connecting to local server...");
-                }
-                _serverRunning = true;
-                //string[] filterscripts = new string[] { };
-                /*Program.ServerInstance.Start(ServerSettings.Filterscripts);
-                ConnectToServer("localhost", ServerSettings.Port);
-                UI.Notify("For others to access the server, you may have to port forward.");*/
             }
         }
 

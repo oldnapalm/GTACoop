@@ -106,26 +106,6 @@ namespace GTACoOp
             return settings;
         }
 
-        public static ServerSettings ReadServerSettings(string path)
-        {
-            var ser = new XmlSerializer(typeof(ServerSettings));
-
-            ServerSettings settings = null;
-
-            if (File.Exists(path))
-            {
-                using (var stream = File.OpenRead(path)) settings = (ServerSettings)ser.Deserialize(stream);
-
-                using (var stream = new FileStream(path, File.Exists(path) ? FileMode.Truncate : FileMode.Create, FileAccess.ReadWrite)) ser.Serialize(stream, settings);
-            }
-            else
-            {
-                using (var stream = File.OpenWrite(path)) ser.Serialize(stream, settings = new ServerSettings());
-            }
-
-            return settings;
-        }
-
         public static void SaveSettings(string path)
         {
             try {
@@ -140,17 +120,6 @@ namespace GTACoOp
                 UI.Notify("Error saving player settings: " + ex.Message);
             }
         }
-
-        public static void SaveServerSettings(string path)
-        {
-            try
-            {
-                var ser = new XmlSerializer(typeof(ServerSettings));
-            using (var stream = new FileStream(path, File.Exists(path) ? FileMode.Truncate : FileMode.Create, FileAccess.ReadWrite)) ser.Serialize(stream, Main.ServerSettings);
-            } catch (Exception ex) {
-                UI.Notify("Error saving server settings: " + ex.Message);
-            }
-}
 
         public static Vector3 GetLastWeaponImpact(Ped ped)
         {
