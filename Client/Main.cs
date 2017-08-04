@@ -26,7 +26,7 @@ namespace GTACoOp
     {
         public static PlayerSettings PlayerSettings;
         public static ServerSettings ServerSettings;
-        public static ScriptVersion LocalScriptVersion = ScriptVersion.VERSION_0_9_3;
+        public static ScriptVersion LocalScriptVersion = ScriptVersion.VERSION_0_9_4;
 
         private readonly UIMenu _mainMenu;
         public UIMenu _serverBrowserMenu;
@@ -182,7 +182,7 @@ namespace GTACoOp
             listenItem.SetRightLabel(PlayerSettings.LastIP);
             listenItem.Activated += (menu, item) =>
             {
-                _clientIp = Game.GetUserInput(255);
+                _clientIp = Game.GetUserInput(listenItem.RightLabel, 255);
                 if (!string.IsNullOrWhiteSpace(_clientIp))
                 {
                     PlayerSettings.LastIP = _clientIp;
@@ -193,9 +193,10 @@ namespace GTACoOp
 
             var portItem = new UIMenuItem("Port");
             portItem.SetRightLabel(PlayerSettings.LastPort.ToString());
+            Port = PlayerSettings.LastPort;
             portItem.Activated += (menu, item) =>
             {
-                string newPort = Game.GetUserInput(5);
+                string newPort = Game.GetUserInput(Port.ToString(), 5);
                 int nPort; bool success = int.TryParse(newPort, out nPort);
                 if (!success)
                 {
@@ -219,18 +220,18 @@ namespace GTACoOp
             }
             passItem.Activated += (menu, item) =>
             {
-                string _LastPassword = Game.GetUserInput(255);
+                string _LastPassword = Game.GetUserInput(passItem.RightLabel, 255);
                 if (!string.IsNullOrEmpty(_LastPassword))
                 {
-                    PlayerSettings.DisplayName = _LastPassword;
+                    PlayerSettings.LastPassworde = _LastPassword;
                     Util.SaveSettings(null);
                     if (PlayerSettings.HidePasswords)
                     {
-                        passItem.SetRightLabel(new String('*', PlayerSettings.LastPassword.Length));
+                        passItem.SetRightLabel(new String('*', _LastPassword.Length));
                     }
                     else
                     {
-                        passItem.SetRightLabel(PlayerSettings.LastPassword.ToString());
+                        passItem.SetRightLabel(_LastPassword);
                     }
                 }
             };
@@ -265,13 +266,10 @@ namespace GTACoOp
             _mainMenu.BindMenuToItem(_playersMenu, playersItem);
             playersItem.Activated += (sender, item) => RebuildPlayersList();
 
-            var aboutItem = new UIMenuItem("~g~GTA V~w~ Coop mod v" + ReadableScriptVersion() + " by ~b~Bluscream~w~.")
+            var aboutItem = new UIMenuItem("~g~GTA V~w~ Coop mod v" + ReadableScriptVersion() + " by ~b~Bluscream~w~.");
+            aboutItem.Activated += (menu, item) =>
             {
-                Enabled = true
-            };
-            aboutItem.Activated += (sender, item) =>
-            {
-                UI.Notify("GTA V Coop mod by Guad, temporary continued by Bluscream and wolfmitchell.");
+                UI.Notify("GTA V Coop mod by Guad, temporary continued by Bluscream, TheIndra and wolfmitchell.");
                 UI.Notify("Mod Version: " + ReadableScriptVersion());
                 UI.Notify("https://pydio.studiowolfree.com/public/gtacoop");
             };
@@ -288,15 +286,15 @@ namespace GTACoOp
 
 
             var nameItem = new UIMenuItem("Display Name");
-            nameItem.SetRightLabel(PlayerSettings.DisplayName);
+            nameItem.SetRightLabel(PlayerSettings.LastPassworde);
             nameItem.Activated += (menu, item) =>
             {
                 string _DisplayName = Game.GetUserInput(32);
                 if (!string.IsNullOrWhiteSpace(_DisplayName))
                 {
-                    PlayerSettings.DisplayName = _DisplayName;
+                    PlayerSettings.LastPassworde = _DisplayName;
                     Util.SaveSettings(null);
-                    nameItem.SetRightLabel(PlayerSettings.DisplayName);
+                    nameItem.SetRightLabel(PlayerSettings.LastPassworde);
                 }
             };
 
@@ -811,7 +809,7 @@ namespace GTACoOp
                 UI.Notify("Clicked");
             };*/
 
-            var meItem = new UIMenuItem(PlayerSettings.DisplayName);
+            var meItem = new UIMenuItem(PlayerSettings.LastPassworde);
             meItem.SetRightLabel(((int)(Latency * 1000)) + "ms");
             _playersMenu.AddItem(meItem);
             /*meItem.Activated += (sender, item) =>
@@ -1262,7 +1260,7 @@ namespace GTACoOp
 
             var obj = new ConnectionRequest();
             obj.Name = string.IsNullOrWhiteSpace(Game.Player.Name) ? "Player" : Game.Player.Name; // To be used as identifiers in server files
-            obj.DisplayName = string.IsNullOrWhiteSpace(PlayerSettings.DisplayName) ? obj.Name : PlayerSettings.DisplayName.Trim();
+            obj.DisplayName = string.IsNullOrWhiteSpace(PlayerSettings.LastPassworde) ? obj.Name : PlayerSettings.LastPassworde.Trim();
             if (!string.IsNullOrEmpty(_password)) obj.Password = _password;
             obj.ScriptVersion = (byte)LocalScriptVersion;
             obj.GameVersion = (int)Game.Version;

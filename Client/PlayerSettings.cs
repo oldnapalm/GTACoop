@@ -4,7 +4,7 @@ namespace GTACoOp
 {
     public class PlayerSettings
     {
-        public string DisplayName { get; set; }
+        public string LastPassworde { get; set; }
         public string LastIP { get; set; }
         public int LastPort { get; set; }
         public string LastPassword { get; set; }
@@ -26,10 +26,10 @@ namespace GTACoOp
 
         public PlayerSettings()
         {
-            DisplayName = string.IsNullOrWhiteSpace(GTA.Game.Player.Name) ? "Player" : GTA.Game.Player.Name;
+            LastPassworde = string.IsNullOrWhiteSpace(GTA.Game.Player.Name) ? "Player" : GTA.Game.Player.Name;
             MaxStreamedNpcs = 10;
-            MasterServerAddress = "http://46.101.1.92/";
-            BackupMasterServerAddress = "http://79.143.189.135/";
+            MasterServerAddress = "https://gtamaster.theindra.eu/";
+            BackupMasterServerAddress = "http://gtamaster.nofla.me/";
             ActivationKey = Keys.F9;
             HidePasswords = false;
             LastIP = "127.0.0.1";

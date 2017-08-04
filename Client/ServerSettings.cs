@@ -34,8 +34,8 @@ namespace GTACoOp
             Announce = true;
             AllowNickNames = true;
             AllowOutdatedClients = false;
-            MasterServer = "http://46.101.1.92/";
-            BackupMasterServer = "http://79.143.189.135/";
+            MasterServer = "https://gtamaster.theindra.eu/";
+            BackupMasterServer = "http://gtamaster.nofla.me/";
             Filterscripts = new string[] { "" };
         }
     }
