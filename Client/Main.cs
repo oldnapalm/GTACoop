@@ -223,7 +223,7 @@ namespace GTACoOp
                 string _LastPassword = Game.GetUserInput(passItem.RightLabel, 255);
                 if (!string.IsNullOrEmpty(_LastPassword))
                 {
-                    PlayerSettings.LastPassworde = _LastPassword;
+                    PlayerSettings.LastPassword = _LastPassword;
                     Util.SaveSettings(null);
                     if (PlayerSettings.HidePasswords)
                     {
@@ -259,12 +259,9 @@ namespace GTACoOp
             var settItem = new UIMenuItem("Client Settings");
             _mainMenu.BindMenuToItem(_settingsMenu, settItem);
 
-            //var serverItem = new UIMenuItem("Server Settings");
-            //_mainMenu.BindMenuToItem(_serverMenu, serverItem);
-
             var playersItem = new UIMenuItem("Player List");
             _mainMenu.BindMenuToItem(_playersMenu, playersItem);
-            playersItem.Activated += (sender, item) => RebuildPlayersList();
+            playersItem.Activated += (menur, item) => RebuildPlayersList();
 
             var aboutItem = new UIMenuItem("~g~GTA V~w~ Coop mod v" + ReadableScriptVersion() + " by ~b~Bluscream~w~.");
             aboutItem.Activated += (menu, item) =>
@@ -280,21 +277,20 @@ namespace GTACoOp
             _mainMenu.AddItem(portItem);
             _mainMenu.AddItem(passItem);
             _mainMenu.AddItem(settItem);
-            //_mainMenu.AddItem(serverItem);
             _mainMenu.AddItem(playersItem);
             _mainMenu.AddItem(aboutItem);
 
 
             var nameItem = new UIMenuItem("Display Name");
-            nameItem.SetRightLabel(PlayerSettings.LastPassworde);
+            nameItem.SetRightLabel(PlayerSettings.Username);
             nameItem.Activated += (menu, item) =>
             {
                 string _DisplayName = Game.GetUserInput(32);
                 if (!string.IsNullOrWhiteSpace(_DisplayName))
                 {
-                    PlayerSettings.LastPassworde = _DisplayName;
+                    PlayerSettings.Username = _DisplayName;
                     Util.SaveSettings(null);
-                    nameItem.SetRightLabel(PlayerSettings.LastPassworde);
+                    nameItem.SetRightLabel(PlayerSettings.Username);
                 }
             };
 
@@ -809,7 +805,7 @@ namespace GTACoOp
                 UI.Notify("Clicked");
             };*/
 
-            var meItem = new UIMenuItem(PlayerSettings.LastPassworde);
+            var meItem = new UIMenuItem(PlayerSettings.Username);
             meItem.SetRightLabel(((int)(Latency * 1000)) + "ms");
             _playersMenu.AddItem(meItem);
             /*meItem.Activated += (sender, item) =>
@@ -1260,7 +1256,7 @@ namespace GTACoOp
 
             var obj = new ConnectionRequest();
             obj.Name = string.IsNullOrWhiteSpace(Game.Player.Name) ? "Player" : Game.Player.Name; // To be used as identifiers in server files
-            obj.DisplayName = string.IsNullOrWhiteSpace(PlayerSettings.LastPassworde) ? obj.Name : PlayerSettings.LastPassworde.Trim();
+            obj.DisplayName = string.IsNullOrWhiteSpace(PlayerSettings.Username) ? obj.Name : PlayerSettings.Username.Trim();
             if (!string.IsNullOrEmpty(_password)) obj.Password = _password;
             obj.ScriptVersion = (byte)LocalScriptVersion;
             obj.GameVersion = (int)Game.Version;
