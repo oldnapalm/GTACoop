@@ -109,7 +109,6 @@ namespace GTACoOp
         public Main()
         {
             PlayerSettings = Util.ReadSettings(Program.Location + Path.DirectorySeparatorChar + "ClientSettings.xml");
-            //ServerSettings = new ServerSettings();
             _threadJumping = new Queue<Action>();
 
             Opponents = new Dictionary<long, SyncPed>();
