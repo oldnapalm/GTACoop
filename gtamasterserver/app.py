@@ -33,10 +33,10 @@ def checkThread():
     print('cleaning list...')
     for server in dict(servers):
         date = servers[server]
-        if (datetime.now() - date).total_seconds() > 10*60:
+        if (datetime.now() - date).total_seconds() > 6*60:
             del servers[server]
 
-    sleep(10*60)
+    sleep(6*60)
     checkThread()
 
 
