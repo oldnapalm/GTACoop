@@ -4,10 +4,8 @@ if sys.version_info < (3, 3):
     sys.exit(1)
 
 import flask
-import threading
 from datetime import datetime
 from json import dumps
-from time import sleep
 
 app = flask.Flask(__name__)
 
@@ -22,29 +20,18 @@ def index():
         if not port.isdigit():
             return '403'
 
-        srvstring = "{0}:{1}".format(flask.request.remote_addr, port)
-        servers[srvstring] = datetime.now()
+        ip = "{0}:{1}".format(flask.request.remote_addr, port)
+        servers[ip] = datetime.now()
         return '200'
     else:
+        for server in dict(servers):
+            date = servers[server]
+            if (datetime.now() - date).total_seconds() > 6 * 60:
+                del servers[server]
+
         return dumps({"list": list(servers.keys())})
 
-
-def checkThread():
-    print('cleaning list...')
-    for server in dict(servers):
-        date = servers[server]
-        if (datetime.now() - date).total_seconds() > 6*60:
-            del servers[server]
-
-    sleep(6*60)
-    checkThread()
-
-
 if __name__ == '__main__':
-    t = threading.Thread(target=checkThread)
-    t.daemon = True
-    t.start()
-
     app.debug = False #InDev ONLY
     #serve(app, port=int(environ['PORT'])) #For deployment
     app.run() #Run our app. #InDev ONLY
