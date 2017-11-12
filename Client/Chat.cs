@@ -20,8 +20,7 @@ namespace GTACoOp
         public Chat()
         {
             CurrentInput = "";
-            _mainScaleform = new Scaleform(0);
-            _mainScaleform.Load("multiplayer_chat");
+            _mainScaleform = new Scaleform("multiplayer_chat");
         }
 
         public bool HasInitialized;
@@ -52,7 +51,7 @@ namespace GTACoOp
             }
         }
 
-        private Scaleform _mainScaleform;
+        private readonly Scaleform _mainScaleform;
 
         public string CurrentInput;
 

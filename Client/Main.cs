@@ -94,6 +94,7 @@ namespace GTACoOp
         private static Dictionary<int, int> _pedClothes = new Dictionary<int, int>();
 
         private static DiscordRpc.RichPresence _Presence;
+        private static PlayerList _playerList;
 
         private enum NativeType
         {
@@ -267,7 +268,7 @@ namespace GTACoOp
             {
                 UI.Notify("GTA V Coop mod by Guad, temporary continued by Bluscream, TheIndra and wolfmitchell.");
                 UI.Notify("Mod Version: " + ReadableScriptVersion());
-                UI.Notify("https://pydio.studiowolfree.com/public/gtacoop");
+                UI.Notify("https://files.theindra.eu/?dir=gtacoop");
             };
 
             _mainMenu.AddItem(browserItem);
@@ -526,6 +527,8 @@ namespace GTACoOp
             }
 
             DiscordRpc.UpdatePresence(ref _Presence);
+
+            _playerList = new PlayerList();
         }
 
         private void RebuildServerBrowser()
@@ -862,6 +865,7 @@ namespace GTACoOp
                 Ped player = Game.Player.Character;
                 _menuPool.ProcessMenus();
                 _chat.Tick();
+                _playerList.Tick(Opponents);
 
                 if (_serverRunning) 
 
@@ -1059,6 +1063,12 @@ namespace GTACoOp
                     }
                 }
             }
+
+            if (e.KeyCode == Keys.Z && IsOnServer())
+            {
+                _playerList.Pressed = DateTime.Now;
+            }
+
         }
 
         public void ConnectToServer(string ip, int port = 4499)

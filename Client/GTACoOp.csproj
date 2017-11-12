@@ -89,6 +89,7 @@
     <Compile Include="Main.cs" />
     <Compile Include="NativeData.cs" />
     <Compile Include="PedThread.cs" />
+    <Compile Include="PlayerList.cs" />
     <Compile Include="PlayerSettings.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
