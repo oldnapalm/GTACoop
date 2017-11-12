@@ -7,7 +7,7 @@
     <ProjectGuid>{B6AE6D47-49C4-471C-A55D-DD44452DFF63}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>discord_rpc_test</RootNamespace>
-    <AssemblyName>discord-rpc-test</AssemblyName>
+    <AssemblyName>discord-rpc</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

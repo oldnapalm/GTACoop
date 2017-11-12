@@ -16,11 +16,15 @@ namespace discord_rpc_test
         {
 
             Handlers = new DiscordRpc.EventHandlers();
-            Handlers.ReadyCallback = ReadyCallback;
             DiscordRpc.Initialize("348838311873216514", ref Handlers, true, "");
 
-            Presence.Details = "testing";
-            Presence.LargeImageKey = "352120722522374144";
+            Presence.Details = "Connected to server";
+            Presence.LargeImageKey = "large_logo";
+            //Presence.SmallImageKey = "franklin";
+            //Presence.LargeImageText = "Playing as Franklin";
+            Presence.PartySize = 4;
+            Presence.PartyMax = 16;
+            Presence.State = "127.0.0.1:4499";
 
             DiscordRpc.UpdatePresence(ref Presence);
 
@@ -28,11 +32,6 @@ namespace discord_rpc_test
             {
                 
             }
-        }
-
-        private static void ReadyCallback()
-        {
-            Console.Write("ok");
         }
     }
 }

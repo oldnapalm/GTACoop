@@ -93,6 +93,8 @@ namespace GTACoOp
         private static Dictionary<int, int> _vehMods = new Dictionary<int, int>();
         private static Dictionary<int, int> _pedClothes = new Dictionary<int, int>();
 
+        private static DiscordRpc.RichPresence _Presence;
+
         private enum NativeType
         {
             Unknown = 0,
@@ -497,6 +499,33 @@ namespace GTACoOp
             if (PlayerSettings.AutoConnect && !String.IsNullOrWhiteSpace(PlayerSettings.LastIP) && PlayerSettings.LastPort != -1 && PlayerSettings.LastPort != 0) { 
                 ConnectToServer(PlayerSettings.LastIP.ToString(), PlayerSettings.LastPort);
             }
+
+            // discord rich presence
+            DiscordRpc.EventHandlers handlers = new DiscordRpc.EventHandlers();
+            //handlers.JoinCallback (we can't use this without approval)
+
+            DiscordRpc.Initialize("348838311873216514", ref handlers, true, "");
+
+            _Presence.Details = "Not connected to server";
+            _Presence.LargeImageKey = "large_logo";
+
+            if (Game.Player.Character.Model == PedHash.Franklin)
+            {
+                _Presence.SmallImageKey = "franklin";
+                _Presence.SmallImageText = "Playing as Franklin";
+            }
+            else if (Game.Player.Character.Model == PedHash.Michael)
+            {
+                _Presence.SmallImageKey = "michael";
+                _Presence.SmallImageText = "Playing as Michael";
+            }
+            else if (Game.Player.Character.Model == PedHash.Trevor)
+            {
+                _Presence.SmallImageKey = "trevor";
+                _Presence.SmallImageText = "Playing as Trevor";
+            }
+
+            DiscordRpc.UpdatePresence(ref _Presence);
         }
 
         private void RebuildServerBrowser()
@@ -1406,7 +1435,9 @@ namespace GTACoOp
                         case NetConnectionStatus.Connected:
                             UI.Notify("Connection successful!");
                             _channel = msg.SenderConnection.RemoteHailMessage.ReadInt32();
-                            //File.AppendAllText("scripts\\GTACOOP_chat.log", "[" + DateTime.UtcNow + "] New server: " + msg + "\n");
+
+                            _Presence.Details = "Connected to server";
+                            DiscordRpc.UpdatePresence(ref _Presence);
                             break;
                         case NetConnectionStatus.Disconnected:
                             var reason = msg.ReadString();
@@ -1420,7 +1451,7 @@ namespace GTACoOp
                                     Opponents.Clear();
                                 }
                             }
-
+                 
                             lock (Npcs)
                             {
                                 if (Npcs != null)
@@ -1454,6 +1485,9 @@ namespace GTACoOp
                             {
                                 ConnectToServer(_lastIP, _lastPort);
                             }
+
+                            _Presence.Details = "Not Connected to server";
+                            DiscordRpc.UpdatePresence(ref _Presence);
                             break;
                     }
                 }
