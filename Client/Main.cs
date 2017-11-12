@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -29,7 +30,6 @@ namespace GTACoOp
 
         private readonly UIMenu _mainMenu;
         public UIMenu _serverBrowserMenu;
-        private readonly UIMenu _playersMenu;
         //private readonly UIMenu _playerMenu;
         private readonly UIMenu _settingsMenu;
         private readonly UIMenu _serverMenu;
@@ -169,7 +169,6 @@ namespace GTACoOp
             _mainMenu = new UIMenu("Co-oP", "MAIN MENU");
             _settingsMenu = new UIMenu("Co-oP", "CLIENT SETTINGS");
             _serverBrowserMenu = new UIMenu("Co-oP", "SERVER BROWSER");
-            _playersMenu = new UIMenu("Co-oP", "PLAYER LIST");
             //_serverMenu = new UIMenu("Co-oP", "SERVER SETTINGS");
             //_playerMenu = new UIMenu("Co-oP", "PLAYER OPTIONS");
 
@@ -259,11 +258,7 @@ namespace GTACoOp
             var settItem = new UIMenuItem("Client Settings");
             _mainMenu.BindMenuToItem(_settingsMenu, settItem);
 
-            var playersItem = new UIMenuItem("Player List");
-            _mainMenu.BindMenuToItem(_playersMenu, playersItem);
-            playersItem.Activated += (menur, item) => RebuildPlayersList();
-
-            var aboutItem = new UIMenuItem("~g~GTA V~w~ Coop mod v" + ReadableScriptVersion() + " by ~b~Bluscream~w~.");
+            var aboutItem = new UIMenuItem("~g~GTA V~w~ Coop mod v" + ReadableScriptVersion() + " by ~b~contributors~w~.");
             aboutItem.Activated += (menu, item) =>
             {
                 UI.Notify("GTA V Coop mod by Guad, temporary continued by Bluscream, TheIndra and wolfmitchell.");
@@ -277,7 +272,6 @@ namespace GTACoOp
             _mainMenu.AddItem(portItem);
             _mainMenu.AddItem(passItem);
             _mainMenu.AddItem(settItem);
-            _mainMenu.AddItem(playersItem);
             _mainMenu.AddItem(aboutItem);
 
 
@@ -470,29 +464,12 @@ namespace GTACoOp
             _settingsMenu.AddItem(modeItem);
             _settingsMenu.AddItem(spawnItem);
 
-            _playersMenu.OnIndexChange += (sender, index) =>
-            {
-                KeyValuePair<long, SyncPed> newPlayer = new KeyValuePair<long, SyncPed>();
-                lock (Opponents) newPlayer = Opponents.FirstOrDefault(ops => ops.Value.Name == _playersMenu.MenuItems[index].Text);
-                if (newPlayer.Equals(new KeyValuePair<long, SyncPed>())) return;
-                var pos = newPlayer.Value.IsInVehicle ? newPlayer.Value.VehiclePosition : newPlayer.Value.Position;
-                Function.Call(Hash.LOCK_MINIMAP_POSITION, pos.X, pos.Y);
-                Function.Call(Hash.SET_RADAR_ZOOM, 0);
-            };
-
-            _playersMenu.OnMenuClose += sender =>
-            {
-                Function.Call(Hash.UNLOCK_MINIMAP_POSITION);
-                Function.Call(Hash.SET_RADAR_ZOOM, 200);
-            };
-
             _mainMenu.RefreshIndex();
             _settingsMenu.RefreshIndex();
 
             _menuPool.Add(_mainMenu);
             _menuPool.Add(_serverBrowserMenu);
             _menuPool.Add(_settingsMenu);
-            _menuPool.Add(_playersMenu);
             #endregion
 
             _debug = new DebugWindow();
@@ -619,52 +596,6 @@ namespace GTACoOp
                     continue;
                 _client.DiscoverKnownPeer(split[0], port);
             }
-        }
-
-        private void RebuildPlayersList()
-        {
-            _playersMenu.Clear();
-            List<SyncPed> list = null;
-            lock (Opponents)
-            {
-                if (Opponents == null) return;
-
-                list = new List<SyncPed>(Opponents.Select(pair => pair.Value));
-            }
-
-            /*var setWaypointItem = new UIMenuItem("Set Waypoint");
-            setWaypointItem.Activated += (sender, item) =>
-            {
-                //var pos = ped.IsInVehicle ? ped.VehiclePosition : ped.Position;
-                //Function.Call(Hash.SET_NEW_WAYPOINT, pos.X, pos.Y);
-                UI.Notify("Clicked");
-            };*/
-
-            var meItem = new UIMenuItem(PlayerSettings.Username);
-            meItem.SetRightLabel(((int)(Latency * 1000)) + "ms");
-            _playersMenu.AddItem(meItem);
-            /*meItem.Activated += (sender, item) =>
-            {
-
-            };*/
-            //_playerMenu.AddItem(setWaypointItem);
-
-            foreach (var ped in list)
-            {
-                var newItem = new UIMenuItem(ped.Name == null ? "" : ped.Name);
-                newItem.SetRightLabel(((int)(ped.Latency * 1000)) + "ms");
-
-                newItem.Description = "Real latency: " + ped.AverageLatency;
-
-                newItem.Activated += (sender, item) =>
-                {
-                    var pos = ped.IsInVehicle ? ped.VehiclePosition : ped.Position;
-                    Function.Call(Hash.SET_NEW_WAYPOINT, pos.X, pos.Y);
-                };
-                _playersMenu.AddItem(newItem);
-            }
-
-            _playersMenu.RefreshIndex();
         }
 
         public static Dictionary<int, int> CheckPlayerVehicleMods()
@@ -881,10 +812,6 @@ namespace GTACoOp
                     {
                         _mainMenu.MenuItems[1].Text = "Disconnect";
                     }
-                    if (!_mainMenu.MenuItems[7].Enabled)
-                    {
-                        _mainMenu.MenuItems[7].Enabled = true;
-                    }
                     if (_settingsMenu.MenuItems[0].Enabled)
                     {
                         _settingsMenu.MenuItems[0].Enabled = false;
@@ -895,10 +822,6 @@ namespace GTACoOp
                     if (_mainMenu.MenuItems[1].Text.Equals("Disconnect"))
                     {
                         _mainMenu.MenuItems[1].Text = "Connect";
-                    }
-                    if (_mainMenu.MenuItems[7].Enabled)
-                    {
-                        _mainMenu.MenuItems[7].Enabled = false;
                     }
                     if (!_settingsMenu.MenuItems[0].Enabled)
                     {
@@ -991,7 +914,7 @@ namespace GTACoOp
 
                 for (int i = 0; i < tickNatives.Count; i++) DecodeNativeCall(tickNatives.ElementAt(i).Value);
             }catch(Exception ex) {
-                UI.Notify("<ERROR> Could not handle this tick:"); UI.Notify(ex.Message);
+                UI.Notify("<ERROR> Could not handle this tick: " + ex.ToString());
                 if(Main.PlayerSettings.Logging)
                     File.AppendAllText("scripts\\GTACOOP.log", "[" + DateTime.UtcNow + "] <ERROR> Could not handle this tick: " + ex.Message+"\n");
             }
@@ -1066,7 +989,15 @@ namespace GTACoOp
 
             if (e.KeyCode == Keys.Z && IsOnServer())
             {
-                _playerList.Pressed = DateTime.Now;
+                // toggle playerlist  
+                if (_playerList.Pressed.AddSeconds(5) < DateTime.Now)
+                {
+                    _playerList.Pressed = DateTime.Now;
+                }
+                else
+                {
+                    _playerList.Pressed = new DateTime();
+                }
             }
 
         }

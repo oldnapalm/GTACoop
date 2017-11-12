@@ -21,7 +21,7 @@ namespace GTACoOp
 
         public void Tick(Dictionary<long, SyncPed> opponents)
         {
-            if (Pressed.AddSeconds(5) < DateTime.Now || Pressed == default(DateTime)) return;
+            if (Pressed.AddSeconds(5) < DateTime.Now || Pressed == default(DateTime) || !Main.IsOnServer()) return;
 
             var players = new List<SyncPed>(opponents.Select(pair => pair.Value));
 
