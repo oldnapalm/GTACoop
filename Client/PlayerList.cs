@@ -11,6 +11,7 @@ namespace GTACoOp
 {
     class PlayerList
     {
+        // credits to https://github.com/jorjic/misc-fivereborn-scripts/blob/master/resources/jscoreboard/scoreboard.lua
 
         public DateTime Pressed;
 

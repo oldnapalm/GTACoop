@@ -18,8 +18,10 @@ using Control = GTA.Control;
 //using GTAServer;
 using System.Text.RegularExpressions;
 using System.Globalization;
+using System.Xml.Serialization;
 using MaxMind.GeoIP2;
 using MaxMind.GeoIP2.Model;
+using Newtonsoft.Json.Linq;
 
 namespace GTACoOp
 {
@@ -261,7 +263,7 @@ namespace GTACoOp
             var aboutItem = new UIMenuItem("~g~GTA V~w~ Coop mod v" + ReadableScriptVersion() + " by ~b~contributors~w~.");
             aboutItem.Activated += (menu, item) =>
             {
-                UI.Notify("GTA V Coop mod by Guad, temporary continued by Bluscream, TheIndra and wolfmitchell.");
+                UI.Notify("GTA V Coop mod by Guad, Bluscream, TheIndra and wolfmitchell.");
                 UI.Notify("Mod Version: " + ReadableScriptVersion());
                 UI.Notify("https://files.theindra.eu/?dir=gtacoop");
             };
@@ -1375,6 +1377,7 @@ namespace GTACoOp
                             break;
                         case NetConnectionStatus.Connected:
                             UI.Notify("Connection successful!");
+                            Util.DisplayHelpText("Press ~INPUT_MULTIPLAYER_INFO~ to view a list of online players");
                             _channel = msg.SenderConnection.RemoteHailMessage.ReadInt32();
 
                             _Presence.Details = "Connected to server";
