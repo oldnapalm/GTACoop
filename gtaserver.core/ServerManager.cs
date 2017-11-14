@@ -48,8 +48,7 @@ namespace GTAServer
             {
 
                 Util.LoggerFactory = new LoggerFactory()
-                    .AddSimpleConsole()
-                    .AddDebug();
+                    .AddSimpleConsole();
             }
             else
             {

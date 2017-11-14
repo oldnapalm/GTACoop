@@ -276,7 +276,6 @@ namespace GTACoOp
             _mainMenu.AddItem(settItem);
             _mainMenu.AddItem(aboutItem);
 
-
             var nameItem = new UIMenuItem("Display Name");
             nameItem.SetRightLabel(PlayerSettings.Username);
             nameItem.Activated += (menu, item) =>
