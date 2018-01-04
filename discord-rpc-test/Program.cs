@@ -4,30 +4,42 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using discord_rpc_test.discord;
+using Microsoft.VisualBasic;
+using NAudio.CoreAudioApi;
+using NAudio.Wave;
 
 namespace discord_rpc_test
 {
     class Program
     {
-        public static DiscordRpc.EventHandlers Handlers;
-        static DiscordRpc.RichPresence Presence;
+        private static WaveInEvent _captureDevice;
 
         static void Main(string[] args)
         {
+            // shitty code to test shit (fix in client)
+            var deviceEnum = new MMDeviceEnumerator();
+            var devices = deviceEnum.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active).ToList();
 
-            Handlers = new DiscordRpc.EventHandlers();
-            DiscordRpc.Initialize("348838311873216514", ref Handlers, true, "");
+            Console.WriteLine("Found following devices: \n " + String.Join("\n ", devices.Select(n => n.FriendlyName)));
 
-            Presence.Details = "Connected to server";
-            Presence.LargeImageKey = "large_logo";
-            //Presence.SmallImageKey = "franklin";
-            //Presence.LargeImageText = "Playing as Franklin";
-            Presence.PartySize = 4;
-            Presence.PartyMax = 16;
-            Presence.State = "127.0.0.1:4499";
+            _captureDevice = new WaveInEvent()
+            {
+                DeviceNumber = 0
+            };
 
-            DiscordRpc.UpdatePresence(ref Presence);
+            var device = devices.FirstOrDefault();
+            device.AudioEndpointVolume.Mute = false;
 
+            Console.WriteLine(_captureDevice.GetType().FullName);
+
+            _captureDevice.DataAvailable += (sender, argss) =>
+            {
+                Console.WriteLine("Hehe data avaible: " + argss.BytesRecorded);
+                Microsoft.VisualBasic.Devices.Audio audio = new Microsoft.VisualBasic.Devices.Audio();
+                audio.Play(argss.Buffer, AudioPlayMode.Background);
+            };
+
+            //stay alive :)
             while (true)
             {
                 

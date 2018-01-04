@@ -39,5 +39,11 @@ namespace GTAServer.ProtocolMessages
         public bool IsSirenActive { get; set; }
         [ProtoMember(16)]
         public float Speed { get; set; }
+        [ProtoMember(17)]
+        public bool IsEngineRunning { get; set; }
+        [ProtoMember(18)]
+        public float WheelSpeed { get; set; }
+        [ProtoMember(19)]
+        public float Steering { get; set; }
     }
 }

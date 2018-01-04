@@ -21,9 +21,9 @@ namespace GTAServer
         public string GamemodeName { get; set; } = "freeroam";
         public string ServerName { get; set; } = "GTACoOp Server";
         public string Password { get; set; } = "";
-        public string PrimaryMasterServer { get; set; } = "http://46.101.1.92/";
-        public string BackupMasterServer { get; set; } = "https://gtamaster.nofla.me";
-        public bool AnnounceSelf { get; set; } = false;
+        public string PrimaryMasterServer { get; set; } = "http://clan-banderos.de/gta/";
+        public string BackupMasterServer { get; set; } = "https://gtamaster.theindra.eu/";
+        public bool AnnounceSelf { get; set; } = true;
         public bool AllowNicknames { get; set; } = true;
         public bool AllowOutdatedClients { get; set; } = false;
         public bool DebugMode { get; set; } = false;

@@ -21,6 +21,8 @@ using System.Globalization;
 using System.Xml.Serialization;
 using MaxMind.GeoIP2;
 using MaxMind.GeoIP2.Model;
+using Microsoft.VisualBasic;
+using NAudio.Wave;
 using Newtonsoft.Json.Linq;
 
 namespace GTACoOp
@@ -111,6 +113,7 @@ namespace GTACoOp
         {
              return Regex.Replace(Regex.Replace(LocalScriptVersion.ToString(), "VERSION_", "", RegexOptions.IgnoreCase), "_", ".", RegexOptions.IgnoreCase);
         }
+
         public Main()
         {
             PlayerSettings = Util.ReadSettings(Program.Location + Path.DirectorySeparatorChar + "ClientSettings.xml");
@@ -464,6 +467,98 @@ namespace GTACoOp
             _settingsMenu.AddItem(versionItem);
             _settingsMenu.AddItem(modeItem);
             _settingsMenu.AddItem(spawnItem);
+            var ny = new UIMenuItem("(Debug) Load North Yankton");
+            ny.Activated += (sender, item) =>
+            {
+                Function.Call(Hash.REQUEST_IPL, "plg_01");
+                Function.Call(Hash.REQUEST_IPL, "prologue01");
+                Function.Call(Hash.REQUEST_IPL, "prologue01_lod");
+                Function.Call(Hash.REQUEST_IPL, "prologue01c");
+                Function.Call(Hash.REQUEST_IPL, "prologue01c_lod");
+                Function.Call(Hash.REQUEST_IPL, "prologue01d");
+                Function.Call(Hash.REQUEST_IPL, "prologue01d_lod");
+                Function.Call(Hash.REQUEST_IPL, "prologue01e");
+                Function.Call(Hash.REQUEST_IPL, "prologue01e_lod");
+                Function.Call(Hash.REQUEST_IPL, "prologue01f");
+                Function.Call(Hash.REQUEST_IPL, "prologue01f_lod");
+                Function.Call(Hash.REQUEST_IPL, "prologue01g");
+                Function.Call(Hash.REQUEST_IPL, "prologue01h");
+                Function.Call(Hash.REQUEST_IPL, "prologue01h_lod");
+                Function.Call(Hash.REQUEST_IPL, "prologue01i");
+                Function.Call(Hash.REQUEST_IPL, "prologue01i_lod");
+                Function.Call(Hash.REQUEST_IPL, "prologue01j");
+                Function.Call(Hash.REQUEST_IPL, "prologue01j_lod");
+                Function.Call(Hash.REQUEST_IPL, "prologue01k");
+                Function.Call(Hash.REQUEST_IPL, "prologue01k_lod");
+                Function.Call(Hash.REQUEST_IPL, "prologue01z");
+                Function.Call(Hash.REQUEST_IPL, "prologue01z_lod");
+                Function.Call(Hash.REQUEST_IPL, "plg_02");
+                Function.Call(Hash.REQUEST_IPL, "prologue02");
+                Function.Call(Hash.REQUEST_IPL, "prologue02_lod");
+                Function.Call(Hash.REQUEST_IPL, "plg_03");
+                Function.Call(Hash.REQUEST_IPL, "prologue03");
+                Function.Call(Hash.REQUEST_IPL, "prologue03_lod");
+                Function.Call(Hash.REQUEST_IPL, "prologue03b");
+                Function.Call(Hash.REQUEST_IPL, "prologue03b_lod");
+                Function.Call(Hash.REQUEST_IPL, "prologue03_grv_dug");
+                Function.Call(Hash.REQUEST_IPL, "prologue03_grv_dug_lod");
+                Function.Call(Hash.REQUEST_IPL, "prologue_grv_torch");
+                Function.Call(Hash.REQUEST_IPL, "plg_04");
+                Function.Call(Hash.REQUEST_IPL, "prologue04");
+                Function.Call(Hash.REQUEST_IPL, "prologue04_lod");
+                Function.Call(Hash.REQUEST_IPL, "prologue04b");
+                Function.Call(Hash.REQUEST_IPL, "prologue04b_lod");
+                Function.Call(Hash.REQUEST_IPL, "prologue04_cover");
+                Function.Call(Hash.REQUEST_IPL, "des_protree_end");
+                Function.Call(Hash.REQUEST_IPL, "des_protree_start");
+                Function.Call(Hash.REQUEST_IPL, "des_protree_start_lod");
+                Function.Call(Hash.REQUEST_IPL, "plg_05");
+                Function.Call(Hash.REQUEST_IPL, "prologue05");
+                Function.Call(Hash.REQUEST_IPL, "prologue05_lod");
+                Function.Call(Hash.REQUEST_IPL, "prologue05b");
+                Function.Call(Hash.REQUEST_IPL, "prologue05b_lod");
+                Function.Call(Hash.REQUEST_IPL, "plg_06");
+                Function.Call(Hash.REQUEST_IPL, "prologue06");
+                Function.Call(Hash.REQUEST_IPL, "prologue06_lod");
+                Function.Call(Hash.REQUEST_IPL, "prologue06b");
+                Function.Call(Hash.REQUEST_IPL, "prologue06b_lod");
+                Function.Call(Hash.REQUEST_IPL, "prologue06_int");
+                Function.Call(Hash.REQUEST_IPL, "prologue06_int_lod");
+                Function.Call(Hash.REQUEST_IPL, "prologue06_pannel");
+                Function.Call(Hash.REQUEST_IPL, "prologue06_pannel_lod");
+                Function.Call(Hash.REMOVE_IPL, "prologue_m2_door");
+                Function.Call(Hash.REMOVE_IPL, "prologue_m2_door_lod");
+                Function.Call(Hash.REQUEST_IPL, "plg_occl_00");
+                Function.Call(Hash.REQUEST_IPL, "prologue_occl");
+                Function.Call(Hash.REQUEST_IPL, "plg_rd");
+                Function.Call(Hash.REQUEST_IPL, "prologuerd");
+                Function.Call(Hash.REQUEST_IPL, "prologuerdb");
+                Function.Call(Hash.REQUEST_IPL, "prologuerd_lod");
+            };
+
+            var iplloader = new UIMenuItem("(Debug) Load IPL");
+            iplloader.Activated += (sender, item) =>
+            {
+                var input = Game.GetUserInput("prologue", 255);
+                if (!String.IsNullOrEmpty(input))
+                {
+                    Function.Call(Hash.REQUEST_IPL, input);
+                }
+            };
+
+            var ipllunoader = new UIMenuItem("(Debug) Unload IPL");
+            ipllunoader.Activated += (sender, item) =>
+            {
+                var input = Game.GetUserInput("prologue", 255);
+                if (!String.IsNullOrEmpty(input))
+                {
+                    Function.Call(Hash.REMOVE_IPL, input);
+                }
+            };
+            _settingsMenu.AddItem(ipllunoader);
+            _settingsMenu.AddItem(iplloader);
+
+            _settingsMenu.AddItem(ny);
 
             _mainMenu.RefreshIndex();
             _settingsMenu.RefreshIndex();
@@ -669,6 +764,9 @@ namespace GTACoOp
                 obj.IsPressingHorn = Game.Player.IsPressingHorn;
                 obj.IsSirenActive = veh.SirenActive;
                 obj.VehicleMods = CheckPlayerVehicleMods();
+                obj.IsEngineRunning = veh.EngineRunning;
+                obj.WheelSpeed = veh.WheelSpeed;
+                obj.Steering = veh.SteeringScale;
                 obj.Speed = veh.Speed;
 
                 var bin = SerializeBinary(obj);
@@ -741,6 +839,9 @@ namespace GTACoOp
                 obj.Name = ped.Handle.ToString();
                 obj.Speed = veh.Speed;
                 obj.IsSirenActive = veh.SirenActive;
+                obj.WheelSpeed = veh.WheelSpeed;
+                obj.Steering = veh.SteeringScale;
+                obj.IsEngineRunning = veh.EngineRunning;
 
                 var bin = SerializeBinary(obj);
 
@@ -999,6 +1100,10 @@ namespace GTACoOp
                 {
                     _playerList.Pressed = new DateTime();
                 }
+            }
+
+            if (e.KeyCode == Keys.N)
+            {
             }
 
         }
