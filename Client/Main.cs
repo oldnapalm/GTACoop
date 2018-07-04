@@ -169,9 +169,9 @@ namespace GTACoOp
             // #warning Affects performance when open, drops from 80~100 on a GTX 980 to high 30s ~ 60
             _menuPool = new MenuPool();
 
-            _mainMenu = new UIMenu("Co-oP", "MAIN MENU");
-            _settingsMenu = new UIMenu("Co-oP", "CLIENT SETTINGS");
-            _serverBrowserMenu = new UIMenu("Co-oP", "SERVER BROWSER");
+            _mainMenu = new UIMenu("GTA CooP", "MAIN MENU");
+            _settingsMenu = new UIMenu("GTA CooP", "CLIENT SETTINGS");
+            _serverBrowserMenu = new UIMenu("GTA CooP", "SERVER BROWSER");
             //_serverMenu = new UIMenu("Co-oP", "SERVER SETTINGS");
             //_playerMenu = new UIMenu("Co-oP", "PLAYER OPTIONS");
 
