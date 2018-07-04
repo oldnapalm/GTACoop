@@ -15,7 +15,6 @@ using NativeUI;
 using Newtonsoft.Json;
 using ProtoBuf;
 using Control = GTA.Control;
-//using GTAServer;
 using System.Text.RegularExpressions;
 using System.Globalization;
 using System.Xml.Serialization;
@@ -97,7 +96,6 @@ namespace GTACoOp
         private static Dictionary<int, int> _vehMods = new Dictionary<int, int>();
         private static Dictionary<int, int> _pedClothes = new Dictionary<int, int>();
 
-        private static DiscordRpc.RichPresence _Presence;
         private static PlayerList _playerList;
 
         private enum NativeType
@@ -574,33 +572,6 @@ namespace GTACoOp
                 ConnectToServer(PlayerSettings.LastIP.ToString(), PlayerSettings.LastPort);
             }
 
-            // discord rich presence
-            DiscordRpc.EventHandlers handlers = new DiscordRpc.EventHandlers();
-            //handlers.JoinCallback (we can't use this without approval)
-
-            DiscordRpc.Initialize("348838311873216514", ref handlers, true, "");
-
-            _Presence.Details = "Not connected to server";
-            _Presence.LargeImageKey = "large_logo";
-
-            if (Game.Player.Character.Model == PedHash.Franklin)
-            {
-                _Presence.SmallImageKey = "franklin";
-                _Presence.SmallImageText = "Playing as Franklin";
-            }
-            else if (Game.Player.Character.Model == PedHash.Michael)
-            {
-                _Presence.SmallImageKey = "michael";
-                _Presence.SmallImageText = "Playing as Michael";
-            }
-            else if (Game.Player.Character.Model == PedHash.Trevor)
-            {
-                _Presence.SmallImageKey = "trevor";
-                _Presence.SmallImageText = "Playing as Trevor";
-            }
-
-            DiscordRpc.UpdatePresence(ref _Presence);
-
             _playerList = new PlayerList();
         }
 
@@ -1069,7 +1040,7 @@ namespace GTACoOp
                     var message = Game.GetUserInput(255);
                     foreach (GTA.Control control in Enum.GetValues(typeof(GTA.Control)))
                     {
-                        Game.EnableControl(2, control);
+                        Game.EnableControlThisFrame(2, control);
                     }
                     //Game.EnableAllControlsThisFrame(2);
                     if (!string.IsNullOrWhiteSpace(message))
@@ -1484,8 +1455,6 @@ namespace GTACoOp
                             Util.DisplayHelpText("Press ~INPUT_MULTIPLAYER_INFO~ to view a list of online players");
                             _channel = msg.SenderConnection.RemoteHailMessage.ReadInt32();
 
-                            _Presence.Details = "Connected to server";
-                            DiscordRpc.UpdatePresence(ref _Presence);
                             break;
                         case NetConnectionStatus.Disconnected:
                             var reason = msg.ReadString();
@@ -1534,8 +1503,6 @@ namespace GTACoOp
                                 ConnectToServer(_lastIP, _lastPort);
                             }
 
-                            _Presence.Details = "Not Connected to server";
-                            DiscordRpc.UpdatePresence(ref _Presence);
                             break;
                     }
                 }
