@@ -40,6 +40,8 @@ namespace GTAServer
         public NetServer Server;
         public int CurrentTick { get; set; } = 0;
 
+        public string Motd { get; set; } = "Welcome to this GTA CooP server!";
+
         public readonly Dictionary<string, ICommand> Commands = new Dictionary<string, ICommand>();
 
         public int TicksPerSecond { get; set; }
@@ -61,6 +63,7 @@ namespace GTAServer
             Port = port;
             MasterServer = "http://46.101.1.92/";
             BackupMasterServer = "https://gtamaster.nofla.me";
+
             Config = new NetPeerConfiguration("GTAVOnlineRaces") { Port = port };
             Config.EnableMessageType(NetIncomingMessageType.ConnectionApproval);
             Config.EnableMessageType(NetIncomingMessageType.DiscoveryRequest);
@@ -117,7 +120,9 @@ namespace GTAServer
 
         private async void AnnounceToMaster()
         {
-            if (DebugMode) return;
+            if (DebugMode)
+                return;
+
             logger.LogInformation("Announcing to master server");
             _lastAnnounceDateTime = DateTime.Now;
             var payload = Port.ToString();
@@ -126,16 +131,27 @@ namespace GTAServer
             var request = WebRequest.Create(MasterServer);
             request.Method = "POST";
             request.ContentType = "text/plain";
-            var dataStream = await request.GetRequestStreamAsync();
-            dataStream.Write(enc.GetBytes(payload), 0, payload.Length);
-            await request.GetResponseAsync();
+            try
+            {
+                var dataStream = await request.GetRequestStreamAsync();
+                dataStream.Write(enc.GetBytes(payload), 0, payload.Length);
+                await request.GetResponseAsync();
+            }catch(WebException)
+            {
+                logger.LogError("Couldn't announce to masterserver (primary)");
+            }
 
             request = WebRequest.Create(BackupMasterServer);
             request.Method = "POST";
             request.ContentType = "text/plain";
-            dataStream = await request.GetRequestStreamAsync();
-            dataStream.Write(enc.GetBytes(payload), 0, payload.Length);
-            await request.GetResponseAsync();
+            try
+            {
+                var dataStream = await request.GetRequestStreamAsync();
+                dataStream.Write(enc.GetBytes(payload), 0, payload.Length);
+                await request.GetResponseAsync();
+            } catch (WebException) {
+                logger.LogError("Couldn't announce to masterserver (secondary)");
+            }
         }
 
         private void CalculateTicksPerSecond()
@@ -145,6 +161,12 @@ namespace GTAServer
 
             //logger.LogTrace("TPS: " + TicksPerSecond);
             Console.Title = "GTAServer - " + Name + " (" + Clients.Count + "/" + MaxPlayers + " players) - Port: " + Port + " - TPS: " + TicksPerSecond;
+
+            if(TicksPerSecond < 1)
+            {
+
+            }
+                
             return;
         }
 
@@ -378,6 +400,11 @@ namespace GTAServer
                 case NetConnectionStatus.Connected:
                     logger.LogInformation($"Connected: {client.DisplayName}@{msg.SenderEndPoint.Address.ToString()}");
                     SendNotificationToAll($"Player connected: {client.DisplayName}");
+
+                    if (!String.IsNullOrEmpty(Motd)) 
+                    { 
+                        SendChatMessageToPlayer(client, Motd);
+                    }
                     break;
 
                 case NetConnectionStatus.Disconnected:
@@ -391,7 +418,7 @@ namespace GTAServer
                                 {
                                     if (string.IsNullOrEmpty(client.KickReason)) client.KickReason = "Unknown";
                                     SendNotificationToAll(
-                                        $"Player kicked: {client.DisplayName} - Reason: {client.KickReason}");
+                                        $"Kicked: {client.DisplayName} - Reason: {client.KickReason}");
                                 }
                                 else
                                 {

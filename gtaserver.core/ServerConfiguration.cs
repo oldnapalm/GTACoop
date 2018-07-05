@@ -28,6 +28,8 @@ namespace GTAServer
         public bool AllowOutdatedClients { get; set; } = false;
         public bool DebugMode { get; set; } = false;
 
+        public string Motd { get; set; } = "Welcome to this GTA CooP server!";
+
         public List<string> ServerPlugins { get; set; } = new List<string>() {};
 
         public List<ServerVariable> ServerVariables = new List<ServerVariable>();

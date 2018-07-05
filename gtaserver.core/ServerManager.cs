@@ -83,7 +83,8 @@ namespace GTAServer
                 AnnounceSelf = _gameServerConfiguration.AnnounceSelf,
                 AllowNicknames = _gameServerConfiguration.AllowNicknames,
                 AllowOutdatedClients = _gameServerConfiguration.AllowOutdatedClients,
-                MaxPlayers = _gameServerConfiguration.MaxClients
+                MaxPlayers = _gameServerConfiguration.MaxClients,
+                Motd = _gameServerConfiguration.Motd
             };
             gameServer.Start();
 
