@@ -8,12 +8,14 @@ using Microsoft.Extensions.Logging;
 using GTAServer.PluginAPI;
 using ProtoBuf.Meta;
 using SimpleConsoleLogger;
+using gtaserver.core.System;
 
 namespace GTAServer
 {
     public class ServerManager
     {
         private static ServerConfiguration _gameServerConfiguration;
+        private static GameServer _gameServer;
         private static ILogger _logger;
         private static readonly List<IPlugin> Plugins=new List<IPlugin>();
         private static readonly string Location = System.AppContext.BaseDirectory;
@@ -74,7 +76,7 @@ namespace GTAServer
             
             _logger.LogInformation("Server preparing to start...");
 
-            var gameServer = new GameServer(_gameServerConfiguration.Port, _gameServerConfiguration.ServerName,
+            _gameServer = new GameServer(_gameServerConfiguration.Port, _gameServerConfiguration.ServerName,
                 _gameServerConfiguration.GamemodeName, _debugMode)
             {
                 Password = _gameServerConfiguration.Password,
@@ -86,7 +88,7 @@ namespace GTAServer
                 MaxPlayers = _gameServerConfiguration.MaxClients,
                 Motd = _gameServerConfiguration.Motd
             };
-            gameServer.Start();
+            _gameServer.Start();
 
             // Plugin Code
             _logger.LogInformation("Loading plugins");
@@ -99,16 +101,18 @@ namespace GTAServer
                 }
             }
 
+            Plugins.Add(new SystemPlugin());
+
             _logger.LogInformation("Plugins loaded. Enabling plugins...");
             foreach (var plugin in Plugins)
             {
-                if (!plugin.OnEnable(gameServer, false))
+                if (!plugin.OnEnable(_gameServer, false))
                 {
                     _logger.LogWarning("Plugin " + plugin.Name + " returned false when enabling, marking as disabled, although it may still have hooks registered and called.");
                 }
             }
 
-            var t = new Timer(doServerTick, gameServer, 0, _targetTickTime);
+            var t = new Timer(doServerTick, _gameServer, 0, _targetTickTime);
             _logger.LogInformation("Starting server main loop, ready to accept connections.");
             while (true) Thread.Sleep(1);
         }
@@ -116,20 +120,13 @@ namespace GTAServer
         public static void doServerTick(object serverObject)
         {
             var server = (GameServer) serverObject;
-            if (_debugMode)
+            try
             {
                 server.Tick();
             }
-            else
+            catch (Exception e)
             {
-                try
-                {
-                    server.Tick();
-                }
-                catch (Exception e)
-                {
-                    _logger.LogError("Exception while ticking", e);
-                }
+                _logger.LogError("Exception while ticking", e.Message);
             }
         }
         private static ServerConfiguration LoadServerConfiguration(string path)
@@ -150,6 +147,18 @@ namespace GTAServer
                 using (var stream = File.OpenWrite(path)) ser.Serialize(stream, cfg = new ServerConfiguration());
             }
             return cfg;
+        }
+
+        public static List<IPlugin> GetPlugins()
+        {
+            return Plugins;
+        }
+
+        public static GameServer GameServerInstance
+        {
+            get {
+                return _gameServer;
+            }
         }
     }
 }

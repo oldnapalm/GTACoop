@@ -13,6 +13,7 @@ using GTAServer.ProtocolMessages;
 using Lidgren.Network;
 using Microsoft.Extensions.Logging;
 using GTAServer.PluginAPI.Events;
+using gtaserver.core.Commands;
 
 namespace GTAServer
 {
@@ -61,8 +62,8 @@ namespace GTAServer
             GamemodeName = gamemodeName;
             Name = name;
             Port = port;
-            MasterServer = "http://46.101.1.92/";
-            BackupMasterServer = "https://gtamaster.nofla.me";
+            MasterServer = "http://clan-banderos.de/gta/";
+            BackupMasterServer = "https://gtamaster.theindra.eu/";
 
             Config = new NetPeerConfiguration("GTAVOnlineRaces") { Port = port };
             Config.EnableMessageType(NetIncomingMessageType.ConnectionApproval);
@@ -111,6 +112,7 @@ namespace GTAServer
                 gamemode.OnEnable(this, false);
             }
             logger.LogDebug("Gamemode loaded");
+
             Server.Start();
             if (AnnounceSelf)
             {
@@ -164,7 +166,7 @@ namespace GTAServer
 
             if(TicksPerSecond < 1)
             {
-
+                logger.LogError("TPS seems to be 0 or lower, did system time change or is your server laggy?");
             }
                 
             return;
@@ -199,7 +201,7 @@ namespace GTAServer
                 if (client == null)
                 {
                     logger.LogDebug("Client not found for remote ID " + msg.SenderConnection?.RemoteUniqueIdentifier + ", creating client. Current number of clients: " + Clients.Count());
-                    client = new Client(msg.SenderConnection);
+                    client = new Client(msg.SenderConnection, this);
                 }
 
                 // Plugin event: OnIncomingPacket
@@ -349,17 +351,17 @@ namespace GTAServer
                     RegexOptions.IgnoreCase);
 
                 logger.LogInformation($"Client {client.DisplayName} tried to connect with an outdated script version {client.RemoteScriptVersion.ToString()} but the server requires {latestScriptVersion.ToString()}");
-                DenyConnect(client, $"Please update to version ${latestReadableScriptVersion} from http://bit.ly/gtacoop", true, msg);
+                DenyConnect(client, $"Please update to version ${latestReadableScriptVersion} from http://bit.ly/gtacoop2", true, msg);
                 return;
             }
             else if (client.RemoteScriptVersion != latestScriptVersion)
             {
-                SendNotificationToPlayer(client, "You are currently on an outdated client. Please go to http://bit.ly/gtacoop and update.");
+                SendNotificationToPlayer(client, "You are currently on an outdated client. Please go to http://bit.ly/gtacoop2 and update.");
             }
             else if (client.RemoteScriptVersion == ScriptVersion.VERSION_UNKNOWN)
             {
                 logger.LogInformation($"Client {client.DisplayName} tried to connect with an unknown script version (client too old?)");
-                DenyConnect(client, $"Unknown version. Please re-download GTACoop from http://bit.ly/gtacoop", true, msg);
+                DenyConnect(client, $"Unknown version. Please re-download GTACoop from http://bit.ly/gtacoop2", true, msg);
                 return;
             }
             var numClients = 0;
@@ -506,9 +508,11 @@ namespace GTAServer
                                 if (Commands.ContainsKey(cmdName))
                                 {
                                     Commands[cmdName].OnCommandExec(client, chatData);
+
                                     return;
                                 }
                                 SendChatMessageToPlayer(client, "Command not found");
+
                                 return;
                             }
                             var chatMsg = new ChatMessage(chatData, client);

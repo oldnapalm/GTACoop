@@ -21,9 +21,12 @@ namespace GTAServer.ProtocolMessages
         public Client KickedBy { get; set; }
         public bool Silent { get; set; }
 
-        public Client(NetConnection nc)
+        private GameServer _gameServer { get; set; }
+
+        public Client(NetConnection nc, GameServer gameServer)
         {
             NetConnection = nc;
+            _gameServer = gameServer;
         }
 
         public void ApplyConnectionRequest(ConnectionRequest cr)
@@ -32,6 +35,11 @@ namespace GTAServer.ProtocolMessages
             DisplayName = cr.DisplayName;
             RemoteScriptVersion = (ScriptVersion)cr.ScriptVersion;
             GameVersion = cr.GameVersion;
+        }
+
+        public void SendMessage(string message)
+        {
+            _gameServer.SendChatMessageToPlayer(this, message);   
         }
     }
 }
