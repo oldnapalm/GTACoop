@@ -21,7 +21,6 @@ using System.Xml.Serialization;
 using MaxMind.GeoIP2;
 using MaxMind.GeoIP2.Model;
 using Microsoft.VisualBasic;
-using NAudio.Wave;
 using Newtonsoft.Json.Linq;
 
 namespace GTACoOp
@@ -369,7 +368,7 @@ namespace GTACoOp
             var trafficItem = new UIMenuListItem("Share Traffic With Players", new List<dynamic>(Enum.GetNames(typeof(TrafficMode))), 0);
             trafficItem.OnListChanged += (item, index) =>
             {
-                PlayerSettings.SyncTraffic = Enum.Parse(typeof(TrafficMode), item.IndexToItem(index).ToString());
+                PlayerSettings.SyncTraffic = (TrafficMode) Enum.Parse(typeof(TrafficMode), item.IndexToItem(index).ToString());
                 Util.SaveSettings(null);
             };
 
@@ -424,14 +423,14 @@ namespace GTACoOp
             var modeItem = new UIMenuListItem("Sync Mode", new List<dynamic>(Enum.GetNames(typeof(SynchronizationMode))), 0);
             modeItem.OnListChanged += (item, index) =>
             {
-                GlobalSyncMode = Enum.Parse(typeof(SynchronizationMode), item.IndexToItem(index).ToString());
+                GlobalSyncMode = (SynchronizationMode) Enum.Parse(typeof(SynchronizationMode), item.IndexToItem(index).ToString());
                 lock (Opponents) if (Opponents != null) Opponents.ToList().ForEach(p => p.Value.SyncMode = GlobalSyncMode);
             };
 
             var versionItem = new UIMenuListItem("Version", new List<dynamic>(Enum.GetNames(typeof(ScriptVersion))), 0);
             versionItem.OnListChanged += (item, index) =>
             {
-                LocalScriptVersion = Enum.Parse(typeof(ScriptVersion), item.IndexToItem(index).ToString());
+                LocalScriptVersion = (ScriptVersion) Enum.Parse(typeof(ScriptVersion), item.IndexToItem(index).ToString());
                 //_mainMenu.Clear();_mainMenu.RefreshIndex();
             };
 
@@ -1502,6 +1501,9 @@ namespace GTACoOp
                             {
                                 ConnectToServer(_lastIP, _lastPort);
                             }
+
+                            // clear chat
+                            _chat.Reset();
 
                             break;
                     }

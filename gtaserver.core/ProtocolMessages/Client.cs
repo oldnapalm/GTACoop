@@ -41,5 +41,10 @@ namespace GTAServer.ProtocolMessages
         {
             _gameServer.SendChatMessageToPlayer(this, message);   
         }
+
+        public void SendNativeCall(ulong hash, params object[] arguments)
+        {
+            _gameServer.SendNativeCallToPlayer(this, hash, arguments);
+        }
     }
 }

@@ -74,22 +74,21 @@ namespace GTACoOp
         {
             if (string.IsNullOrEmpty(sender))
             {
-                _mainScaleform.CallFunction("ADD_MESSAGE", "", SanitizeString(msg));
+                _mainScaleform.CallFunction("ADD_MESSAGE", "", msg);
                 if(Main.PlayerSettings.ChatLog)
                     System.IO.File.AppendAllText("scripts\\GTACOOP_chat.log", "[" + DateTime.UtcNow + "] " + msg + "\n");
             }
             else
             {
-                _mainScaleform.CallFunction("ADD_MESSAGE", SanitizeString(sender) + ":", SanitizeString(msg));
+                _mainScaleform.CallFunction("ADD_MESSAGE", sender + ":", msg);
                 if (Main.PlayerSettings.ChatLog)
                     System.IO.File.AppendAllText("scripts\\GTACOOP_chat.log", "[" + DateTime.UtcNow + "] " + sender + ": " + msg + "\n");
             }
         }
 
-        public string SanitizeString(string input)
+        public void Reset()
         {
-            input = Regex.Replace(input, "~.~", "", RegexOptions.IgnoreCase);
-            return input;
+            _mainScaleform.CallFunction("RESET");
         }
 
         public void OnKeyDown(Keys key)

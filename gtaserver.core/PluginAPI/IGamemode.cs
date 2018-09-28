@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace GTAServer.PluginAPI
 {
-    interface IGamemode : IPlugin
+    public interface IGamemode : IPlugin
     {
         string GamemodeName { get; }
     }

@@ -164,12 +164,6 @@ namespace GTAServer
             //logger.LogTrace("TPS: " + TicksPerSecond);
             Console.Title = "GTAServer - " + Name + " (" + Clients.Count + "/" + MaxPlayers + " players) - Port: " + Port + " - TPS: " + TicksPerSecond;
 
-            if(TicksPerSecond < 1)
-            {
-                logger.LogError("TPS seems to be 0 or lower, did system time change or is your server laggy?");
-            }
-                
-            return;
         }
 
         public void Tick()
@@ -526,6 +520,9 @@ namespace GTAServer
 
                                 if (!string.IsNullOrWhiteSpace(chatMsg.Suffix))
                                     chatData.Sender += $" ({chatMsg.Suffix}) ";
+
+                                chatData.Message = Util.SanitizeString(chatData.Message);
+
                                 SendToAll(chatData, PacketType.ChatData, true);
                                 logger.LogInformation($"[Chat] <{chatData.Sender}>: {chatData.Message}");
                             }
@@ -949,5 +946,6 @@ namespace GTAServer
         public void IsNightVisionActive(Client player, Action<object> callback, string salt = "salt") =>
             GetNativeCallFromPlayer(player, salt, 0x2202A3F42C8E5F79, new BooleanArgument(), 
                 callback, new LocalPlayerArgument());
+
     }
 }

@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 using GTAServer.PluginAPI;
 using ProtoBuf.Meta;
 using SimpleConsoleLogger;
-using gtaserver.core.System;
+using gtaserver.core.ServerSystem;
 
 namespace GTAServer
 {

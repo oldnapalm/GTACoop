@@ -1,11 +1,13 @@
 ﻿using gtaserver.core.Commands;
 using GTAServer;
 using GTAServer.PluginAPI;
+using GTAServer.PluginAPI.Events;
+using GTAServer.ProtocolMessages;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace gtaserver.core.System
+namespace gtaserver.core.ServerSystem
 {
     class SystemPlugin : IPlugin
     {
@@ -17,6 +19,7 @@ namespace gtaserver.core.System
 
         public bool OnEnable(GameServer gameServer, bool isAfterServerLoad)
         {
+            // register built-in commands
             gameServer.Commands.Add("help", new HelpCommand());
             gameServer.Commands.Add("tps", new TpsCommand());
             gameServer.Commands.Add("about", new AboutCommand());

@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using ProtoBuf;
 
@@ -24,5 +25,11 @@ namespace GTAServer
         }
 
         public static ILoggerFactory LoggerFactory;
+
+        public static string SanitizeString(string input)
+        {
+            input = Regex.Replace(input, "~.~", "", RegexOptions.IgnoreCase);
+            return input;
+        }
     }
 }

@@ -232,7 +232,7 @@ namespace GTACoOp
                     var oldPos = UI.WorldToScreen(Character.Position + new Vector3(0, 0, 1.5f));
                     if (oldPos.X != 0 && oldPos.Y != 0)
                     {
-                        var res = UIMenu.GetScreenResolutionMantainRatio();
+                        var res = UIMenu.GetScreenResolutionMaintainRatio();
                         var pos = new Point((int)((oldPos.X / (float)UI.WIDTH) * res.Width),
                             (int)((oldPos.Y / (float)UI.HEIGHT) * res.Height));
 

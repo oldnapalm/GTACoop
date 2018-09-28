@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Text;
+using GTAServer;
 using GTAServer.PluginAPI;
 using GTAServer.ProtocolMessages;
 
@@ -18,10 +20,22 @@ namespace gtaserver.core.Commands
 
         public void OnCommandExec(Client caller, ChatData chatData)
         {
-            caller.SendMessage("This servers runs GTACooP GTAServer.core\n" +
-                "credits:\n" + 
-                "- Wolfmitchell 2017\n" +
-                "- TheIndra 2018");
+            string os = "";
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                os = "Linux";
+            }else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                os = "Windows";
+            }else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                os = "OSX";
+            }
+
+            caller.SendMessage($"This server runs GTAServer.core on {os}.\n" +
+                "More info about this build see gtacoop.com");
         }
+
     }
 }
