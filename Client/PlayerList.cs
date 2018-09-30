@@ -39,7 +39,7 @@ namespace GTACoOp
             Function.Call(Hash.SET_TEXT_COLOUR, 255, 255, 255, 255);
             Function.Call((Hash)0x25FBB336DF1804CB, "STRING");
 
-            Function.Call(Hash._ADD_TEXT_COMPONENT_STRING, $"GTA Coop ({players.Count} online)");
+            Function.Call(Hash._ADD_TEXT_COMPONENT_STRING, $"GTA CooP ({players.Count} online)");
 
             Function.Call((Hash)0xCD015E5BB0D96A57, 0.015, 0.007);
 

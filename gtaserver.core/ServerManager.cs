@@ -6,7 +6,6 @@ using System.Linq;
 using System.Xml.Serialization;
 using Microsoft.Extensions.Logging;
 using GTAServer.PluginAPI;
-using ProtoBuf.Meta;
 using SimpleConsoleLogger;
 using gtaserver.core.ServerSystem;
 
@@ -20,7 +19,7 @@ namespace GTAServer
         private static readonly List<IPlugin> Plugins=new List<IPlugin>();
         private static readonly string Location = System.AppContext.BaseDirectory;
         private static bool _debugMode = false;
-        private static int _targetTickTime = 15;
+        private static int _tickEvery = 10;
         private static void CreateNeededFiles()
         {
             if (!Directory.Exists(Location + Path.DirectorySeparatorChar + "Plugins")) Directory.CreateDirectory(Location + Path.DirectorySeparatorChar + "Plugins");
@@ -63,14 +62,14 @@ namespace GTAServer
             if (_gameServerConfiguration.ServerVariables.Any(v => v.Key == "tickEvery"))
             {
                 var tpsString = _gameServerConfiguration.ServerVariables.First(v => v.Key == "tickEvery").Value;
-                if (!int.TryParse(tpsString, out _targetTickTime))
+                if (!int.TryParse(tpsString, out _tickEvery))
                 {
                     _logger.LogError(
                         "Could not set ticks per second from server variable 'tps' (value is not an integer)");
                 }
                 else
                 {
-                    _logger.LogInformation("Custom tick rate set. Will try to tick every " + _targetTickTime + "ms");
+                    _logger.LogInformation("Custom tick rate set. Will try to tick every " + _tickEvery + "ms");
                 }
             }
             
@@ -112,9 +111,12 @@ namespace GTAServer
                 }
             }
 
-            var t = new Timer(doServerTick, _gameServer, 0, _targetTickTime);
             _logger.LogInformation("Starting server main loop, ready to accept connections.");
-            while (true) Thread.Sleep(1);
+            while (true)
+            {
+                doServerTick(_gameServer);
+                Thread.Sleep(_tickEvery);
+            }
         }
 
         public static void doServerTick(object serverObject)
