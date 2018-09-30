@@ -65,19 +65,10 @@ namespace GTACoOp
         private int _lastPort = 4499;
         //
 
-        // Debug stuff
-        private bool display;
-        private Ped mainPed;
-        private Vehicle mainVehicle;
+        private bool debug;
+        public static Debug DebugLogger;
 
-        private GTA.Math.Vector3 oldplayerpos;
-        private bool _lastJumping;
-        private bool _lastShooting;
-        private bool _lastAiming;
-        private uint _switch;
-        private bool _lastVehicle;
         private bool _isGoingToCar;
-        //
 
         public static Dictionary<long, SyncPed> Opponents;
         public static Dictionary<string, SyncPed> Npcs;
@@ -437,17 +428,7 @@ namespace GTACoOp
             var spawnItem = new UIMenuCheckboxItem("Debug", false);
             spawnItem.CheckboxEvent += (item, check) =>
             {
-                display = check;
-                if (!display)
-                {
-                    if (mainPed != null) mainPed.Delete();
-                    if (mainVehicle != null) mainVehicle.Delete();
-                    if (_debugSyncPed != null)
-                    {
-                        _debugSyncPed.Clear();
-                        _debugSyncPed = null;
-                    }
-                }
+                debug = check;
             };
 
             _settingsMenu.AddItem(nameItem);
@@ -480,6 +461,7 @@ namespace GTACoOp
             }
 
             _playerList = new PlayerList();
+            DebugLogger = new Debug();
         }
 
         private void RebuildServerBrowser()
@@ -820,11 +802,9 @@ namespace GTACoOp
                     //if (!_serverMenu.MenuItems[8].Text.Equals("Start Server"))
                         //_serverMenu.MenuItems[8].Text = "Start Server";
                 }
-                if (display)
+                if (debug)
                 {
-                    Debug();
-                    _debug.Visible = true;
-                    _debug.Draw();
+                    DebugLogger.Tick();
                 }
                 ProcessMessages();
 
@@ -865,7 +845,6 @@ namespace GTACoOp
                     case TrafficMode.All:
                         break;
                     default:
-                        LogToConsole(3, false, "SYNC", "Unknown Traffic Sync mode.");
                         break;
                 }
                 if(PlayerSettings.SyncWorld || PlayerSettings.SyncTraffic != TrafficMode.All)
@@ -1056,6 +1035,8 @@ namespace GTACoOp
 
                                 if (data == null) return;
 
+                                DebugLogger.AddToDebug("From: " + data.Name);
+
                                 lock (Opponents)
                                 {
                                     if (!Opponents.ContainsKey(data.Id))
@@ -1094,6 +1075,8 @@ namespace GTACoOp
                                 var len = msg.ReadInt32();
                                 var data = DeserializeBinary<PedData>(msg.ReadBytes(len)) as PedData;
                                 if (data == null) return;
+
+                                DebugLogger.AddToDebug("From: " + data.Name);
 
                                 lock (Opponents)
                                 {
@@ -1414,6 +1397,8 @@ namespace GTACoOp
                             // clear chat
                             _chat.Reset();
 
+                            DebugLogger.Clear();
+
                             break;
                     }
                 }
@@ -1437,7 +1422,6 @@ namespace GTACoOp
                     catch (Exception ex)
                     {
                         UI.Notify("GeoIP: "+ex.Message);
-                        LogToConsole(3, false, "GeoIP", ex.Message);
                         _description = msg.SenderEndPoint.Address.ToString() + ":" + data.Port;
                     }
                     var item = new UIMenuItem(data.ServerName);
@@ -1492,39 +1476,6 @@ namespace GTACoOp
             }
         }
 
-
-        static void LogToConsole(int flag, bool debug, string module, string message)
-        {
-            if (module == null || module.Equals("")) { module = "CLIENT"; }
-            if (debug && !Program.Debug) return;
-            if (flag == 1)
-            {
-                Console.ForegroundColor = ConsoleColor.Cyan; Console.WriteLine("[" + DateTime.Now + "] (DEBUG) " + module.ToUpper() + ": " + message);
-            }
-            else if (flag == 2)
-            {
-                Console.ForegroundColor = ConsoleColor.Green; Console.WriteLine("[" + DateTime.Now + "] (SUCCESS) " + module.ToUpper() + ": " + message);
-            }
-            else if (flag == 3)
-            {
-                Console.ForegroundColor = ConsoleColor.DarkYellow; Console.WriteLine("[" + DateTime.Now + "] (WARNING) " + module.ToUpper() + ": " + message);
-            }
-            else if (flag == 4)
-            {
-                Console.ForegroundColor = ConsoleColor.Red; Console.WriteLine("[" + DateTime.Now + "] (ERROR) " + module.ToUpper() + ": " + message);
-            }
-            else if (flag == 6)
-            {
-                Console.ForegroundColor = ConsoleColor.Magenta; Console.WriteLine("[" + DateTime.Now + "] " + module.ToUpper() + ": " + message);
-            }
-            else
-            {
-                Console.WriteLine("[" + DateTime.Now + "] " + module.ToUpper() + ": " + message);
-            }
-            Console.ForegroundColor = ConsoleColor.White;
-        }
-
-
         #region debug stuff
 
         private DateTime _artificialLagCounter = DateTime.MinValue;
@@ -1548,7 +1499,6 @@ namespace GTACoOp
             debugText += "\n" + Opponents.Count;
 
             new UIResText(debugText, new Point(10, 10), 0.5f).Draw();
-
 
             return;
 
