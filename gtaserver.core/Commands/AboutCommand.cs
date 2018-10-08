@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Text;
-using GTAServer;
 using GTAServer.PluginAPI;
 using GTAServer.ProtocolMessages;
 
@@ -13,10 +10,6 @@ namespace gtaserver.core.Commands
         public string CommandName => throw new NotImplementedException();
 
         public string HelpText => throw new NotImplementedException();
-
-        public List<string> RequiredPermissions => throw new NotImplementedException();
-
-        public bool AllPermissionsRequired => throw new NotImplementedException();
 
         public void OnCommandExec(Client caller, ChatData chatData)
         {

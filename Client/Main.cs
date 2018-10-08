@@ -251,13 +251,8 @@ namespace GTACoOp
             var settItem = new UIMenuItem("Client Settings");
             _mainMenu.BindMenuToItem(_settingsMenu, settItem);
 
-            var aboutItem = new UIMenuItem("~g~GTA V~w~ Coop mod v" + ReadableScriptVersion() + " by ~b~contributors~w~.");
-            aboutItem.Activated += (menu, item) =>
-            {
-                UI.Notify("GTA V Coop mod by Guad, Bluscream, TheIndra and wolfmitchell.");
-                UI.Notify("Mod Version: " + ReadableScriptVersion());
-                UI.Notify("https://files.theindra.eu/?dir=gtacoop");
-            };
+            var updateItem = new UIMenuItem("Check for ~r~updates");
+            updateItem.SetRightLabel("0.9.3.4");
 
             _mainMenu.AddItem(browserItem);
             _mainMenu.AddItem(connectItem);
@@ -265,7 +260,14 @@ namespace GTACoOp
             _mainMenu.AddItem(portItem);
             _mainMenu.AddItem(passItem);
             _mainMenu.AddItem(settItem);
-            _mainMenu.AddItem(aboutItem);
+
+            _mainMenu.AddItem(updateItem);
+
+            browserItem.Description = "~g~GTA V~w~ CooP v" + ReadableScriptVersion() + " by TheIndra";
+            _mainMenu.OnIndexChange += (menu, index) =>
+            {
+                menu.MenuItems[index].Description = "~g~GTA V~w~ CooP v" + ReadableScriptVersion() + " by TheIndra";
+            };
 
             var nameItem = new UIMenuItem("Display Name");
             nameItem.SetRightLabel(PlayerSettings.Username);
