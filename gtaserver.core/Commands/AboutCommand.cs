@@ -11,6 +11,8 @@ namespace gtaserver.core.Commands
 
         public string HelpText => throw new NotImplementedException();
 
+        public bool Restricted => false;
+
         public void OnCommandExec(Client caller, ChatData chatData)
         {
             string os = "";

@@ -12,10 +12,12 @@ namespace gtaserver.core.Commands
 
         public string HelpText => "Shows all loaded plugins";
 
+        public bool Restricted => false;
+
         public void OnCommandExec(Client caller, ChatData chatData)
         {
-            caller.SendMessage("Plugins (" + ServerManager.GetPlugins().Count + "): \n" + 
-                String.Join(", ", ServerManager.GetPlugins().Select(x => x.Name)));
+            caller.SendMessage("Plugins (" + ServerManager.GetPlugins().Count + "): \n" +
+                string.Join(", ", ServerManager.GetPlugins().Select(x => x.Name)));
         }
     }
 }

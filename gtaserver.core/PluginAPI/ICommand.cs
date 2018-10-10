@@ -17,6 +17,10 @@ namespace GTAServer.PluginAPI
         /// What shows in the help text for the command
         /// </summary>
         string HelpText { get; }
+        /// <sumary>
+        /// If the command is restricted to console only
+        /// </sumary> 
+        bool Restricted { get; }
 
         /// <summary>
         /// Called when a command is being executed.

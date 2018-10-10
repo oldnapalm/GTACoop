@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using GTAServer.PluginAPI;
 using SimpleConsoleLogger;
 using gtaserver.core.ServerSystem;
+using GTAServer.ProtocolMessages;
 
 namespace GTAServer
 {
@@ -19,6 +20,7 @@ namespace GTAServer
         private static readonly List<IPlugin> Plugins=new List<IPlugin>();
         private static readonly string Location = System.AppContext.BaseDirectory;
         private static bool _debugMode = false;
+        private static Client _consoleClient;
         private static int _tickEvery = 10;
         private static void CreateNeededFiles()
         {
@@ -112,10 +114,59 @@ namespace GTAServer
             }
 
             _logger.LogInformation("Starting server main loop, ready to accept connections.");
-            while (true)
+
+            var tickThread = new Thread(() =>
             {
-                doServerTick(_gameServer);
-                Thread.Sleep(_tickEvery);
+                while (true)
+                {
+                    doServerTick(_gameServer);
+                    Thread.Sleep(_tickEvery);
+                }
+            });
+
+            tickThread.Start();
+
+            Console.CancelKeyPress += (arg, arg2) =>
+            {
+                _logger.LogInformation("^c detected quiting...");
+
+                _logger.LogInformation("Kicking all clients");
+                _gameServer.Clients.ForEach(client => _gameServer.KickPlayer(client, "Server shutdown"));
+
+                _logger.LogInformation("Quiting...");
+
+                tickThread.Abort();
+            };
+
+            // create a new client for console
+            _consoleClient = new Client(null, _gameServer);
+            _consoleClient.Console = true;
+
+            // wait 1000 ticks before console can execute commands
+            // this is just so the > doesn't come for any errors from tickthread shitty fix
+            Thread.Sleep(1000);
+
+            while (tickThread.ThreadState != ThreadState.Aborted)
+            {
+                Console.Write(">");
+
+                var msg = Console.ReadLine();
+                if (msg == null) return;
+
+                var command = msg.Split(" ")[0];
+
+                if(_gameServer.Commands.Any(x => x.Key == command))
+                {
+                    // create fake chatdata with message
+                    var chatData = new ChatData();
+                    chatData.Message = msg;
+
+                    _gameServer.Commands.Single(x => x.Key == command).Value.OnCommandExec(_consoleClient, chatData);
+                }
+                else
+                {
+                    _logger.LogInformation("Command not found");
+                }
             }
         }
 

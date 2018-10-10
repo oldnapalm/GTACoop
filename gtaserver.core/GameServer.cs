@@ -48,7 +48,7 @@ namespace GTAServer
         public int TicksPerSecond { get; set; }
 
         private DateTime _lastAnnounceDateTime;
-        private ILogger logger;
+        public ILogger logger;
         private Dictionary<string, Action<object>> _callbacks = new Dictionary<string, Action<object>>();
         private int _ticksLastSecond;
 
@@ -502,7 +502,10 @@ namespace GTAServer
                                 var cmdName = cmdArgs[0].Remove(0, 1);
                                 if (Commands.ContainsKey(cmdName))
                                 {
-                                    Commands[cmdName].OnCommandExec(client, chatData);
+                                    var cmd = Commands[cmdName];
+                                    if (cmd.Restricted && !client.Console) return;
+
+                                    cmd.OnCommandExec(client, chatData);
 
                                     return;
                                 }

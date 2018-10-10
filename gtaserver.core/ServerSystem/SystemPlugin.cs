@@ -24,6 +24,7 @@ namespace gtaserver.core.ServerSystem
             gameServer.Commands.Add("tps", new TpsCommand());
             gameServer.Commands.Add("about", new AboutCommand());
             gameServer.Commands.Add("plugins", new PluginsCommand());
+            gameServer.Commands.Add("say", new SayCommand());
 
             return true;
         }

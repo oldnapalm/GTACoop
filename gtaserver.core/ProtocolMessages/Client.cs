@@ -1,4 +1,5 @@
 ﻿using Lidgren.Network;
+using Microsoft.Extensions.Logging;
 
 namespace GTAServer.ProtocolMessages
 {
@@ -21,6 +22,9 @@ namespace GTAServer.ProtocolMessages
         public Client KickedBy { get; set; }
         public bool Silent { get; set; }
 
+        // if the client is the console so it wil log messages instead of sending to a client which doesn't exist
+        public bool Console { get; set; } = false;
+
         private GameServer _gameServer { get; set; }
 
         public Client(NetConnection nc, GameServer gameServer)
@@ -39,7 +43,13 @@ namespace GTAServer.ProtocolMessages
 
         public void SendMessage(string message)
         {
-            _gameServer.SendChatMessageToPlayer(this, message);   
+            if (Console)
+            {
+                _gameServer.logger.LogInformation(message);
+            }
+            else {
+                _gameServer.SendChatMessageToPlayer(this, message);
+            }
         }
 
         public void SendNativeCall(ulong hash, params object[] arguments)

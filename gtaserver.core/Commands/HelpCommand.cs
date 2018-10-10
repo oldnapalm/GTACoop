@@ -12,10 +12,12 @@ namespace gtaserver.core.Commands
 
         public string HelpText => throw new NotImplementedException();
 
+        public bool Restricted => false;
+
         public void OnCommandExec(Client caller, ChatData chatData)
         {
             caller.SendMessage("Available commands:\n" +
-                String.Join(", ", ServerManager.GameServerInstance.Commands.Select(x => "/" + x.Key)));
+                string.Join(", ", ServerManager.GameServerInstance.Commands.Where(x => !x.Value.Restricted).Select(x => "/" + x.Key)));
         }
     }
 }
