@@ -22,7 +22,7 @@ namespace GTAServer
         public string ServerName { get; set; } = "GTACoOp Server";
         public string Password { get; set; } = "";
         public string PrimaryMasterServer { get; set; } = "http://clan-banderos.de/gta/";
-        public string BackupMasterServer { get; set; } = "https://gtamaster.theindra.eu/";
+        public string BackupMasterServer { get; set; } = "https://master.gtacoop.com/";
         public bool AnnounceSelf { get; set; } = true;
         public bool AllowNicknames { get; set; } = true;
         public bool AllowOutdatedClients { get; set; } = false;

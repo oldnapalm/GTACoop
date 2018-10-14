@@ -19,9 +19,12 @@ namespace GTAServer
         private static ILogger _logger;
         private static readonly List<IPlugin> Plugins=new List<IPlugin>();
         private static readonly string Location = System.AppContext.BaseDirectory;
+
         private static bool _debugMode = false;
         private static Client _consoleClient;
         private static int _tickEvery = 10;
+
+        private static bool _isQuiting = false;
         private static void CreateNeededFiles()
         {
             if (!Directory.Exists(Location + Path.DirectorySeparatorChar + "Plugins")) Directory.CreateDirectory(Location + Path.DirectorySeparatorChar + "Plugins");
@@ -119,6 +122,9 @@ namespace GTAServer
             {
                 while (true)
                 {
+                    if (_isQuiting)
+                        break;
+
                     doServerTick(_gameServer);
                     Thread.Sleep(_tickEvery);
                 }
@@ -126,16 +132,17 @@ namespace GTAServer
 
             tickThread.Start();
 
-            Console.CancelKeyPress += (arg, arg2) =>
+            Console.CancelKeyPress += (sender, arg2) =>
             {
                 _logger.LogInformation("^c detected quiting...");
+                arg2.Cancel = true;
 
                 _logger.LogInformation("Kicking all clients");
                 _gameServer.Clients.ForEach(client => _gameServer.KickPlayer(client, "Server shutdown"));
 
                 _logger.LogInformation("Quiting...");
 
-                tickThread.Abort();
+                _isQuiting = true;
             };
 
             // create a new client for console
@@ -146,14 +153,14 @@ namespace GTAServer
             // this is just so the > doesn't come for any errors from tickthread shitty fix
             Thread.Sleep(1000);
 
-            while (tickThread.ThreadState != ThreadState.Aborted)
+            while (true)
             {
                 Console.Write(">");
 
                 var msg = Console.ReadLine();
                 if (msg == null) return;
 
-                var command = msg.Split(" ")[0];
+                var command = msg.Trim().Split(" ")[0];
 
                 if(_gameServer.Commands.Any(x => x.Key == command))
                 {
