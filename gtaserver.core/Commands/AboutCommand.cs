@@ -31,6 +31,5 @@ namespace gtaserver.core.Commands
             caller.SendMessage($"This server runs GTAServer.core on {os}.\n" +
                 "More info about this build see gtacoop.com");
         }
-
     }
 }

@@ -52,7 +52,7 @@ namespace GTAServer
         private Dictionary<string, Action<object>> _callbacks = new Dictionary<string, Action<object>>();
         private int _ticksLastSecond;
 
-        private Timer _tpsTimer;
+        private readonly Timer _tpsTimer;
         public GameServer(int port, string name, string gamemodeName, bool isDebug)
         {
             logger = Util.LoggerFactory.CreateLogger<GameServer>();

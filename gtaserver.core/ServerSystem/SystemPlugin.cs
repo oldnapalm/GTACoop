@@ -1,11 +1,6 @@
 ﻿using gtaserver.core.Commands;
 using GTAServer;
 using GTAServer.PluginAPI;
-using GTAServer.PluginAPI.Events;
-using GTAServer.ProtocolMessages;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace gtaserver.core.ServerSystem
 {

@@ -25,10 +25,15 @@ namespace GTAServer
         private static int _tickEvery = 10;
 
         private static bool _isQuiting = false;
+
         private static void CreateNeededFiles()
         {
             if (!Directory.Exists(Location + Path.DirectorySeparatorChar + "Plugins")) Directory.CreateDirectory(Location + Path.DirectorySeparatorChar + "Plugins");
             if (!Directory.Exists(Location + Path.DirectorySeparatorChar + "Configuration")) Directory.CreateDirectory(Location + Path.DirectorySeparatorChar + "Configuration");
+
+            // lua
+            if (!Directory.Exists(Location + Path.DirectorySeparatorChar + "Plugins" + Path.DirectorySeparatorChar + "Lua"))
+                Directory.CreateDirectory(Location + Path.DirectorySeparatorChar + "Plugins" + Path.DirectorySeparatorChar + "Lua");
         }
 
         private static void DoDebugWarning()
@@ -125,7 +130,7 @@ namespace GTAServer
                     if (_isQuiting)
                         break;
 
-                    doServerTick(_gameServer);
+                    DoServerTick(_gameServer);
                     Thread.Sleep(_tickEvery);
                 }
             });
@@ -146,8 +151,10 @@ namespace GTAServer
             };
 
             // create a new client for console
-            _consoleClient = new Client(null, _gameServer);
-            _consoleClient.Console = true;
+            _consoleClient = new Client(null, _gameServer)
+            {
+                Console = true
+            };
 
             // wait 1000 ticks before console can execute commands
             // this is just so the > doesn't come for any errors from tickthread shitty fix
@@ -165,8 +172,10 @@ namespace GTAServer
                 if(_gameServer.Commands.Any(x => x.Key == command))
                 {
                     // create fake chatdata with message
-                    var chatData = new ChatData();
-                    chatData.Message = msg;
+                    var chatData = new ChatData
+                    {
+                        Message = msg
+                    };
 
                     _gameServer.Commands.Single(x => x.Key == command).Value.OnCommandExec(_consoleClient, chatData);
                 }
@@ -177,7 +186,7 @@ namespace GTAServer
             }
         }
 
-        public static void doServerTick(object serverObject)
+        public static void DoServerTick(object serverObject)
         {
             var server = (GameServer) serverObject;
             try
