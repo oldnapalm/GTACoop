@@ -30,10 +30,6 @@ namespace GTAServer
         {
             if (!Directory.Exists(Location + Path.DirectorySeparatorChar + "Plugins")) Directory.CreateDirectory(Location + Path.DirectorySeparatorChar + "Plugins");
             if (!Directory.Exists(Location + Path.DirectorySeparatorChar + "Configuration")) Directory.CreateDirectory(Location + Path.DirectorySeparatorChar + "Configuration");
-
-            // lua
-            if (!Directory.Exists(Location + Path.DirectorySeparatorChar + "Plugins" + Path.DirectorySeparatorChar + "Lua"))
-                Directory.CreateDirectory(Location + Path.DirectorySeparatorChar + "Plugins" + Path.DirectorySeparatorChar + "Lua");
         }
 
         private static void DoDebugWarning()
