@@ -140,7 +140,7 @@ namespace GTAServer
                 await request.GetResponseAsync();
             }catch(WebException)
             {
-                logger.LogError("Couldn't announce to masterserver (primary)");
+                logger.LogWarning("Couldn't announce to masterserver (primary)");
             }
 
             request = WebRequest.Create(BackupMasterServer);
@@ -152,7 +152,7 @@ namespace GTAServer
                 dataStream.Write(enc.GetBytes(payload), 0, payload.Length);
                 await request.GetResponseAsync();
             } catch (WebException) {
-                logger.LogError("Couldn't announce to masterserver (secondary)");
+                logger.LogWarning("Couldn't announce to masterserver (secondary)");
             }
         }
 

@@ -1,3 +1,6 @@
 [submodule "lidgren.network"]
 	path = lidgren.network
 	url = https://gitlab.com/TinyMP/LidgrenNetwork.git
+[submodule "NativeUI"]
+	path = NativeUI
+	url = https://github.com/Guad/NativeUI.git
