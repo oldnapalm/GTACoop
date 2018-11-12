@@ -9,6 +9,7 @@ using GTAServer.PluginAPI;
 using SimpleConsoleLogger;
 using gtaserver.core.ServerSystem;
 using GTAServer.ProtocolMessages;
+using Sentry;
 
 namespace GTAServer
 {
@@ -39,6 +40,7 @@ namespace GTAServer
             _logger.LogWarning("Furthermore, debug builds will not announce themselves to the master server, regardless of the AnnounceSelf config option.");
             _logger.LogWarning("To help bring crashes to the attention of the server owner and make sure they are reported to me, error catching has been disabled in this build.");
         }
+
         public static void Main(string[] args)
         {
 #if DEBUG
@@ -64,6 +66,18 @@ namespace GTAServer
             }
             _logger = Util.LoggerFactory.CreateLogger<ServerManager>();
             DoDebugWarning();
+
+            // enable Sentry (sadly we can't catch errors above cause sentry depends on debug mode
+            if(_debugMode)
+            {
+                SentrySdk.Init("https://61668555fb9846bd8a2451366f50e5d3@sentry.io/1320932");
+
+                SentrySdk.ConfigureScope(scope =>
+                {
+                    // we want to send our configuration too
+                    scope.SetExtra("configuration", _gameServerConfiguration);
+                });
+            }
 
             if (_gameServerConfiguration.ServerVariables.Any(v => v.Key == "tickEvery"))
             {

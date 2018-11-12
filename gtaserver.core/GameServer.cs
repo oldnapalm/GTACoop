@@ -49,7 +49,7 @@ namespace GTAServer
 
         private DateTime _lastAnnounceDateTime;
         public ILogger logger;
-        private Dictionary<string, Action<object>> _callbacks = new Dictionary<string, Action<object>>();
+        private readonly Dictionary<string, Action<object>> _callbacks = new Dictionary<string, Action<object>>();
         private int _ticksLastSecond;
 
         private readonly Timer _tpsTimer;
