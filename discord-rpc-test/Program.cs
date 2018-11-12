@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Media;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using discord_rpc_test.discord;
 using Microsoft.VisualBasic;
@@ -35,16 +38,21 @@ namespace discord_rpc_test
 
             _captureDevice.StartRecording();
 
-            var writer = new WaveFileWriter("testt.wav", _captureDevice.WaveFormat);
+            var provider = new BufferedWaveProvider(new WaveFormat());
+            var writer = new WaveFileWriter("tes.wav", new WaveFormat());
+
+            var player = new WaveOut();
+            _captureDevice.WaveFormat = WaveFormat.CreateALawFormat(0, 100);
+            player.Init(provider);
 
             _captureDevice.DataAvailable += (sender, argss) =>
             {
                 Console.WriteLine("Hehe data avaible: " + argss.BytesRecorded);
 
-                writer.Write(argss.Buffer, Convert.ToInt32(writer.Position), argss.BytesRecorded);
+                writer.Write(argss.Buffer, 0, argss.BytesRecorded);
             };
 
-            Console.CancelKeyPress += (arg, arg2) =>
+            Console.CancelKeyPress += (sender, eventArgs) =>
             {
                 writer.Close();
             };
@@ -52,7 +60,7 @@ namespace discord_rpc_test
             //stay alive :)
             while (true)
             {
-               
+
             }
         }
     }

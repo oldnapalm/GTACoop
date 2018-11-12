@@ -68,7 +68,7 @@ namespace GTAServer
             DoDebugWarning();
 
             // enable Sentry (sadly we can't catch errors above cause sentry depends on debug mode
-            if(_debugMode)
+            if(!_debugMode)
             {
                 SentrySdk.Init("https://61668555fb9846bd8a2451366f50e5d3@sentry.io/1320932");
 
