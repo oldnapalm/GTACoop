@@ -141,12 +141,14 @@ namespace GTAServer
                         break;
 
                     DoServerTick(_gameServer);
+
                     Thread.Sleep(_tickEvery);
                 }
             });
 
             tickThread.Start();
 
+            // TODO is this really necesary?
             Console.CancelKeyPress += (sender, arg2) =>
             {
                 _logger.LogInformation("^c detected quiting...");
@@ -225,19 +227,12 @@ namespace GTAServer
                 Console.WriteLine("No configuration found, creating a new one.");
                 using (var stream = File.OpenWrite(path)) ser.Serialize(stream, cfg = new ServerConfiguration());
             }
+
             return cfg;
         }
 
-        public static List<IPlugin> GetPlugins()
-        {
-            return Plugins;
-        }
+        public static List<IPlugin> GetPlugins() => Plugins;
 
-        public static GameServer GameServerInstance
-        {
-            get {
-                return _gameServer;
-            }
-        }
+        public static GameServer GameServerInstance => _gameServer;
     }
 }
