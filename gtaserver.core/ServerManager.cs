@@ -136,11 +136,24 @@ namespace GTAServer
             // create a new client for console
             _consoleClient = new Client(null, _gameServer){ Console = true };
 
+            Console.CancelKeyPress += (sender, e) =>
+            {
+                _logger.LogInformation("Kicking all clients");
+                _gameServer.Clients.ForEach(client => _gameServer.KickPlayer(client, "Server shutdown"));
+
+                _logger.LogInformation("Quitting...");
+
+                t.Dispose();
+
+                // and.. exit
+                Environment.Exit(0);
+            };
+
             while (true)
             {
                 var msg = Console.ReadLine();
-                if (msg == null) return;
 
+                if (msg == null) continue;
                 var command = msg.Trim().Split(" ")[0];
 
                 if(_gameServer.Commands.Any(x => x.Key == command))
