@@ -70,11 +70,7 @@ namespace GTAServer
             {
                 SentrySdk.Init("https://61668555fb9846bd8a2451366f50e5d3@sentry.io/1320932");
 
-                SentrySdk.ConfigureScope(scope =>
-                {
-                    // we want to send our configuration too
-                    scope.SetExtra("configuration", _gameServerConfiguration);
-                });
+                SentrySdk.ConfigureScope(scope => scope.SetExtra("configuration", _gameServerConfiguration));
             }
 
             if (_gameServerConfiguration.ServerVariables.Any(v => v.Key == "tickEvery"))
@@ -153,12 +149,12 @@ namespace GTAServer
             {
                 var msg = Console.ReadLine();
 
-                if (msg == null) continue;
+                if (string.IsNullOrWhiteSpace(msg)) continue;
                 var command = msg.Trim().Split(" ")[0];
 
                 if(_gameServer.Commands.Any(x => x.Key == command))
                 {
-                    // create fake chatdata with message
+                    // create fake chat data with message
                     var chatData = new ChatData
                     {
                         Message = msg
