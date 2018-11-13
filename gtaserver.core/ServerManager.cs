@@ -25,8 +25,6 @@ namespace GTAServer
         private static Client _consoleClient;
         private static int _tickEvery = 10;
 
-        private static bool _isQuiting = false;
-
         private static void CreateNeededFiles()
         {
             if (!Directory.Exists(Location + Path.DirectorySeparatorChar + "Plugins")) Directory.CreateDirectory(Location + Path.DirectorySeparatorChar + "Plugins");
@@ -133,49 +131,13 @@ namespace GTAServer
 
             _logger.LogInformation("Starting server main loop, ready to accept connections.");
 
-            var tickThread = new Thread(() =>
-            {
-                while (true)
-                {
-                    if (_isQuiting)
-                        break;
-
-                    DoServerTick(_gameServer);
-
-                    Thread.Sleep(_tickEvery);
-                }
-            });
-
-            tickThread.Start();
-
-            // TODO is this really necesary?
-            Console.CancelKeyPress += (sender, arg2) =>
-            {
-                _logger.LogInformation("^c detected quiting...");
-                arg2.Cancel = true;
-
-                _logger.LogInformation("Kicking all clients");
-                _gameServer.Clients.ForEach(client => _gameServer.KickPlayer(client, "Server shutdown"));
-
-                _logger.LogInformation("Quiting...");
-
-                _isQuiting = true;
-            };
+            var t = new Timer(DoServerTick, _gameServer, 0, _tickEvery);
 
             // create a new client for console
-            _consoleClient = new Client(null, _gameServer)
-            {
-                Console = true
-            };
-
-            // wait 1000 ticks before console can execute commands
-            // this is just so the > doesn't come for any errors from tickthread shitty fix
-            Thread.Sleep(1000);
+            _consoleClient = new Client(null, _gameServer){ Console = true };
 
             while (true)
             {
-                Console.Write(">");
-
                 var msg = Console.ReadLine();
                 if (msg == null) return;
 
