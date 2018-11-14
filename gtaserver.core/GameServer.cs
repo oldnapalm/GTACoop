@@ -161,7 +161,6 @@ namespace GTAServer
             TicksPerSecond = CurrentTick - _ticksLastSecond;
             _ticksLastSecond = CurrentTick;
 
-            //logger.LogTrace("TPS: " + TicksPerSecond);
             Console.Title = "GTAServer - " + Name + " (" + Clients.Count + "/" + MaxPlayers + " players) - Port: " + Port + " - TPS: " + TicksPerSecond;
 
         }
@@ -175,7 +174,7 @@ namespace GTAServer
             {
                 AnnounceToMaster();
             }
-            //throw new Exception("test");
+
             NetIncomingMessage msg;
             while ((msg = Server.ReadMessage()) != null)
             {

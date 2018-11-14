@@ -22,7 +22,7 @@ namespace gtaserver.core.Commands
             var message = string.Join(" ", chatData.Message.Split(" ").Skip(1));
 
             ServerManager.GameServerInstance.SendChatMessageToAll(message);
-            caller.SendMessage(message);
+            caller.SendMessage("Send to all: " + message);
         }
     }
 }
