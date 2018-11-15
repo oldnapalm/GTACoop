@@ -135,7 +135,11 @@ namespace GTAServer
             Console.CancelKeyPress += (sender, e) =>
             {
                 _logger.LogInformation("Kicking all clients");
-                _gameServer.Clients.ForEach(client => _gameServer.KickPlayer(client, "Server shutdown"));
+
+                _gameServer.Clients.ForEach(client => _gameServer.KickPlayer(client, "Server shutdown", true));
+
+                // give the other thread some time to kick all the clients
+                Thread.Sleep(1000);
 
                 _logger.LogInformation("Quitting...");
 
