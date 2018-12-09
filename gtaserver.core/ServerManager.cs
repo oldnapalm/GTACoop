@@ -129,9 +129,6 @@ namespace GTAServer
 
             var t = new Timer(DoServerTick, _gameServer, 0, _tickEvery);
 
-            // create a new client for console
-            _consoleClient = new Client(null, _gameServer){ Console = true };
-
             Console.CancelKeyPress += (sender, e) =>
             {
                 _logger.LogInformation("Kicking all clients");
@@ -148,6 +145,9 @@ namespace GTAServer
                 // and.. exit
                 Environment.Exit(0);
             };
+
+            // create a new client for console
+            _consoleClient = new Client(null, _gameServer) { Console = true };
 
             while (true)
             {
