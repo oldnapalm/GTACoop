@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Reflection;
 using System.Runtime.Loader;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -219,7 +218,9 @@ namespace GTAServer
                                 Server.Recycle(msg);
                                 return;
                             }
+
                             logger.LogInformation("Ping received from " + msg.SenderEndPoint.Address.ToString());
+
                             var reply = Server.CreateMessage("pong");
                             Server.SendMessage(reply, client.NetConnection, NetDeliveryMethod.ReliableOrdered);
                         }
@@ -230,10 +231,11 @@ namespace GTAServer
                                 Server.Recycle(msg);
                                 return;
                             }
-                            var playersOnline = 0;
-                            lock (Clients) playersOnline = Clients.Count;
+
                             logger.LogInformation("Query received from " + msg.SenderEndPoint.Address.ToString());
-                            var reply = Server.CreateMessage($"{Name}%{PasswordProtected}%{playersOnline}%{MaxPlayers}%{GamemodeName}");
+
+                            // does anyone even use this?
+                            var reply = Server.CreateMessage("");
                             Server.SendMessage(reply, client.NetConnection, NetDeliveryMethod.ReliableOrdered);
                         }
                         break;
