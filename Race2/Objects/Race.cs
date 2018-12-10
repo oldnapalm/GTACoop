@@ -1,7 +1,5 @@
 ﻿using GTAServer.ProtocolMessages;
-using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Race.Objects
 {
@@ -10,6 +8,7 @@ namespace Race.Objects
         public string Name { get; set; }
         public string Description { get; set; }
 
+        // 1st = start, last = finish
         public List<SpawnPoint> SpawnPoints { get; set; }
     }
 

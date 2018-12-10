@@ -62,8 +62,8 @@ namespace GTAServer
             GamemodeName = gamemodeName;
             Name = name;
             Port = port;
-            MasterServer = "http://clan-banderos.de/gta/";
-            BackupMasterServer = "https://master.gtacoop.com/";
+            MasterServer = "https://master.gtacoop.com/";
+            BackupMasterServer = "http://clan-banderos.de/gta/";
 
             Config = new NetPeerConfiguration("GTAVOnlineRaces") { Port = port };
             Config.EnableMessageType(NetIncomingMessageType.ConnectionApproval);

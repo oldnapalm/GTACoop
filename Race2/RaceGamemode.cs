@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using GTAServer;
 using GTAServer.PluginAPI;
 using Microsoft.Extensions.Logging;
@@ -60,6 +61,10 @@ namespace Race
 
                 return false;
             }
+
+            logger.LogInformation("Starting main race thread");
+
+            new Thread(() => new Race()).Start();
 
             return true;
         }
