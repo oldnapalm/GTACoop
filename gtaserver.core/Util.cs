@@ -32,6 +32,6 @@ namespace GTAServer
         {
             input = Regex.Replace(input, "~.~", "", RegexOptions.IgnoreCase);
             return input;
-        }
+        }   
     }
 }

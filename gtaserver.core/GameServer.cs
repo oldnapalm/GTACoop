@@ -222,7 +222,7 @@ namespace GTAServer
                             logger.LogInformation("Ping received from " + msg.SenderEndPoint.Address.ToString());
 
                             var reply = Server.CreateMessage("pong");
-                            Server.SendMessage(reply, client.NetConnection, NetDeliveryMethod.ReliableOrdered);
+                            Server.SendUnconnectedMessage(reply, msg.SenderEndPoint);
                         }
                         else if (ucType == "query")
                         {
@@ -235,12 +235,13 @@ namespace GTAServer
                             logger.LogInformation("Query received from " + msg.SenderEndPoint.Address.ToString());
 
                             // does anyone even use this?
-                            object[] response = { Name, GamemodeName, Port, Clients.Count, MaxPlayers, string.Join(",", Clients) };
+                            object[] response = { Name, GamemodeName, Port, Clients.Count, MaxPlayers,
+                                string.Join(",", Clients.Select(x => x.DisplayName)) };
 
                             var reply = Server.CreateMessage(                             // escape ; if someone tries to parse it
-                                string.Join(";", response.ToList().Select(x => x.ToString().Replace(";", "\\;"))));
+                                string.Join(";", response.ToList().Select(x => x.ToString().Replace(";", "\\;"))) + ";");
 
-                            Server.SendMessage(reply, client.NetConnection, NetDeliveryMethod.ReliableOrdered);
+                            Server.SendUnconnectedMessage(reply, msg.SenderEndPoint);
                         }
                         break;
                     case NetIncomingMessageType.VerboseDebugMessage:

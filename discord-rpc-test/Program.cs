@@ -20,6 +20,7 @@ namespace discord_rpc_test
             SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
 
             var config = new NetPeerConfiguration("GTAVOnlineRaces");
+            config.SetMessageTypeEnabled(NetIncomingMessageType.UnconnectedData, true);
             //config.Port = new Random().Next(1000, 9999);
 
             var client = new NetClient(config);
@@ -32,7 +33,7 @@ namespace discord_rpc_test
             client.MessageReceivedEvent.WaitOne();
 
             var response = client.ReadMessage();
-            Console.WriteLine(response);
+            Console.WriteLine(response.ReadString());
 
             Console.ReadLine();
         }
