@@ -235,7 +235,11 @@ namespace GTAServer
                             logger.LogInformation("Query received from " + msg.SenderEndPoint.Address.ToString());
 
                             // does anyone even use this?
-                            var reply = Server.CreateMessage("");
+                            object[] response = { Name, GamemodeName, Port, Clients.Count, MaxPlayers, string.Join(",", Clients) };
+
+                            var reply = Server.CreateMessage(                             // escape ; if someone tries to parse it
+                                string.Join(";", response.ToList().Select(x => x.ToString().Replace(";", "\\;"))));
+
                             Server.SendMessage(reply, client.NetConnection, NetDeliveryMethod.ReliableOrdered);
                         }
                         break;

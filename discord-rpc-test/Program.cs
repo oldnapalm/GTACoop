@@ -3,20 +3,41 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Media;
+using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using discord_rpc_test.discord;
-using Microsoft.VisualBasic;
-using NAudio.CoreAudioApi;
-using NAudio.Utils;
-using NAudio.Wave;
+using Lidgren.Network;
 
 namespace discord_rpc_test
 {
     class Program
     {
-        private static WaveInEvent _captureDevice;
+
+        static void Main(string[] args)
+        {
+            SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
+
+            var config = new NetPeerConfiguration("GTAVOnlineRaces");
+            //config.Port = new Random().Next(1000, 9999);
+
+            var client = new NetClient(config);
+            client.Start();
+
+            var msg = client.CreateMessage("query");
+
+            client.SendUnconnectedMessage(msg, new IPEndPoint(NetUtility.Resolve("127.0.0.1"), 4499));
+
+            client.MessageReceivedEvent.WaitOne();
+
+            var response = client.ReadMessage();
+            Console.WriteLine(response);
+
+            Console.ReadLine();
+        }
+
+        /*private static WaveInEvent _captureDevice;
 
         static void Main(string[] args)
         {
@@ -62,6 +83,6 @@ namespace discord_rpc_test
             {
 
             }
+        }*/
         }
-    }
 }
