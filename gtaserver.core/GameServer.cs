@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Runtime.Loader;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -83,32 +84,47 @@ namespace GTAServer
             logger.LogDebug("Loading gamemode");
             if (GamemodeName != "freeroam")
             {
-                var assemblyName = Location + Path.DirectorySeparatorChar + GamemodeName + ".dll";
-                var pluginAssembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(assemblyName);
-                var types = pluginAssembly.GetExportedTypes();
-                var validTypes = types.Where(t => typeof(IGamemode).IsAssignableFrom(t)).ToArray();
-                if (!validTypes.Any())
+                var assemblyName = 
+                    Location + Path.DirectorySeparatorChar + "Plugins" + Path.DirectorySeparatorChar + GamemodeName + ".dll";
+                Assembly pluginAssembly = null;
+
+                try
                 {
-                    logger.LogError("No gamemodes found in gamemode assembly, using freeroam");
-                    GamemodeName = "freeroam";
-                    return;
+                    pluginAssembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(assemblyName);
                 }
-                if (validTypes.Count() > 1)
+                catch (Exception e)
                 {
-                    logger.LogError("Multiple valid gamemodes found in gamemode assembly, using freeroam");
-                    GamemodeName = "freeroam";
-                    return;
+                    logger.LogWarning("Given gamemode not found, using freeroam");
                 }
-                var gamemode = Activator.CreateInstance(validTypes.First()) as IGamemode;
-                if (gamemode == null)
+
+                if (pluginAssembly != null)
                 {
-                    logger.LogError(
-                        "Could not create instance of gamemode (Activator.CreateInstance returned null), using freeroam");
-                    GamemodeName = "freeroam";
-                    return;
+
+                    var types = pluginAssembly.GetExportedTypes();
+                    var validTypes = types.Where(t => typeof(IGamemode).IsAssignableFrom(t)).ToArray();
+                    if (!validTypes.Any())
+                    {
+                        logger.LogError("No gamemodes found in gamemode assembly, using freeroam");
+                        GamemodeName = "freeroam";
+                        return;
+                    }
+                    if (validTypes.Count() > 1)
+                    {
+                        logger.LogError("Multiple valid gamemodes found in gamemode assembly, using freeroam");
+                        GamemodeName = "freeroam";
+                        return;
+                    }
+                    var gamemode = Activator.CreateInstance(validTypes.First()) as IGamemode;
+                    if (gamemode == null)
+                    {
+                        logger.LogError(
+                            "Could not create instance of gamemode (Activator.CreateInstance returned null), using freeroam");
+                        GamemodeName = "freeroam";
+                        return;
+                    }
+                    GamemodeName = gamemode.GamemodeName;
+                    gamemode.OnEnable(this, false);
                 }
-                GamemodeName = gamemode.GamemodeName;
-                gamemode.OnEnable(this, false);
             }
             logger.LogDebug("Gamemode loaded");
 
