@@ -16,5 +16,5 @@ build:
         - "dotnet publish -r ubuntu.14.04-x64 -c Release -o linux-Release"
     artifacts:
         paths:
-            - "windows-Release/"
-            - "linux-Release/"
+            - "gtaserver.core/windows-Release/"
+            - "gtaserver.core/linux-Release/"
