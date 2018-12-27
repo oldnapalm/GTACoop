@@ -8,9 +8,9 @@ namespace gtaserver.core.Commands
 {
     class HelpCommand : ICommand
     {
-        public string CommandName => throw new NotImplementedException();
+        public string CommandName => "help";
 
-        public string HelpText => throw new NotImplementedException();
+        public string HelpText => "Shows a list of commands";
 
         public bool Restricted => false;
 

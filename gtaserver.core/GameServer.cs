@@ -419,7 +419,7 @@ namespace GTAServer
                     logger.LogInformation($"Connected: {client.DisplayName}@{msg.SenderEndPoint.Address.ToString()}");
                     SendNotificationToAll($"Player connected: {client.DisplayName}");
 
-                    if (!String.IsNullOrEmpty(Motd)) 
+                    if (!string.IsNullOrEmpty(Motd)) 
                     { 
                         SendChatMessageToPlayer(client, Motd);
                     }
