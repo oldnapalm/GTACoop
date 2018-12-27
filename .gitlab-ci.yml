@@ -10,6 +10,5 @@ before_script:
 build:
     stage: build
     script:
-        - "cd gtaserver.core"
         - "dotnet build -r win7-x64 -c Release"
         - "dotnet build -r ubuntu.14.04-x64 -c Release"
