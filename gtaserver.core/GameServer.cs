@@ -92,7 +92,7 @@ namespace GTAServer
                 {
                     pluginAssembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(assemblyName);
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     logger.LogWarning("Given gamemode not found, using freeroam");
                 }
