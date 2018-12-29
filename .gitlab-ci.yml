@@ -13,8 +13,11 @@ build:
         - "dotnet build -r win7-x64 -c Release"
         - "dotnet build -r ubuntu.14.04-x64 -c Release"
         - "dotnet publish -r win7-x64 -c Release -o windows-Release"
-        - "dotnet publish -r ubuntu.14.04-x64 -c Release -o linux-Release"
+        - "dotnet publish -r ubuntu.14.04-x64 -c Release -o linux-Release" 
+        # zip the builds
+        - "zip -r windows-Release.zip windows-Release"
+        - "zip -r linux-Release.zip linux-Release"
     artifacts:
         paths:
-            - "gtaserver.core/windows-Release/"
-            - "gtaserver.core/linux-Release/"
+            - "gtaserver.core/windows-Release.zip"
+            - "gtaserver.core/linux-Release.zip"
