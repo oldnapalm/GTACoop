@@ -4,6 +4,7 @@ stages:
     - build
     
 before_script:
+    - "apt-get update -qq && apt-get install -y -qq zip"
     - "cd gtaserver.core"
     - "dotnet restore"
     
