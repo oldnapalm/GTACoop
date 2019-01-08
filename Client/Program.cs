@@ -5,6 +5,8 @@ using System.Threading;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Xml.Serialization;
+using GTA;
+using GTA.Native;
 using Lidgren.Network;
 using ProtoBuf;
 
