@@ -367,7 +367,7 @@ namespace GTAServer
                     RegexOptions.IgnoreCase);
 
                 logger.LogInformation($"Client {client.DisplayName} tried to connect with an outdated script version {client.RemoteScriptVersion.ToString()} but the server requires {latestScriptVersion.ToString()}");
-                DenyConnect(client, $"Please update to version ${latestReadableScriptVersion} from https://gtacoop.com", true, msg);
+                DenyConnect(client, $"Please update to version {latestReadableScriptVersion} from https://gtacoop.com", true, msg);
                 return;
             }
             else if (client.RemoteScriptVersion != latestScriptVersion)

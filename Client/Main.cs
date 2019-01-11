@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -17,11 +16,7 @@ using ProtoBuf;
 using Control = GTA.Control;
 using System.Text.RegularExpressions;
 using System.Globalization;
-using System.Xml.Serialization;
 using MaxMind.GeoIP2;
-using MaxMind.GeoIP2.Model;
-using Microsoft.VisualBasic;
-using Newtonsoft.Json.Linq;
 
 namespace GTACoOp
 {
@@ -87,6 +82,8 @@ namespace GTACoOp
         private static Dictionary<int, int> _pedClothes = new Dictionary<int, int>();
 
         private static PlayerList _playerList;
+
+        private static UIMenuItem _passItem;
 
         private enum NativeType
         {
@@ -201,30 +198,35 @@ namespace GTACoOp
                 portItem.SetRightLabel(nPort.ToString());
             };
             
-            var passItem = new UIMenuItem("Password");
+            _passItem = new UIMenuItem("Password");
             if (PlayerSettings.HidePasswords)
             {
-                passItem.SetRightLabel(new String('*', PlayerSettings.LastPassword.Length));
+                _passItem.SetRightLabel(new String('*', PlayerSettings.LastPassword.Length));
             }
             else
             {
-                passItem.SetRightLabel(PlayerSettings.LastPassword.ToString());
+                _passItem.SetRightLabel(PlayerSettings.LastPassword.ToString());
             }
-            passItem.Activated += (menu, item) =>
+
+            _password = PlayerSettings.LastPassword;
+
+            _passItem.Activated += (menu, item) =>
             {
-                string _LastPassword = Game.GetUserInput(passItem.RightLabel, 255);
-                if (!string.IsNullOrEmpty(_LastPassword))
+                string lastPassword = Game.GetUserInput(_passItem.RightLabel, 255);
+                if (!string.IsNullOrEmpty(lastPassword))
                 {
-                    PlayerSettings.LastPassword = _LastPassword;
+                    PlayerSettings.LastPassword = lastPassword;
                     Util.SaveSettings(null);
                     if (PlayerSettings.HidePasswords)
                     {
-                        passItem.SetRightLabel(new String('*', _LastPassword.Length));
+                        _passItem.SetRightLabel(new String('*', lastPassword.Length));
                     }
                     else
                     {
-                        passItem.SetRightLabel(_LastPassword);
+                        _passItem.SetRightLabel(lastPassword);
                     }
+
+                    _password = lastPassword;
                 }
             };
 
@@ -263,7 +265,7 @@ namespace GTACoOp
             _mainMenu.AddItem(connectItem);
             _mainMenu.AddItem(listenItem);
             _mainMenu.AddItem(portItem);
-            _mainMenu.AddItem(passItem);
+            _mainMenu.AddItem(_passItem);
             _mainMenu.AddItem(settItem);
             _mainMenu.AddItem(aboutItem);
 
@@ -552,6 +554,12 @@ namespace GTACoOp
                 if (!int.TryParse(split[1], out port))
                     continue;
                 _client.DiscoverKnownPeer(split[0], port);
+            }
+
+            if (debug)
+            {
+                // add localhost to server browser if debug
+                _client.DiscoverKnownPeer("localhost", 44499);
             }
         }
 
@@ -1466,6 +1474,7 @@ namespace GTACoOp
                         if (data.PasswordProtected)
                         {
                             _password = Game.GetUserInput(256);
+                            _passItem.SetRightLabel(_password);
                         }
                         ConnectToServer(gMsg.SenderEndPoint.Address.ToString(), data.Port);
                         _serverBrowserMenu.Visible = false;
@@ -1488,7 +1497,7 @@ namespace GTACoOp
         {
             var player = Game.Player.Character;
 
-            var debugText = "\n\n\n\n";
+            var debugText = "";
 
             if (player.IsInVehicle())
             {
@@ -1499,6 +1508,7 @@ namespace GTACoOp
             }
 
             debugText += "\n" + Opponents.Count;
+            debugText += "\n" + "password: " + _password;
 
             new UIResText(debugText, new Point(10, 10), 0.5f).Draw();
 
