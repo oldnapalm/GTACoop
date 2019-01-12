@@ -11,7 +11,6 @@ namespace GTACoOp
         public bool SyncWorld { get; set; }
         public TrafficMode SyncTraffic { get; set; }
         public bool Logging { get; set; }
-        public bool OldChat { get; set; }
         public bool ChatLog { get; set; }
         public int MaxStreamedNpcs { get; set; }
         public string MasterServerAddress { get; set; }
@@ -36,7 +35,6 @@ namespace GTACoOp
             LastPort = 4499;
             LastPassword = "changeme";
             Logging = false;
-            OldChat = false;
             ChatLog = false;
             SyncWorld = true;
             SyncTraffic = TrafficMode.None;

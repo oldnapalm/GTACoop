@@ -10,12 +10,6 @@ using Font = GTA.Font;
 
 namespace GTACoOp
 {
-    public enum SynchronizationMode
-    {
-        Tasks,
-        Teleport,
-    }
-
     public enum TrafficMode
     {
         None,
@@ -25,7 +19,6 @@ namespace GTACoOp
 
     public class SyncPed
     {
-        public SynchronizationMode SyncMode;
         public long Host;
         public MaxMind.GeoIP2.Responses.CountryResponse geoIP;
         public Ped Character;
@@ -54,7 +47,7 @@ namespace GTACoOp
         public bool Siren;
         public bool IsEngineRunning;
 
-        public float Steering;
+        public float VehicleRpm;
 
         public float Speed
         {
@@ -159,7 +152,7 @@ namespace GTACoOp
             World.SetRelationshipBetweenGroups(Relationship.Neutral, Game.Player.Character.RelationshipGroup, _relGroup);
         }
 
-        public void SetBlipNameFromTextFile(Blip blip, string text)
+        public void SetBlipName(Blip blip, string text)
         {
             Function.Call(Hash._0xF9113A30DE5C6670, "STRING");
             Function.Call(Hash._ADD_TEXT_COMPONENT_STRING, text);
@@ -174,7 +167,7 @@ namespace GTACoOp
         public void DisplayLocally()
         {
             try {
-                const float hRange = 200f;
+                const float hRange = 1500f;
                 var gPos = IsInVehicle ? VehiclePosition : Position;
                 var inRange = Game.Player.Character.IsInRangeOf(gPos, hRange);
             
@@ -200,7 +193,7 @@ namespace GTACoOp
                         _mainBlip = World.CreateBlip(gPos);
                         _mainBlip.Color = BlipColor.White;
                         _mainBlip.Scale = 0.8f;
-                        SetBlipNameFromTextFile(_mainBlip, Name == null ? "<nameless>" : Name);
+                        SetBlipName(_mainBlip, Name == null ? "<nameless>" : Name);
                     }
                     if(_blip && _mainBlip != null)
                         _mainBlip.Position = gPos;
@@ -225,14 +218,13 @@ namespace GTACoOp
                         if (Character.CurrentBlip == null) return;
                         Character.CurrentBlip.Color = BlipColor.White;
                         Character.CurrentBlip.Scale = 0.8f;
-                        SetBlipNameFromTextFile(Character.CurrentBlip, Name);
+                        SetBlipName(Character.CurrentBlip, Name);
                     }
                     return;
                 }
 
                 if (!Character.IsOccluded && Character.IsInRangeOf(Game.Player.Character.Position, 20f))
                 {
-                    var dimensions = Character.Model.GetDimensions();
                     var pos = Character.Position;
 
                     Function.Call(Hash.SET_DRAW_ORIGIN, pos.X, pos.Y, pos.Z + 1.1, 0);
@@ -329,7 +321,9 @@ namespace GTACoOp
 
                     MainVehicle.EngineRunning = IsEngineRunning;
 
-                    MainVehicle.SteeringScale = Steering;
+                    MainVehicle.CurrentRPM = VehicleRpm;
+
+                    MainVehicle.Speed = Speed;
 
                     if (VehicleMods != null && _modSwitch%50 == 0 &&
                         Game.Player.Character.IsInRangeOf(VehiclePosition, 30f))
@@ -479,25 +473,16 @@ namespace GTACoOp
 
                         if (!IsAiming && !IsShooting && !IsJumping)
                         {
-                            switch (SyncMode)
+                            if (!Character.IsInRangeOf(Position, 0.5f))
                             {
-                                case SynchronizationMode.Tasks:
-                                    if (!Character.IsInRangeOf(Position, 0.5f))
-                                    {
-                                        Character.Task.RunTo(Position, true, 500);
-                                        //var targetAngle = Rotation.Z/Math.Sqrt(1 - Rotation.W*Rotation.W);
-                                        //Function.Call(Hash.TASK_GO_STRAIGHT_TO_COORD, Character.Handle, Position.X, Position.Y, Position.Z, 5f, 3000, targetAngle, 0);
-                                    }
-                                    if (!Character.IsInRangeOf(Position, 5f))
-                                    {
-                                        Character.Position = dest - new Vector3(0, 0, 1f);
-                                        Character.Quaternion = Rotation;
-                                    }
-                                    break;
-                                case SynchronizationMode.Teleport:
-                                    Character.Position = dest - new Vector3(0, 0, 1f);
-                                    Character.Quaternion = Rotation;
-                                    break;
+                                Character.Task.RunTo(Position, true, 500);
+                                //var targetAngle = Rotation.Z/Math.Sqrt(1 - Rotation.W*Rotation.W);
+                                //Function.Call(Hash.TASK_GO_STRAIGHT_TO_COORD, Character.Handle, Position.X, Position.Y, Position.Z, 5f, 3000, targetAngle, 0);
+                            }
+                            if (!Character.IsInRangeOf(Position, 5f))
+                            {
+                                Character.Position = dest - new Vector3(0, 0, 1f);
+                                Character.Quaternion = Rotation;
                             }
                         }
                     }
@@ -517,15 +502,6 @@ namespace GTACoOp
         {
             try
             {
-                /*if (_mainVehicle != null && Character.IsInVehicle(_mainVehicle) && Game.Player.Character.IsInVehicle(_mainVehicle))
-                {
-                    _playerSeat = Util.GetPedSeat(Game.Player.Character);
-                }
-                else
-                {
-                    _playerSeat = -2;
-                }*/
-
                 if (Character != null)
                 {
                     Character.Model.MarkAsNoLongerNeeded();

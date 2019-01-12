@@ -45,5 +45,7 @@ namespace GTAServer.ProtocolMessages
         public float WheelSpeed { get; set; }
         [ProtoMember(19)]
         public float Steering { get; set; }
+        [ProtoMember(20)]
+        public float Rpm { get; set; }
     }
 }

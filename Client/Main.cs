@@ -39,8 +39,6 @@ namespace GTACoOp
         private static NetClient _client;
         private static NetPeerConfiguration _config;
 
-        public static SynchronizationMode GlobalSyncMode;
-
         private static int _channel;
 
         private readonly Queue<Action> _threadJumping;
@@ -308,14 +306,6 @@ namespace GTACoOp
                 }
             };
 
-
-            var chatItem = new UIMenuCheckboxItem("Use Old Chat Input", PlayerSettings.OldChat);
-            chatItem.CheckboxEvent += (item, check) =>
-            {
-                PlayerSettings.OldChat = check;
-                Util.SaveSettings(null);
-            };
-
             var chatLogItem = new UIMenuCheckboxItem("Log Chats", PlayerSettings.ChatLog);
             chatLogItem.CheckboxEvent += (item, check) =>
             {
@@ -412,14 +402,6 @@ namespace GTACoOp
                 Util.SaveSettings(null);
             };
 
-
-            var modeItem = new UIMenuListItem("Sync Mode", new List<dynamic>(Enum.GetNames(typeof(SynchronizationMode))), 0);
-            modeItem.OnListChanged += (item, index) =>
-            {
-                GlobalSyncMode = (SynchronizationMode) Enum.Parse(typeof(SynchronizationMode), item.IndexToItem(index).ToString());
-                lock (Opponents) if (Opponents != null) Opponents.ToList().ForEach(p => p.Value.SyncMode = GlobalSyncMode);
-            };
-
             var versionItem = new UIMenuListItem("Version", new List<dynamic>(Enum.GetNames(typeof(ScriptVersion))), 0);
             versionItem.OnListChanged += (item, index) =>
             {
@@ -436,7 +418,6 @@ namespace GTACoOp
             _settingsMenu.AddItem(nameItem);
             _settingsMenu.AddItem(npcItem);
             _settingsMenu.AddItem(trafficItem);
-            _settingsMenu.AddItem(chatItem);
             _settingsMenu.AddItem(chatLogItem);
             _settingsMenu.AddItem(hidePasswordsItem);
             _settingsMenu.AddItem(autoConnectItem);
@@ -445,7 +426,6 @@ namespace GTACoOp
             _settingsMenu.AddItem(autoRegisterItem);
             _settingsMenu.AddItem(masterItem);
             _settingsMenu.AddItem(versionItem);
-            _settingsMenu.AddItem(modeItem);
             _settingsMenu.AddItem(spawnItem);
 
             _mainMenu.RefreshIndex();
@@ -637,6 +617,7 @@ namespace GTACoOp
                 obj.WheelSpeed = veh.WheelSpeed;
                 obj.Steering = veh.SteeringScale;
                 obj.Speed = veh.Speed;
+                obj.Rpm = veh.CurrentRPM;
 
                 var bin = SerializeBinary(obj);
 
@@ -921,39 +902,8 @@ namespace GTACoOp
 
             if (e.KeyCode == Keys.T && IsOnServer())
             {
-                if (!PlayerSettings.OldChat)
-                {
-                    _chat.IsFocused = true;
-                    _wasTyping = true;
-                }
-                else
-                {
-                    //Game.DisableAllControlsThisFrame(2);
-                    foreach (GTA.Control control in Enum.GetValues(typeof(GTA.Control)))
-                    {
-                        Game.DisableControlThisFrame(2, control);
-                    }
-                    var message = Game.GetUserInput(255);
-                    foreach (GTA.Control control in Enum.GetValues(typeof(GTA.Control)))
-                    {
-                        Game.EnableControlThisFrame(2, control);
-                    }
-                    //Game.EnableAllControlsThisFrame(2);
-                    if (!string.IsNullOrWhiteSpace(message))
-                    {
-                        var obj = new ChatData()
-                        {
-                            Message = message,
-                        };
-                        var data = SerializeBinary(obj);
-
-                        var msg = _client.CreateMessage();
-                        msg.Write((int)PacketType.ChatData);
-                        msg.Write(data.Length);
-                        msg.Write(data);
-                        _client.SendMessage(msg, NetDeliveryMethod.ReliableOrdered, 0);
-                    }
-                }
+                _chat.IsFocused = true;
+                _wasTyping = true;
             }
 
             if (e.KeyCode == Keys.Z && IsOnServer())
@@ -1079,7 +1029,8 @@ namespace GTACoOp
                                     Opponents[data.Id].Siren = data.IsSirenActive;
 
                                     Opponents[data.Id].IsEngineRunning = data.IsEngineRunning;
-                                    Opponents[data.Id].Steering = data.Steering;
+                                    //Opponents[data.Id].SteeringScale = data.Steering;
+                                    Opponents[data.Id].VehicleRpm = data.Rpm;
                                 }
                             }
                             break;
@@ -1514,6 +1465,11 @@ namespace GTACoOp
             debugText += "\n" + "password: " + _password;
 
             new UIResText(debugText, new Point(10, 10), 0.5f).Draw();
+
+            _debug.Visible = true;
+            _debug.Draw();
+
+            return;
 
             // ignore
             if (_debugSyncPed == null)
