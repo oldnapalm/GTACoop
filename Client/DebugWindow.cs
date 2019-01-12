@@ -44,8 +44,11 @@ namespace GTACoOp
             if (player.Value.Character != null) {
                 output += "Character Pos: " + player.Value.Character.Position + "\n";
                 output += "CharacterIsInVeh: " + player.Value.Character.IsInVehicle() + "\n";
-                if (player.Value.Character.CurrentVehicle != null)
+                if (player.Value.Character.CurrentVehicle != null) { 
                     output += "Char Speed: " + player.Value.Character.CurrentVehicle.Speed + "\n";
+                    output += "Wheel speed" + player.Value.Character.CurrentVehicle.WheelSpeed + "\n";
+                    output += "Net Wheel speed" + Math.Round(player.Value.WheelSpeed, 2) + "\n";
+                }
             }
             output += "Net Speed: " + player.Value.Speed + "\n";
 

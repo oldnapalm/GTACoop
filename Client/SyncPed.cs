@@ -47,7 +47,7 @@ namespace GTACoOp
         public bool Siren;
         public bool IsEngineRunning;
 
-        public float VehicleRpm;
+        public float WheelSpeed;
 
         public float Speed
         {
@@ -321,10 +321,6 @@ namespace GTACoOp
 
                     MainVehicle.EngineRunning = IsEngineRunning;
 
-                    MainVehicle.CurrentRPM = VehicleRpm;
-
-                    MainVehicle.Speed = Speed;
-
                     if (VehicleMods != null && _modSwitch%50 == 0 &&
                         Game.Player.Character.IsInRangeOf(VehiclePosition, 30f))
                     {
@@ -367,6 +363,19 @@ namespace GTACoOp
 
                     if (MainVehicle.IsInRangeOf(VehiclePosition, (float) range))
                     {
+                        /*if (Speed > 1)
+                        {
+                            unsafe
+                            {
+                                var address = new VehicleWheelcolel
+                                var data = (float*) (((IntPtr) address + 0x008).ToPointer());
+
+                                new UIText($"address {*data}", new Point(10, 10), 1).Draw();
+
+                                *data = new Random().Next(0, 360);
+                            }
+                        }*/
+                        
                         var timeElapsed = (float) DateTime.Now.Subtract(LastUpdateReceived).TotalSeconds;
                         var acceleration = Speed - _lastSpeed;
                         MainVehicle.Position = _lastVehiclePos + dir*(Speed*timeElapsed) +

@@ -128,9 +128,6 @@ namespace GTACoOp
 
         [ProtoMember(19)]
         public float Steering { get; set; }
-
-        [ProtoMember(20)]
-        public float Rpm { get; set; }
     }
 
     [ProtoContract]

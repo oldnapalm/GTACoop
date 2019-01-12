@@ -617,7 +617,6 @@ namespace GTACoOp
                 obj.WheelSpeed = veh.WheelSpeed;
                 obj.Steering = veh.SteeringScale;
                 obj.Speed = veh.Speed;
-                obj.Rpm = veh.CurrentRPM;
 
                 var bin = SerializeBinary(obj);
 
@@ -1029,8 +1028,7 @@ namespace GTACoOp
                                     Opponents[data.Id].Siren = data.IsSirenActive;
 
                                     Opponents[data.Id].IsEngineRunning = data.IsEngineRunning;
-                                    //Opponents[data.Id].SteeringScale = data.Steering;
-                                    Opponents[data.Id].VehicleRpm = data.Rpm;
+                                    Opponents[data.Id].WheelSpeed = data.WheelSpeed;
                                 }
                             }
                             break;
@@ -1455,14 +1453,10 @@ namespace GTACoOp
 
             if (player.IsInVehicle())
             {
-                debugText +=
-                player.CurrentVehicle.Rotation.X + ", " + player.CurrentVehicle.Rotation.Y + ", " + player.CurrentVehicle.Rotation.Z + "\n";
-                var converted = Util.QuaternionToEuler(player.CurrentVehicle.Quaternion);
-                debugText += converted.X + ", " + converted.Y + ", " + converted.Z;
+                debugText += "\n\n\n\n\nRPM: " + Game.Player.Character.CurrentVehicle.EngineRunning.ToString();
             }
 
             debugText += "\n" + Opponents.Count;
-            debugText += "\n" + "password: " + _password;
 
             new UIResText(debugText, new Point(10, 10), 0.5f).Draw();
 
