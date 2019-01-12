@@ -1515,8 +1515,6 @@ namespace GTACoOp
 
             new UIResText(debugText, new Point(10, 10), 0.5f).Draw();
 
-            return;
-
             // ignore
             if (_debugSyncPed == null)
             {

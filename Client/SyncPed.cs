@@ -232,18 +232,17 @@ namespace GTACoOp
 
                 if (!Character.IsOccluded && Character.IsInRangeOf(Game.Player.Character.Position, 20f))
                 {
-                    var oldPos = UI.WorldToScreen(Character.Position + new Vector3(0, 0, 1.5f));
-                    if (oldPos.X != 0 && oldPos.Y != 0)
+                    var dimensions = Character.Model.GetDimensions();
+                    var pos = Character.Position;
+
+                    Function.Call(Hash.SET_DRAW_ORIGIN, pos.X, pos.Y, pos.Z + 1.1, 0);
+
+                    new UIResText(Name == null ? "<nameless>" : Name, new Point(0, 0), 0.3f, Color.WhiteSmoke, Font.ChaletLondon, UIResText.Alignment.Centered)
                     {
-                        var pos = new Point((int)((oldPos.X / (float)UI.WIDTH) * 1280),
-                            (int)((oldPos.Y / (float)UI.HEIGHT) * 1080));
+                        Outline = true,
+                    }.Draw();
 
-
-                        new UIResText(Name == null ? "<nameless>" : Name, pos, 0.3f, Color.WhiteSmoke, Font.ChaletLondon, UIResText.Alignment.Centered)
-                        {
-                            Outline = true,
-                        }.Draw();
-                    }
+                    Function.Call(Hash.CLEAR_DRAW_ORIGIN);
                 }
 
                 if ((!_lastVehicle && IsInVehicle && VehicleHash != 0) || (_lastVehicle && IsInVehicle && (MainVehicle == null || !Character.IsInVehicle(MainVehicle) || MainVehicle.Model.Hash != VehicleHash || VehicleSeat != Util.GetPedSeat(Character))))
