@@ -1077,6 +1077,9 @@ namespace GTACoOp
                                     Opponents[data.Id].IsHornPressed = data.IsPressingHorn;
                                     Opponents[data.Id].Speed = data.Speed;
                                     Opponents[data.Id].Siren = data.IsSirenActive;
+
+                                    Opponents[data.Id].IsEngineRunning = data.IsEngineRunning;
+                                    Opponents[data.Id].Steering = data.Steering;
                                 }
                             }
                             break;

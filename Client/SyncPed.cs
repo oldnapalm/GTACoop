@@ -52,6 +52,9 @@ namespace GTACoOp
         public int VehicleSecondaryColor;
         public string Name;
         public bool Siren;
+        public bool IsEngineRunning;
+
+        public float Steering;
 
         public float Speed
         {
@@ -324,6 +327,10 @@ namespace GTACoOp
 
                     MainVehicle.PrimaryColor = (VehicleColor) VehiclePrimaryColor;
                     MainVehicle.SecondaryColor = (VehicleColor) VehicleSecondaryColor;
+
+                    MainVehicle.EngineRunning = IsEngineRunning;
+
+                    MainVehicle.SteeringScale = Steering;
 
                     if (VehicleMods != null && _modSwitch%50 == 0 &&
                         Game.Player.Character.IsInRangeOf(VehiclePosition, 30f))
