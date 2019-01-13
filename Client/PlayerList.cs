@@ -41,7 +41,7 @@ namespace GTACoOp
 
             Function.Call(Hash._ADD_TEXT_COMPONENT_STRING, $"GTA CooP ({players.Count} online)");
 
-            Function.Call((Hash)0xCD015E5BB0D96A57, 0.015, 0.007);
+            Function.Call((Hash)0xCD015E5BB0D96A57, 0.015, 0.009);
 
             int current = 1;
             foreach (var player in players)

@@ -892,7 +892,7 @@ namespace GTACoOp
                 }
             }
 
-            if (e.KeyCode == Keys.G && !Game.Player.Character.IsInVehicle() && IsOnServer())
+            if (e.KeyCode == Keys.G && !Game.Player.Character.IsInVehicle() && IsOnServer() && !_chat.IsFocused)
             {
                 var vehs = World.GetAllVehicles().OrderBy(v => (v.Position - Game.Player.Character.Position).Length()).Take(1).ToList();
                 if (vehs.Any() && Game.Player.Character.IsInRangeOf(vehs[0].Position, 5f))
@@ -908,7 +908,7 @@ namespace GTACoOp
                 _wasTyping = true;
             }
 
-            if (e.KeyCode == Keys.Z && IsOnServer())
+            if (Game.IsControlPressed(0, Control.MultiplayerInfo) && IsOnServer() && !_chat.IsFocused)
             {
                 // toggle playerlist  
                 if (_playerList.Pressed.AddSeconds(5) < DateTime.Now)
@@ -920,11 +920,6 @@ namespace GTACoOp
                     _playerList.Pressed = new DateTime();
                 }
             }
-
-            if (e.KeyCode == Keys.N)
-            {
-            }
-
         }
 
         public void ConnectToServer(string ip, int port = 4499)

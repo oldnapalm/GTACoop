@@ -323,7 +323,11 @@ namespace GTACoOp
 
                     MainVehicle.EngineRunning = IsEngineRunning;
 
-                    MainVehicle.NumberPlate = Plate;
+                    if (Plate != null)
+                    {
+                        MainVehicle.NumberPlate = Plate;
+                    }
+
                     MainVehicle.RadioStation = (RadioStation) RadioStation;
 
                     if (VehicleMods != null && _modSwitch%50 == 0 &&
