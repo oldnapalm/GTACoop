@@ -386,12 +386,14 @@ namespace GTAServer
             {
                 logger.LogInformation($"Player tried to join while server is full: {client.DisplayName}");
                 DenyConnect(client, "No available player slots.", true, msg);
+                return;
             }
 
             if (PasswordProtected && connReq.Password != Password)
             {
                 logger.LogInformation($"Client {client.DisplayName} tried to connect with the wrong password.");
                 DenyConnect(client, "Wrong password.", true, msg);
+                return;
             }
 
             lock (Clients)
