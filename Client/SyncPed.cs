@@ -48,6 +48,8 @@ namespace GTACoOp
         public bool IsEngineRunning;
 
         public float WheelSpeed;
+        public string Plate;
+        public int RadioStation;
 
         public float Speed
         {
@@ -321,6 +323,9 @@ namespace GTACoOp
 
                     MainVehicle.EngineRunning = IsEngineRunning;
 
+                    MainVehicle.NumberPlate = Plate;
+                    MainVehicle.RadioStation = (RadioStation) RadioStation;
+
                     if (VehicleMods != null && _modSwitch%50 == 0 &&
                         Game.Player.Character.IsInRangeOf(VehiclePosition, 30f))
                     {
@@ -363,18 +368,24 @@ namespace GTACoOp
 
                     if (MainVehicle.IsInRangeOf(VehiclePosition, (float) range))
                     {
-                        /*if (Speed > 1)
+                        if (Speed > 1)
                         {
+                            /*int[] wheels = { 11, 12, 15, 16, 13, 14, 11, 13 };
+
                             unsafe
                             {
-                                var address = new VehicleWheelcolel
-                                var data = (float*) (((IntPtr) address + 0x008).ToPointer());
+                                var wheelsAddress = ((IntPtr)MainVehicle.MemoryAddress + 0xBB0).ToPointer();
 
-                                new UIText($"address {*data}", new Point(10, 10), 1).Draw();
+                                for (var i = 0; i <= 4; i++)
+                                {
+                                    var wheelAddress = ((IntPtr)wheelsAddress + 0x008 * wheels[i]).ToPointer();
 
-                                *data = new Random().Next(0, 360);
-                            }
-                        }*/
+                                    var wheelRot = (float*) ((IntPtr) wheelAddress + 0x008).ToPointer();
+
+                                    *wheelRot = new Random().Next(0, 200);
+                                }
+                            }*/
+                        }
                         
                         var timeElapsed = (float) DateTime.Now.Subtract(LastUpdateReceived).TotalSeconds;
                         var acceleration = Speed - _lastSpeed;

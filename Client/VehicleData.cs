@@ -128,6 +128,12 @@ namespace GTACoOp
 
         [ProtoMember(19)]
         public float Steering { get; set; }
+
+        [ProtoMember(20)]
+        public int RadioStation { get; set; }
+
+        [ProtoMember(21)]
+        public string Plate { get; set; }
     }
 
     [ProtoContract]

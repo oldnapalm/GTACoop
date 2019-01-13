@@ -618,6 +618,9 @@ namespace GTACoOp
                 obj.Steering = veh.SteeringScale;
                 obj.Speed = veh.Speed;
 
+                obj.RadioStation = (int)Game.RadioStation;
+                obj.Plate = veh.NumberPlate;
+
                 var bin = SerializeBinary(obj);
 
                 var msg = _client.CreateMessage();
@@ -1029,6 +1032,9 @@ namespace GTACoOp
 
                                     Opponents[data.Id].IsEngineRunning = data.IsEngineRunning;
                                     Opponents[data.Id].WheelSpeed = data.WheelSpeed;
+
+                                    Opponents[data.Id].RadioStation = data.RadioStation;
+                                    Opponents[data.Id].Plate = data.Plate;
                                 }
                             }
                             break;
