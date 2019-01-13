@@ -328,7 +328,10 @@ namespace GTACoOp
                         MainVehicle.NumberPlate = Plate;
                     }
 
-                    MainVehicle.RadioStation = (RadioStation) RadioStation;
+                    if (Enum.IsDefined(typeof(RadioStation), RadioStation))
+                    {
+                        MainVehicle.RadioStation = (RadioStation) RadioStation;
+                    }
 
                     if (VehicleMods != null && _modSwitch%50 == 0 &&
                         Game.Player.Character.IsInRangeOf(VehiclePosition, 30f))
