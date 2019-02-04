@@ -7,9 +7,9 @@ namespace gtaserver.core.Commands
 {
     class AboutCommand : ICommand
     {
-        public string CommandName => throw new NotImplementedException();
+        public string CommandName => "about";
 
-        public string HelpText => throw new NotImplementedException();
+        public string HelpText => "Shows information about the current server";
 
         public bool Restricted => false;
 
@@ -29,7 +29,7 @@ namespace gtaserver.core.Commands
             }
 
             caller.SendMessage($"This server runs GTAServer.core on {os}.\n" +
-                "More info about this build see gtacoop.com");
+                "More info about this build see gtacoop.com.");
         }
     }
 }

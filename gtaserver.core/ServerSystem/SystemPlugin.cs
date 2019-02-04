@@ -21,6 +21,8 @@ namespace gtaserver.core.ServerSystem
             gameServer.Commands.Add("plugins", new PluginsCommand());
             gameServer.Commands.Add("say", new SayCommand());
 
+            gameServer.Commands.Add("kick", new KickCommand());
+
             return true;
         }
     }

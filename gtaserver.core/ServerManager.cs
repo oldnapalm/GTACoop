@@ -148,6 +148,7 @@ namespace GTAServer
 
             // create a new client for console
             _consoleClient = new Client(null, _gameServer) { Console = true };
+            _consoleClient.Name = "Console";
 
             while (true)
             {
