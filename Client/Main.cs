@@ -1307,6 +1307,13 @@ namespace GTACoOp
                         case NetConnectionStatus.Connected:
                             UI.Notify("Connection successful!");
                             Util.DisplayHelpText("Press ~INPUT_MULTIPLAYER_INFO~ to view a list of online players");
+
+                            // close F9 menu when connected
+                            if (_menuPool.IsAnyMenuOpen())
+                            {
+                                _menuPool.CloseAllMenus();
+                            }
+
                             _channel = msg.SenderConnection.RemoteHailMessage.ReadInt32();
 
                             break;
