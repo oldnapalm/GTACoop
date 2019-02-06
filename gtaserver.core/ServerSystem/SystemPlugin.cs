@@ -7,13 +7,15 @@ namespace gtaserver.core.ServerSystem
     class SystemPlugin : IPlugin
     {
         public string Name => "System";
-
         public string Description => "This is a default plugin and can't be disabled it's used for managing server features like built-in commands.";
-
         public string Author => "TheIndra";
+
+        public static GameServer GameServer;
 
         public bool OnEnable(GameServer gameServer, bool isAfterServerLoad)
         {
+            _gameServer = gameServer;
+
             // register built-in commands
             gameServer.Commands.Add("help", new HelpCommand());
             gameServer.Commands.Add("tps", new TpsCommand());

@@ -1,4 +1,5 @@
-﻿using GTAServer;
+﻿using gtaserver.core.ServerSystem;
+using GTAServer;
 using GTAServer.PluginAPI;
 using GTAServer.ProtocolMessages;
 
@@ -14,7 +15,7 @@ namespace gtaserver.core.Commands
 
         public void OnCommandExec(Client caller, ChatData chatData)
         {
-            caller.SendMessage("TPS: " + ServerManager.GameServerInstance.TicksPerSecond);
+            caller.SendMessage("TPS: " + SystemPlugin.GameServer.TicksPerSecond);
         }
     }
 }

@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Text;
+using gtaserver.core.ServerSystem;
 
 namespace gtaserver.core.Commands
 {
@@ -21,7 +22,7 @@ namespace gtaserver.core.Commands
         {
             var message = string.Join(" ", chatData.Message.Split(" ").Skip(1));
 
-            ServerManager.GameServerInstance.SendChatMessageToAll(message);
+            SystemPlugin.GameServer.SendChatMessageToAll(message);
             caller.SendMessage("Send to all: " + message);
         }
     }

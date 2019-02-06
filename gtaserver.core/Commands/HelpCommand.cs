@@ -2,6 +2,7 @@
 using GTAServer.ProtocolMessages;
 using System;
 using System.Linq;
+using gtaserver.core.ServerSystem;
 using GTAServer;
 
 namespace gtaserver.core.Commands
@@ -17,7 +18,7 @@ namespace gtaserver.core.Commands
         public void OnCommandExec(Client caller, ChatData chatData)
         {
             caller.SendMessage("Available commands:\n" +
-                string.Join(", ", ServerManager.GameServerInstance.Commands.Where(x => (!caller.Console) ? !x.Value.Restricted : true).
+                string.Join(", ", SystemPlugin.GameServer.Commands.Where(x => (!caller.Console) ? !x.Value.Restricted : true).
                 Select(x => (caller.Console) ? x.Key : "/" + x.Key)));
         }
     }
