@@ -17,7 +17,7 @@ using Control = GTA.Control;
 using System.Text.RegularExpressions;
 using System.Globalization;
 using MaxMind.GeoIP2;
-
+using NAudio.Wave;
 namespace GTACoOp
 {
     public class Main : Script
@@ -83,6 +83,12 @@ namespace GTACoOp
 
         private static UIMenuItem _passItem;
 
+        //  ================== NAUDIO ===================
+        private static WaveIn WaveInput;
+        private static WaveOut WaveOutput;
+        private static MemoryStream VoiceStream;
+        private static WaveFileWriter waveWriter;
+        
         private enum NativeType
         {
             Unknown = 0,
@@ -97,8 +103,41 @@ namespace GTACoOp
              return Regex.Replace(Regex.Replace(LocalScriptVersion.ToString(), "VERSION_", "", RegexOptions.IgnoreCase), "_", ".", RegexOptions.IgnoreCase);
         }
 
+        // Sends data to the server when mic is recording
+        void waveinput_DataAvaible(object sender, WaveInEventArgs e)
+        {
+            var VoiceDataPacket = new VoiceChatData();
+            VoiceDataPacket.Buffer = e.Buffer;
+            var msg = _client.CreateMessage();
+            msg.Write((int)PacketType.VoiceChatData);
+            var data = SerializeBinary(VoiceDataPacket);
+            msg.Write(data.Length);
+            msg.Write(data);
+        }
+
+        void waveIn_RecordingStopped(object sender, EventArgs e)
+        {
+            WaveInput.Dispose();
+            WaveInput = null;
+        }
         public Main()
         {
+            //NAUDIO---------------------------
+            WaveInput = new WaveIn();
+            WaveOutput = new WaveOut();
+            WaveInput.BufferMilliseconds = 100;
+            WaveInput.NumberOfBuffers = 10;
+
+            // Sets the input device is the default one.
+            WaveInput.DeviceNumber = 0;
+            WaveInput.DataAvailable += new EventHandler<WaveInEventArgs>(waveinput_DataAvaible);
+            WaveInput.WaveFormat = new WaveFormat(44200, 2);
+            waveIn.RecordingStopped += new EventHandler<StoppedEventArgs>(waveIn_RecordingStopped);
+
+            VoiceStream = new MemoryStream();
+            waveWriter = new WaveFileWriter(VoiceStream, WaveInput.WaveFormat);
+
+            
             PlayerSettings = Util.ReadSettings(Program.Location + Path.DirectorySeparatorChar + "ClientSettings.xml");
             _threadJumping = new Queue<Action>();
 
@@ -110,6 +149,7 @@ namespace GTACoOp
             _entityCleanup = new List<int>();
             _blipCleanup = new List<int>();
 
+            
             _emptyVehicleMods = new Dictionary<int, int>();
             for (int i = 0; i < 50; i++) _emptyVehicleMods.Add(i, 0);
 
@@ -985,6 +1025,19 @@ namespace GTACoOp
                     var type = (PacketType)msg.ReadInt32();
                     switch (type)
                     {
+                        case PacketType.VoiceChatData:
+                            {
+                               var len = msg.ReadInt32();
+                               var data = DeserializeBinary<VoiceChatData>(msg.ReadBytes(len)) as VoiceChatData;
+                                BufferedWaveProvider PlayBuffer = new BufferedWaveProvider(WaveInput.WaveFormat);
+                                WaveOutput.Init(PlayBuffer);
+                                WaveOutput.Play();
+
+                                PlayBuffer.AddSamples(data.Buffer, 0, data.Buffer.Length);
+                               break;
+                            }
+
+
                         case PacketType.VehiclePositionData:
                             {
                                 var len = msg.ReadInt32();
@@ -1316,6 +1369,7 @@ namespace GTACoOp
 
                             _channel = msg.SenderConnection.RemoteHailMessage.ReadInt32();
 
+                            WaveInput.StartRecording();
                             break;
                         case NetConnectionStatus.Disconnected:
                             var reason = msg.ReadString();

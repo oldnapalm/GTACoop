@@ -540,6 +540,7 @@ namespace GTAServer
                     {
                         Log.Error("at " + r.InnerException);
                         r = r.InnerException;
+                        
                     }
                 }
             }
@@ -715,6 +716,7 @@ namespace GTAServer
 
                     switch (msg.MessageType)
                     {
+                        
                         case NetIncomingMessageType.UnconnectedData:
                             var isPing = msg.ReadString();
                             if (isPing == "ping")
@@ -975,7 +977,7 @@ namespace GTAServer
                                                     if (!string.IsNullOrWhiteSpace(Msg.Suffix))
                                                         data.Sender += " (" + Msg.Suffix + ") ";
                                                     SendToAll(data, PacketType.ChatData, true);
-                                                    Log.Info("[CHAT] <"+data.Sender+">" + ": " + data.Message);
+                                                    Log.Info("[CHAT] <" + data.Sender + ">" + ": " + data.Message);
                                                 }
                                             }
                                         }
@@ -1035,7 +1037,7 @@ namespace GTAServer
                                     {
                                         try
                                         {
-                                            var len = msg.ReadInt32();
+                                            int len = msg.ReadInt32();
                                             var data =
                                                 DeserializeBinary<VehicleData>(msg.ReadBytes(len)) as
                                                     VehicleData;
@@ -1049,13 +1051,24 @@ namespace GTAServer
                                         { }
                                     }
                                     break;
+                                case PacketType.VoiceChatData:
+                                    { 
+                                        int len = msg.ReadInt32();
+                                        var data = DeserializeBinary<VoiceChatData>(msg.ReadBytes(len)) as VoiceChatData;
+                                        if (data != null)
+                                        {
+                                            data.Id = msg.SenderConnection.RemoteUniqueIdentifier;
+                                            SendToAll(data, PacketType.VoiceChatData, false, client);
+                                        }
+                                    }
+                                    break;
+                                    
                                 case PacketType.NpcPedPositionData:
                                     {
                                         try
                                         {
                                             var len = msg.ReadInt32();
-                                            var data =
-                                                DeserializeBinary<PedData>(msg.ReadBytes(len)) as PedData;
+                                            var data = DeserializeBinary<PedData>(msg.ReadBytes(len)) as PedData;
                                             if (data != null)
                                             {
                                                 data.Id = msg.SenderConnection.RemoteUniqueIdentifier;

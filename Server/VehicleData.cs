@@ -73,6 +73,10 @@ namespace GTAServer
         /// NativeOnDisconnectRecall packet
         /// </summary>
         NativeOnDisconnectRecall = 15,
+        /// <summary>
+        /// VoiceChatData packet
+        /// </summary>
+        VoiceChatData = 16,
     }
 
     /// <summary>
@@ -408,6 +412,14 @@ namespace GTAServer
         /// </summary>
         [ProtoMember(3)]
         public float Z { get; set; }
+    }
+
+    public class VoiceChatData
+    {
+        [ProtoMember(1)]
+        public long Id { get; set; }
+        [ProtoMember(2)]
+        public byte[] Buffer { get; set; }
     }
 
     /// <summary>
