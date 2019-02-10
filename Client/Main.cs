@@ -18,6 +18,7 @@ using System.Text.RegularExpressions;
 using System.Globalization;
 using MaxMind.GeoIP2;
 using NAudio.Wave;
+
 namespace GTACoOp
 {
     public class Main : Script
@@ -59,6 +60,7 @@ namespace GTACoOp
         //
 
         private bool debug;
+
         public static Debug DebugLogger;
 
         private bool _isGoingToCar;
@@ -83,11 +85,13 @@ namespace GTACoOp
 
         private static UIMenuItem _passItem;
 
-        //  ================== NAUDIO ===================
-        private static WaveIn WaveInput;
+        // NAUDIO
+        private static WaveInEvent WaveInput;
         private static WaveOut WaveOutput;
         private static MemoryStream VoiceStream;
         private static WaveFileWriter waveWriter;
+
+        private static bool _isTalking;
         
         private enum NativeType
         {
@@ -122,8 +126,8 @@ namespace GTACoOp
         }
         public Main()
         {
-            //NAUDIO---------------------------
-            WaveInput = new WaveIn();
+            //NAUDIO
+            WaveInput = new WaveInEvent();
             WaveOutput = new WaveOut();
             WaveInput.BufferMilliseconds = 100;
             WaveInput.NumberOfBuffers = 10;
@@ -132,7 +136,7 @@ namespace GTACoOp
             WaveInput.DeviceNumber = 0;
             WaveInput.DataAvailable += new EventHandler<WaveInEventArgs>(waveinput_DataAvaible);
             WaveInput.WaveFormat = new WaveFormat(44200, 2);
-            waveIn.RecordingStopped += new EventHandler<StoppedEventArgs>(waveIn_RecordingStopped);
+            WaveInput.RecordingStopped += new EventHandler<StoppedEventArgs>(waveIn_RecordingStopped);
 
             VoiceStream = new MemoryStream();
             waveWriter = new WaveFileWriter(VoiceStream, WaveInput.WaveFormat);
@@ -320,6 +324,8 @@ namespace GTACoOp
                 }
             };
 
+            var inputDeviceItem = new UIMenuListItem("Input device", GetInputDevices(), 0);
+
             var masterItem = new UIMenuItem("Master Server");
             masterItem.SetRightLabel(PlayerSettings.MasterServerAddress);
             masterItem.Activated += (menu, item) =>
@@ -449,8 +455,8 @@ namespace GTACoOp
                 //_mainMenu.Clear();_mainMenu.RefreshIndex();
             };
 
-            var spawnItem = new UIMenuCheckboxItem("Debug", false);
-            spawnItem.CheckboxEvent += (item, check) =>
+            var debugItem = new UIMenuCheckboxItem("Debug", false);
+            debugItem.CheckboxEvent += (item, check) =>
             {
                 debug = check;
             };
@@ -458,6 +464,7 @@ namespace GTACoOp
             _settingsMenu.AddItem(nameItem);
             _settingsMenu.AddItem(npcItem);
             _settingsMenu.AddItem(trafficItem);
+            _settingsMenu.AddItem(inputDeviceItem);
             _settingsMenu.AddItem(chatLogItem);
             _settingsMenu.AddItem(hidePasswordsItem);
             _settingsMenu.AddItem(autoConnectItem);
@@ -466,10 +473,12 @@ namespace GTACoOp
             _settingsMenu.AddItem(autoRegisterItem);
             _settingsMenu.AddItem(masterItem);
             _settingsMenu.AddItem(versionItem);
-            _settingsMenu.AddItem(spawnItem);
+            _settingsMenu.AddItem(debugItem);
 
             _mainMenu.RefreshIndex();
+
             _settingsMenu.RefreshIndex();
+            _settingsMenu.SetMenuWidthOffset(100);
 
             _menuPool.Add(_mainMenu);
             _menuPool.Add(_serverBrowserMenu);
@@ -960,6 +969,19 @@ namespace GTACoOp
                     _playerList.Pressed = new DateTime();
                 }
             }
+
+            if (Game.IsControlPressed(0, Control.PushToTalk) && IsOnServer())
+            {
+                if(!_isTalking)
+                    WaveInput.StartRecording();
+                _isTalking = true;
+            }
+            else
+            {
+                if(_isTalking)
+                    WaveInput.StopRecording();
+                _isTalking = false;
+            }
         }
 
         public void ConnectToServer(string ip, int port = 4499)
@@ -1369,7 +1391,6 @@ namespace GTACoOp
 
                             _channel = msg.SenderConnection.RemoteHailMessage.ReadInt32();
 
-                            WaveInput.StartRecording();
                             break;
                         case NetConnectionStatus.Disconnected:
                             var reason = msg.ReadString();
@@ -1982,6 +2003,18 @@ namespace GTACoOp
                 select p;
 
             return range.Except(portsInUse).FirstOrDefault();
+        }
+
+        public static List<Object> GetInputDevices()
+        {
+            var list = new List<Object>();
+
+            for (int n = 0; n < WaveIn.DeviceCount; n++)
+            {
+                var capabilities = WaveIn.GetCapabilities(n);
+                list.Add(capabilities.ProductName);
+            }
+            return list;
         }
     }
 
