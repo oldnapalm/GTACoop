@@ -23,6 +23,7 @@ namespace GTACoOp
         NativeTickRecall = 13,
         NativeOnDisconnect = 14,
         NativeOnDisconnectRecall = 15,
+        VoiceChatData = 16,
     }
 
     public enum ScriptVersion // Please only increment this/add versions on changes that may break the protocol.
@@ -198,7 +199,14 @@ namespace GTACoOp
             return new Vector3(X, Y, Z);
         }
     }
-
+    [ProtoContract]
+    public class VoiceChatData
+    {
+        [ProtoMember(1)]
+        public long Id { get; set; }
+        [ProtoMember(2)]
+        public byte[] Buffer {get; set;}
+    }
     [ProtoContract]
     public class LQuaternion
     {
