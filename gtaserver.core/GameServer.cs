@@ -557,6 +557,26 @@ namespace GTAServer
                         }
                     }
                     break;
+                case PacketType.VoiceChatData:
+                    {
+                        var len = msg.ReadInt32();
+                        var data = msg.ReadBytes(len);
+
+                        if (data != null)
+                        {
+                            // voice packet looks diff so send it manually
+                            var msgSend = Server.CreateMessage();
+
+                            msgSend.Write((int)PacketType.VoiceChatData);
+
+                            msgSend.Write(1);
+                            msgSend.Write(len);
+                            msgSend.Write(data);
+
+                            Server.SendToAll(msgSend, NetDeliveryMethod.Unreliable);
+                        }
+                    }
+                    break;
                 case PacketType.VehiclePositionData:
                     {
                         var len = msg.ReadInt32();

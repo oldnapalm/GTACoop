@@ -86,12 +86,13 @@ namespace GTACoOp
         private static UIMenuItem _passItem;
 
         // NAUDIO
-        private static WaveInEvent WaveInput;
-        private static WaveOut WaveOutput;
-        private static MemoryStream VoiceStream;
-        private static WaveFileWriter waveWriter;
+        private static WaveInEvent _waveInput;
+        private static WaveOut _waveOutput;
+        private static WaveFileWriter _waveWriter;
 
-        private static bool _isTalking;
+        private static BufferedWaveProvider _playBuffer;
+
+        private static bool _isTalking = false;
         
         private enum NativeType
         {
@@ -107,41 +108,33 @@ namespace GTACoOp
              return Regex.Replace(Regex.Replace(LocalScriptVersion.ToString(), "VERSION_", "", RegexOptions.IgnoreCase), "_", ".", RegexOptions.IgnoreCase);
         }
 
-        // Sends data to the server when mic is recording
-        void waveinput_DataAvaible(object sender, WaveInEventArgs e)
-        {
-            var VoiceDataPacket = new VoiceChatData();
-            VoiceDataPacket.Buffer = e.Buffer;
-            var msg = _client.CreateMessage();
-            msg.Write((int)PacketType.VoiceChatData);
-            var data = SerializeBinary(VoiceDataPacket);
-            msg.Write(data.Length);
-            msg.Write(data);
-        }
-
         void waveIn_RecordingStopped(object sender, EventArgs e)
         {
-            WaveInput.Dispose();
-            WaveInput = null;
+            _waveInput.Dispose();
+            _waveInput = null;
         }
         public Main()
         {
             //NAUDIO
-            WaveInput = new WaveInEvent();
-            WaveOutput = new WaveOut();
-            WaveInput.BufferMilliseconds = 100;
-            WaveInput.NumberOfBuffers = 10;
+            _waveInput = new WaveInEvent();
+            _waveOutput = new WaveOut();
+            _waveInput.BufferMilliseconds = 15;
+            _waveInput.NumberOfBuffers = 3;
 
             // Sets the input device is the default one.
-            WaveInput.DeviceNumber = 0;
-            WaveInput.DataAvailable += new EventHandler<WaveInEventArgs>(waveinput_DataAvaible);
-            WaveInput.WaveFormat = new WaveFormat(44200, 2);
-            WaveInput.RecordingStopped += new EventHandler<StoppedEventArgs>(waveIn_RecordingStopped);
+			_waveInput.DeviceNumber = 0;
+            _waveInput.DataAvailable += SendVoiceData;
+            _waveInput.WaveFormat = new WaveFormat(44200, 2);
+            _waveInput.RecordingStopped += waveIn_RecordingStopped;
 
-            VoiceStream = new MemoryStream();
-            waveWriter = new WaveFileWriter(VoiceStream, WaveInput.WaveFormat);
+            var voiceStream = new MemoryStream();
+            _waveWriter = new WaveFileWriter(voiceStream, _waveInput.WaveFormat);
 
-            
+            _playBuffer = new BufferedWaveProvider(_waveInput.WaveFormat);
+
+            _waveOutput.Init(_playBuffer);
+            _waveOutput.Play();
+
             PlayerSettings = Util.ReadSettings(Program.Location + Path.DirectorySeparatorChar + "ClientSettings.xml");
             _threadJumping = new Queue<Action>();
 
@@ -792,6 +785,24 @@ namespace GTACoOp
             }
         }
 
+        void SendVoiceData(object sender, WaveInEventArgs e)
+        {
+            if (!IsOnServer())
+                return;
+
+            if (_isTalking)
+            {
+                var msg = _client.CreateMessage();
+
+                msg.Write((int) PacketType.VoiceChatData);
+
+                msg.Write(e.Buffer.Length);
+                msg.Write(e.Buffer);
+
+                _client.SendMessage(msg, NetDeliveryMethod.Unreliable, _channel);
+            }
+        }
+
         public void OnTick(object sender, EventArgs e)
         {
             try
@@ -910,6 +921,12 @@ namespace GTACoOp
                     }
                 }
 
+                // push to talk
+                if (Game.IsControlPressed(0, Control.PushToTalk))
+                    _isTalking = true;
+                else
+                    _isTalking = false;
+
                 Dictionary<string, NativeData> tickNatives = null;
                 lock (_tickNatives) tickNatives = new Dictionary<string, NativeData>(_tickNatives);
 
@@ -968,19 +985,6 @@ namespace GTACoOp
                 {
                     _playerList.Pressed = new DateTime();
                 }
-            }
-
-            if (Game.IsControlPressed(0, Control.PushToTalk) && IsOnServer())
-            {
-                if(!_isTalking)
-                    WaveInput.StartRecording();
-                _isTalking = true;
-            }
-            else
-            {
-                if(_isTalking)
-                    WaveInput.StopRecording();
-                _isTalking = false;
             }
         }
 
@@ -1049,17 +1053,16 @@ namespace GTACoOp
                     {
                         case PacketType.VoiceChatData:
                             {
-                               var len = msg.ReadInt32();
-                               var data = DeserializeBinary<VoiceChatData>(msg.ReadBytes(len)) as VoiceChatData;
-                                BufferedWaveProvider PlayBuffer = new BufferedWaveProvider(WaveInput.WaveFormat);
-                                WaveOutput.Init(PlayBuffer);
-                                WaveOutput.Play();
+                                var user = msg.ReadInt32();
 
-                                PlayBuffer.AddSamples(data.Buffer, 0, data.Buffer.Length);
-                               break;
+                                var len = msg.ReadInt32();
+                                var data = msg.ReadBytes(len);
+                            
+                                UI.ShowSubtitle(len + " ");
+
+                                _playBuffer.AddSamples(data, 0, data.Length);
                             }
-
-
+                            break;
                         case PacketType.VehiclePositionData:
                             {
                                 var len = msg.ReadInt32();
@@ -1382,6 +1385,7 @@ namespace GTACoOp
                         case NetConnectionStatus.Connected:
                             UI.Notify("Connection successful!");
                             Util.DisplayHelpText("Press ~INPUT_MULTIPLAYER_INFO~ to view a list of online players");
+                            _waveInput.StartRecording();
 
                             // close F9 menu when connected
                             if (_menuPool.IsAnyMenuOpen())
@@ -1539,7 +1543,7 @@ namespace GTACoOp
                 debugText += "\n\n\n\n\nRPM: " + Game.Player.Character.CurrentVehicle.EngineRunning.ToString();
             }
 
-            debugText += "\n" + Opponents.Count;
+            debugText += "\n" + _isTalking.ToString();
 
             new UIResText(debugText, new Point(10, 10), 0.5f).Draw();
 

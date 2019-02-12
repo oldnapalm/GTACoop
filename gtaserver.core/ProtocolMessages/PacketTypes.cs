@@ -18,5 +18,6 @@
         NativeTickRecall = 13,
         NativeOnDisconnect = 14,
         NativeOnDisconnectRecall = 15,
+        VoiceChatData = 16
     }
 }

@@ -200,14 +200,6 @@ namespace GTACoOp
         }
     }
     [ProtoContract]
-    public class VoiceChatData
-    {
-        [ProtoMember(1)]
-        public long Id { get; set; }
-        [ProtoMember(2)]
-        public byte[] Buffer {get; set;}
-    }
-    [ProtoContract]
     public class LQuaternion
     {
         [ProtoMember(1)]

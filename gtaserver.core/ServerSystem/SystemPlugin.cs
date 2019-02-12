@@ -14,7 +14,7 @@ namespace gtaserver.core.ServerSystem
 
         public bool OnEnable(GameServer gameServer, bool isAfterServerLoad)
         {
-            _gameServer = gameServer;
+            //_gameServer = gameServer;
 
             // register built-in commands
             gameServer.Commands.Add("help", new HelpCommand());
