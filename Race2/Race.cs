@@ -10,17 +10,12 @@ namespace Race
 
         public Race()
         {
-            // do shit
-
-            while(true) OnTick();
+            // TODO: get server tick system or something
         }
 
         private void OnTick()
         {
-            
+
         }
-
-      
-
-
+    }
 }

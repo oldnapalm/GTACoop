@@ -179,14 +179,14 @@ namespace GTAServer
         public static void DoServerTick(object serverObject)
         {
             var server = (GameServer) serverObject;
-            //try
-            //{
+            try
+            {
                 server.Tick();
-            //}
-            //catch (Exception e)
-            //{
-                //_logger.LogError("Exception while ticking", e.Message);
-            //}
+            }
+            catch (Exception e)
+            {
+                _logger.LogError("Exception while ticking", e.Message);
+            }
         }
         private static ServerConfiguration LoadServerConfiguration(string path)
         {
