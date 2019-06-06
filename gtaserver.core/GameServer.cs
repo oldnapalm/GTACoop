@@ -428,6 +428,8 @@ namespace GTAServer
                         SendChatMessageToPlayer(client, Motd);
                     }
 
+                    ConnectionEvents.Join(client);
+
                     break;
 
                 case NetConnectionStatus.Disconnected:
@@ -998,7 +1000,7 @@ namespace GTAServer
 
         public void SetPlayerPosition(Client player, Vector3 newPosition) => 
             SendNativeCallToPlayer(player, 0x06843DA7060A026B, new LocalPlayerArgument(), 
-                newPosition.X, newPosition.Y, newPosition.Z, 0, 0, 0, 1);
+                newPosition.X, newPosition.Y, newPosition.Z, 1, 0, 0, 1);
 
         public void GetPlayerPosition(Client player, Action<object> callback, string salt = "salt") =>
             GetNativeCallFromPlayer(player, salt, 0x3FEF770D40960D5A, new Vector3Argument(), 

@@ -29,7 +29,7 @@ namespace Freeroam.Commands
 
                 // TODO: allow server to set position
                 caller.SendNativeCall(0xAAA34F8A7CB32098, new LocalPlayerArgument()); // CLEAR_PED_TASKS_IMMEDIATELY
-                GameServer.SetPlayerPosition(caller, new Vector3(0, 0, 50));
+                GameServer.SetPlayerPosition(caller, Freeroam.Configuration.SpawnCoordinates);
 
                 caller.SendNativeCall(0xD4E8E24955024033, 500); // DO_SCREEN_FADE_IN
             });

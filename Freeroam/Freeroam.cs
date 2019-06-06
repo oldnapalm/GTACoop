@@ -2,6 +2,8 @@
 using Freeroam.Commands;
 using GTAServer;
 using GTAServer.PluginAPI;
+using GTAServer.PluginAPI.Events;
+using GTAServer.ProtocolMessages;
 using Microsoft.Extensions.Logging;
 
 namespace Freeroam
@@ -34,12 +36,20 @@ namespace Freeroam
                 _logger.LogError("Something got wrong while reading configuration of freeroam gamemode, the following exception was thrown: " + e.Message + ". Using default configuration");
                 Configuration = new FreeroamConfiguration();
             }
-
-            _logger.LogInformation("Loading commands");
             
             gameServer.Commands.Add("respawn", new RespawnCommand());
 
+            ConnectionEvents.OnJoin.Add(OnJoin);
+
             return true;
+        }
+
+        private void OnJoin(Client client)
+        {
+            if (Configuration.SpawnAtSpawn)
+            {
+                client.Position = Configuration.SpawnCoordinates;
+            }
         }
     }
 }

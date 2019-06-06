@@ -11,8 +11,9 @@ namespace GTAServer.PluginAPI.Events
         /// <summary>
         /// Called whenever a new connection request comes in.
         /// </summary>
-        public static List<Func<Client, ConnectionRequest, PluginResponse<ConnectionRequest>>> OnConnectionRequest 
-         = new List<Func<Client, ConnectionRequest, PluginResponse<ConnectionRequest>>>();
+        public static List<Func<Client, ConnectionRequest, PluginResponse<ConnectionRequest>>> OnConnectionRequest
+            = new List<Func<Client, ConnectionRequest, PluginResponse<ConnectionRequest>>>();
+
         /// <summary>
         /// Internal method. Triggers OnConnectionRequest
         /// </summary>
@@ -33,7 +34,18 @@ namespace GTAServer.PluginAPI.Events
                 if (!result.ContinuePluginProc) return result;
                 r = result.Data;
             }
+
             return result;
         }
+
+        /// <summary>
+        /// Called whenever a client has joined the server.
+        /// </summary>
+        public static List<Action<Client>> OnJoin = new List<Action<Client>>();
+        /// <summary>
+        /// Internal method. Triggers OnJoin.
+        /// </summary>
+        /// <param name="c">Client who joined the server</param>
+        internal static void Join(Client c) => OnJoin.ForEach(f => f(c));
     }
 }

@@ -22,15 +22,21 @@ namespace GTAServer.ProtocolMessages
         public Client KickedBy { get; set; }
         public bool Silent { get; set; }
 
+        public Vector3 Position
+        {
+            get => LastKnownPosition;
+            set => GameServer.SetPlayerPosition(this, value);
+        }
+
         // if the client is the console so it wil log messages instead of sending to a client which doesn't exist
         public bool Console { get; set; } = false;
 
-        private GameServer _gameServer { get; set; }
+        private GameServer GameServer { get; set; }
 
         public Client(NetConnection nc, GameServer gameServer)
         {
             NetConnection = nc;
-            _gameServer = gameServer;
+            GameServer = gameServer;
         }
 
         public void ApplyConnectionRequest(ConnectionRequest cr)
@@ -45,16 +51,16 @@ namespace GTAServer.ProtocolMessages
         {
             if (Console)
             {
-                _gameServer.logger.LogInformation(message);
+                GameServer.logger.LogInformation(message);
             }
             else {
-                _gameServer.SendChatMessageToPlayer(this, message);
+                GameServer.SendChatMessageToPlayer(this, message);
             }
         }
 
         public void SendNativeCall(ulong hash, params object[] arguments)
         {
-            _gameServer.SendNativeCallToPlayer(this, hash, arguments);
+            GameServer.SendNativeCallToPlayer(this, hash, arguments);
         }
     }
 }
