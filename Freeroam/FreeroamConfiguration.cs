@@ -5,8 +5,8 @@ using GTAServer.ProtocolMessages;
 
 namespace Freeroam
 {
-    class FreeroamConfiguration
+    public class FreeroamConfiguration
     {
-        public Vector3 SpawnCoordinates { get; set; }
+        public Vector3 SpawnCoordinates { get; set; } = new Vector3(0f, 0f, 200f);
     }
 }

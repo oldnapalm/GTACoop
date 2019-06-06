@@ -1,4 +1,5 @@
 ﻿using System;
+using Freeroam.Commands;
 using GTAServer;
 using GTAServer.PluginAPI;
 using Microsoft.Extensions.Logging;
@@ -15,12 +16,28 @@ namespace Freeroam
         public static GameServer GameServer;
         private static ILogger _logger;
 
+        public static FreeroamConfiguration Configuration;
+
         public bool OnEnable(GameServer gameServer, bool isAfterServerLoad)
         {
             GameServer = gameServer;
             _logger = Util.LoggerFactory.CreateLogger<Freeroam>();
 
-            _logger.LogInformation("Starting Freeroam gamemode");
+            _logger.LogInformation("Reading configuration");
+
+            try
+            {
+                Configuration = gameServer.InitConfiguration<FreeroamConfiguration>(typeof(Freeroam));
+            }
+            catch (Exception e)
+            {
+                _logger.LogError("Something got wrong while reading configuration of freeroam gamemode, the following exception was thrown: " + e.Message + ". Using default configuration");
+                Configuration = new FreeroamConfiguration();
+            }
+
+            _logger.LogInformation("Loading commands");
+            
+            gameServer.Commands.Add("respawn", new RespawnCommand());
 
             return true;
         }

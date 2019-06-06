@@ -1,6 +1,6 @@
 ﻿namespace GTAServer.PluginAPI
 {
-    public interface IPlugin
+    public interface IPlugin 
     {
         /// <summary>
         /// Name of the plugin
@@ -22,6 +22,6 @@
         /// <param name="gameServer">Game server object.</param>
         /// <param name="isAfterServerLoad">If the plugin is being started after the server has started.</param>
         /// <returns>If the plugin successfully loaded</returns>
-        bool OnEnable(GameServer gameServer, bool isAfterServerLoad);
+        bool OnEnable(GameServer gameServer, bool isAfterServerLoad);   
     }
 }

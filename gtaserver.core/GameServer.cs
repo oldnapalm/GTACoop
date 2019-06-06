@@ -734,6 +734,35 @@ namespace GTAServer
             }
         }
 
+        /// <summary>
+        /// Init a configuration for the current plugin, this will create a (pluginname).xml in the configuration option
+        /// </summary>
+        /// <param name="plugin">The current plugin class, the file will be named to the classname</param>
+        /// <returns>The provided configuration object</returns>
+        public T InitConfiguration<T>(Type plugin)
+        {
+            var name = plugin.Name.ToLower();
+            var path = Location + Path.DirectorySeparatorChar + "Configuration" + Path.DirectorySeparatorChar + name + ".xml";
+
+            var serializer = new XmlSerializer(typeof(T));
+            T cfg;
+
+            if (File.Exists(path))
+            {
+                cfg = Activator.CreateInstance<T>();
+                using (var stream = File.OpenRead(path)) cfg = (T)serializer.Deserialize(stream);
+                using (
+                    var stream = new FileStream(path, File.Exists(path) ? FileMode.Truncate : FileMode.Create,
+                        FileAccess.ReadWrite)) serializer.Serialize(stream, cfg);
+            }
+            else
+            {
+                using (var stream = File.OpenWrite(path)) serializer.Serialize(stream, cfg = Activator.CreateInstance<T>());
+            }
+
+            return cfg;
+        }
+
         public void SendToAll(object dataToSend, PacketType packetType, bool packetIsImportant)
         {
             var data = Util.SerializeBinary(dataToSend);

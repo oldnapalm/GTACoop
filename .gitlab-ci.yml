@@ -16,8 +16,10 @@ build:
         - "dotnet publish -r win7-x64 -c Release -o windows-Release"
         - "dotnet publish -r ubuntu.14.04-x64 -c Release -o linux-Release" 
         # add gamemodes to server
-        - "cd ../Freeroam/ && dotnet build -c Release && dotnet publish --no-dependencies -o ../gtaserver.core/publish/windows-Release/Gamemodes/"
-        - "cd ../Freeroam/ && dotnet build -c Release && dotnet publish --no-dependencies -o ../gtaserver.core/publish/linux-Release/Gamemodes/"
+        - "mkdir publish\windows-Release\Gamemodes"
+        - "mkdir publish\linux-Release\Gamemodes\"
+        - "cd ../Freeroam/ && dotnet build -c Release && dotnet publish --no-dependencies -o ..\gtaserver.core\publish\windows-Release\Gamemodes"
+        - "cd ../Freeroam/ && dotnet build -c Release && dotnet publish --no-dependencies -o ..\gtaserver.core\publish\linux-Release\Gamemodes\"
         - "cd ../gtaserver.core"
         # zip the builds
         - "zip -r windows-Release.zip windows-Release"
