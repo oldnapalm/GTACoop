@@ -27,7 +27,6 @@ namespace Freeroam.Commands
             {
                 Thread.Sleep(500);
 
-                // TODO: allow server to set position
                 caller.SendNativeCall(0xAAA34F8A7CB32098, new LocalPlayerArgument()); // CLEAR_PED_TASKS_IMMEDIATELY
                 GameServer.SetPlayerPosition(caller, Freeroam.Configuration.SpawnCoordinates);
 
