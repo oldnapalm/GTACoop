@@ -13,8 +13,4 @@
     <Folder Include="Events\" />
   </ItemGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="COPY &quot;$(TargetPath)&quot; &quot;C:\Users\Indra\source\repos\gta\gtaserver.core\bin\Debug\netcoreapp2.0\Gamemodes&quot;" />
-  </Target>
-
 </Project>
