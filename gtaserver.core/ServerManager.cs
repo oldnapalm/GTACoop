@@ -4,10 +4,10 @@ using System.Threading;
 using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
+using gtaserver.core.Commands;
 using Microsoft.Extensions.Logging;
 using GTAServer.PluginAPI;
 using SimpleConsoleLogger;
-using gtaserver.core.ServerSystem;
 using GTAServer.ProtocolMessages;
 using Sentry;
 
@@ -114,9 +114,7 @@ namespace GTAServer
                 }
             }
 
-            Plugins.Add(new SystemPlugin());
-
-            SystemPlugin.GameServer = _gameServer;
+            RegisterCommands();
 
             _logger.LogInformation("Plugins loaded. Enabling plugins...");
             foreach (var plugin in Plugins)
@@ -149,8 +147,7 @@ namespace GTAServer
             };
 
             // create a new client for console
-            _consoleClient = new Client(null, _gameServer) { Console = true };
-            _consoleClient.Name = "Console";
+            _consoleClient = new Client(null, _gameServer) {Console = true, Name = "Console"};
 
             while (true)
             {
@@ -209,6 +206,20 @@ namespace GTAServer
             return cfg;
         }
 
+        // register server commands
+        private static void RegisterCommands()
+        {
+            _gameServer.RegisterCommand("help", new HelpCommand());
+            _gameServer.RegisterCommand("tps", new TpsCommand());
+            _gameServer.RegisterCommand("about", new AboutCommand());
+            _gameServer.RegisterCommand("plugins", new PluginsCommand());
+
+            //_gameServer.RegisterCommand("say", new SayCommand());
+            //_gameServer.RegisterCommand("kick", new KickCommand());
+        }
+
         public static List<IPlugin> GetPlugins() => Plugins;
+
+        internal static GameServer GameServer => _gameServer;
     }
 }

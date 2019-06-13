@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using gtaserver.core.ServerSystem;
 using GTAServer;
 using GTAServer.PluginAPI;
 using GTAServer.ProtocolMessages;
@@ -28,7 +27,7 @@ namespace gtaserver.core.Commands
                 return;
             }
 
-            var client = SystemPlugin.GameServer.Clients.Where(x => x.DisplayName == string.Join(" ", args));
+            var client = ServerManager.GameServer.Clients.Where(x => x.DisplayName == string.Join(" ", args));
             if (!client.Any())
             {
                 caller.SendMessage("Player not found.");
@@ -36,7 +35,7 @@ namespace gtaserver.core.Commands
                 return;
             }
 
-            SystemPlugin.GameServer.KickPlayer(client.First(), "You have been kicked", false, caller);
+            ServerManager.GameServer.KickPlayer(client.First(), "You have been kicked", false, caller);
         }
     }
 }

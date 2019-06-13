@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using GTAServer.PluginAPI.Events;
+using GTAServer.ProtocolMessages;
 
 namespace Race
 {
     class Race
     {
-        private static bool _stopped = false;
-
         public Race()
         {
-            // TODO: get server tick system or something
+
         }
 
         private void OnTick()

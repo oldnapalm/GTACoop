@@ -10,10 +10,6 @@ namespace GTAServer.PluginAPI
     public interface ICommand
     {
         /// <summary>
-        /// Name of the command
-        /// </summary>
-        string CommandName { get; }
-        /// <summary>
         /// What shows in the help text for the command
         /// </summary>
         string HelpText { get; }

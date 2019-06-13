@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using GTAServer;
 using GTAServer.PluginAPI;
 using GTAServer.ProtocolMessages;
 

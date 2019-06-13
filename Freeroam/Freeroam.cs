@@ -37,7 +37,8 @@ namespace Freeroam
                 Configuration = new FreeroamConfiguration();
             }
             
-            gameServer.Commands.Add("respawn", new RespawnCommand());
+            GameServer.RegisterCommand("respawn", new RespawnCommand());
+            gameServer.RegisterCommand("car", new CarCommand());
 
             ConnectionEvents.OnJoin.Add(OnJoin);
 

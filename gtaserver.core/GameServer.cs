@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Runtime.Loader;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -15,7 +14,6 @@ using GTAServer.ProtocolMessages;
 using Lidgren.Network;
 using Microsoft.Extensions.Logging;
 using GTAServer.PluginAPI.Events;
-using gtaserver.core.Commands;
 
 namespace GTAServer
 {
@@ -44,6 +42,7 @@ namespace GTAServer
         public int CurrentTick { get; set; } = 0;
 
         public string Motd { get; set; } = "Welcome to this GTA CooP server!";
+        public readonly World.World World;
 
         public readonly Dictionary<string, ICommand> Commands = new Dictionary<string, ICommand>();
 
@@ -66,6 +65,8 @@ namespace GTAServer
             Port = port;
             MasterServer = "https://master.gtacoop.com/";
             BackupMasterServer = "http://clan-banderos.de/gta/";
+
+            World = new World.World(this);
 
             Config = new NetPeerConfiguration("GTAVOnlineRaces") { Port = port };
             Config.EnableMessageType(NetIncomingMessageType.ConnectionApproval);
@@ -763,6 +764,19 @@ namespace GTAServer
             }
 
             return cfg;
+        }
+
+        /// <summary>
+        /// Registers a command to the server
+        /// </summary>
+        /// <param name="command">The name of the command</param>
+        /// <param name="commandHandler">The class which will handle the command</param>
+        public void RegisterCommand(string command, ICommand commandHandler)
+        {
+            if(Commands.ContainsKey(command))
+                throw new Exception("A command with this name has already been registered");
+
+            Commands.Add(command, commandHandler);
         }
 
         public void SendToAll(object dataToSend, PacketType packetType, bool packetIsImportant)

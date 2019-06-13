@@ -11,5 +11,10 @@ namespace GTAServer.ProtocolMessages {
         public float Z { get; set; }
         [ProtoMember(4)]
         public float W { get; set; }
+
+        public override string ToString()
+        {
+            return $"<X: {X}, Y: {Y}, Z: {Z}, W: {W}>";
+        }
     }
 }

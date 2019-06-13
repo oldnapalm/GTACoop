@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Race.Objects
 {
-    class Race
+    class RaceObject
     {
         public string Name { get; set; }
         public string Description { get; set; }
