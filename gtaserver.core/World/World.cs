@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using GTAServer.ProtocolMessages;
+using GTAServer.World.Entities;
 using Microsoft.Extensions.Logging;
 
 namespace GTAServer.World
@@ -37,11 +38,12 @@ namespace GTAServer.World
             _logger.LogDebug("Created " + vehicle.Name);
         }
 
-        public void CreateVehicleWithPlayer(int model, Vector3 position, int heading, Client player, int seat = -1)
+        public void CreateVehicleWithPlayer(int model, Vector3 position, int heading, Client player, Action<Entity> callback, int seat = -1)
         {
             _gameServer.GetNativeCallFromPlayer(player, "spawn", 0xAF35D0D2583051B0, new IntArgument(), (vehid) =>
             {
                 player.SendNativeCall(0xF75B0D629E1C063D, new LocalPlayerArgument(), vehid, seat);
+                callback(new Entity((int)vehid, player));
             }, model, position.X, position.Y, position.Z, heading, false, false);
         }
     }
