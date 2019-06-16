@@ -179,7 +179,7 @@ namespace GTAServer
             TicksPerSecond = CurrentTick - _ticksLastSecond;
             _ticksLastSecond = CurrentTick;
 
-            Console.Title = "GTAServer - " + Name + " (" + Clients.Count + "/" + MaxPlayers + " players) - Port: " + Port + " - TPS: " + TicksPerSecond;
+            System.Console.Title = "GTAServer - " + Name + " (" + Clients.Count + "/" + MaxPlayers + " players) - Port: " + Port + " - TPS: " + TicksPerSecond;
 
         }
 
@@ -532,8 +532,6 @@ namespace GTAServer
                                 if (Commands.ContainsKey(cmdName))
                                 {
                                     var cmd = Commands[cmdName];
-                                    if (cmd.Restricted && !client.Console) return;
-
                                     cmd.OnCommandExec(client, chatData);
 
                                     return;

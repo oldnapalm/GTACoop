@@ -1,10 +1,13 @@
 ﻿using System;
+using static System.Console;
 using System.Collections.Generic;
 using System.Threading;
 using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
-using gtaserver.core.Commands;
+using GTAServer.Commands;
+using GTAServer.Console;
+using GTAServer.Console.Modules;
 using Microsoft.Extensions.Logging;
 using GTAServer.PluginAPI;
 using SimpleConsoleLogger;
@@ -47,7 +50,8 @@ namespace GTAServer
             CreateNeededFiles();
 
             // can't use logger here since the logger config depends on if debug mode is on or off
-            Console.WriteLine("Reading server configuration...");
+            WriteLine("Reading server configuration...");
+
             _gameServerConfiguration = LoadServerConfiguration(Location + Path.DirectorySeparatorChar + "Configuration" + Path.DirectorySeparatorChar + "serverSettings.xml");
             if (!_debugMode) _debugMode = _gameServerConfiguration.DebugMode;
 
@@ -129,7 +133,7 @@ namespace GTAServer
 
             var t = new Timer(DoServerTick, _gameServer, 0, _tickEvery);
 
-            Console.CancelKeyPress += (sender, e) =>
+            CancelKeyPress += (sender, e) =>
             {
                 _logger.LogInformation("Kicking all clients");
 
@@ -146,31 +150,13 @@ namespace GTAServer
                 Environment.Exit(0);
             };
 
-            // create a new client for console
-            _consoleClient = new Client(null, _gameServer) {Console = true, Name = "Console"};
+            ConsoleInstance instance = new ConsoleInstance(_logger);
+            instance.AddModule(new CommandsModule());
+            instance.AddModule(new ServerCommandsModule());
 
-            while (true)
-            {
-                var msg = Console.ReadLine();
+            instance.Start();
 
-                if (string.IsNullOrWhiteSpace(msg)) continue;
-                var command = msg.Trim().Split(" ")[0];
-
-                if(_gameServer.Commands.Any(x => x.Key == command))
-                {
-                    // create fake chat data with message
-                    var chatData = new ChatData
-                    {
-                        Message = msg
-                    };
-
-                    _gameServer.Commands.Single(x => x.Key == command).Value.OnCommandExec(_consoleClient, chatData);
-                }
-                else
-                {
-                    _logger.LogInformation("Command not found");
-                }
-            }
+            while(true) Thread.Sleep(1);
         }
 
         public static void DoServerTick(object serverObject)
@@ -199,7 +185,7 @@ namespace GTAServer
             }
             else
             {
-                Console.WriteLine("No configuration found, creating a new one.");
+                WriteLine("No configuration found, creating a new one.");
                 using (var stream = File.OpenWrite(path)) ser.Serialize(stream, cfg = new ServerConfiguration());
             }
 
@@ -214,7 +200,6 @@ namespace GTAServer
             _gameServer.RegisterCommand("about", new AboutCommand());
             _gameServer.RegisterCommand("plugins", new PluginsCommand());
 
-            //_gameServer.RegisterCommand("say", new SayCommand());
             //_gameServer.RegisterCommand("kick", new KickCommand());
         }
 

@@ -4,15 +4,13 @@ using GTAServer;
 using GTAServer.PluginAPI;
 using GTAServer.ProtocolMessages;
 
-namespace gtaserver.core.Commands
+namespace GTAServer.Commands
 {
     class AboutCommand : ICommand
     {
         public string CommandName => "about";
 
         public string HelpText => "Shows information about the current server";
-
-        public bool Restricted => false;
 
         public void OnCommandExec(Client caller, ChatData chatData)
         {

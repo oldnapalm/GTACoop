@@ -4,7 +4,7 @@ using System;
 using System.Linq;
 using GTAServer;
 
-namespace gtaserver.core.Commands
+namespace GTAServer.Commands
 {
     class HelpCommand : ICommand
     {
@@ -12,13 +12,10 @@ namespace gtaserver.core.Commands
 
         public string HelpText => "Shows a list of commands";
 
-        public bool Restricted => false;
-
         public void OnCommandExec(Client caller, ChatData chatData)
         {
             caller.SendMessage("Available commands:\n" +
-                string.Join(", ", ServerManager.GameServer.Commands.Where(x => (!caller.Console) ? !x.Value.Restricted : true).
-                Select(x => (caller.Console) ? x.Key : "/" + x.Key)));
+                string.Join(", ", ServerManager.GameServer.Commands.Select(x => (caller.Console) ? x.Key : "/" + x.Key)));
         }
     }
 }

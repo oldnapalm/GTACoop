@@ -6,15 +6,13 @@ using GTAServer;
 using GTAServer.PluginAPI;
 using GTAServer.ProtocolMessages;
 
-namespace gtaserver.core.Commands
+namespace GTAServer.Commands
 {
     class KickCommand : ICommand
     {
         public string CommandName => "kick";
 
         public string HelpText => "Kicks a user from the server";
-
-        public bool Restricted => true;
 
         public void OnCommandExec(Client caller, ChatData chatData)
         {

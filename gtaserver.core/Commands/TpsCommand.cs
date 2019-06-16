@@ -2,15 +2,13 @@
 using GTAServer.PluginAPI;
 using GTAServer.ProtocolMessages;
 
-namespace gtaserver.core.Commands
+namespace GTAServer.Commands
 {
     class TpsCommand : ICommand
     {
         public string CommandName => "tps";
 
         public string HelpText => "Shows the server tick per seconds";
-
-        public bool Restricted => false;
 
         public void OnCommandExec(Client caller, ChatData chatData)
         {
