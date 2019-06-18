@@ -25,7 +25,6 @@ namespace GTAServer
         private static readonly string Location = System.AppContext.BaseDirectory;
 
         private static bool _debugMode = false;
-        private static Client _consoleClient;
         private static int _tickEvery = 10;
 
         private static void CreateNeededFiles()
