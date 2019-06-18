@@ -13,6 +13,10 @@ dotnet build -r ubuntu.14.04-x64 -c Release
 dotnet publish -r win7-x64 -c Release -o publish/windows-Release
 dotnet publish -r ubuntu.14.04-x64 -c Release -o publish/linux-Release
 
+# Version file
+echo -e "# This file contains the build commit id for versioning DO NOT MODIFY\n$CI_COMMIT_SHA\n$CI_COMMIT_REF_NAME" > publish/linux-Release/version
+echo -e "# This file contains the build commit id for versioning DO NOT MODIFY\n$CI_COMMIT_SHA\n$CI_COMMIT_REF_NAME" > publish/windows-Release/version
+
 # Automaticly build gamemodes and add them to the server
 
 mkdir publish/windows-Release/Gamemodes
@@ -21,8 +25,8 @@ mkdir publish/linux-Release/Gamemodes
 cd ../Freeroam
 dotnet build -c Release
 
-dotnet publish --no-dependencies -o ../gtaserver.core/publish/windows-Release/Gamemodes
-dotnet publish --no-dependencies -o ../gtaserver.core/publish/linux-Release/Gamemodes
+#dotnet publish --no-dependencies -o ../gtaserver.core/publish/windows-Release/Gamemodes
+#dotnet publish --no-dependencies -o ../gtaserver.core/publish/linux-Release/Gamemodes
 
 cd ../gtaserver.core
 

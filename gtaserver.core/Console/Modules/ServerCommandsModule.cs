@@ -8,10 +8,11 @@ namespace GTAServer.Console.Modules
     {
         public void OnEnable(ConsoleInstance instance)
         {
+            var version = VersionModule.ReadVersion(out var branch);
+
             instance.AddCommand("about", args =>
             {
-                instance.WriteLn("This server is running GTAServer.core");
-                // TODO: version and info
+                instance.WriteLn($"This server is running GTAServer.core, commit {version}. For more info see gtacoop.com");
             });
 
             instance.AddCommand("tps", args =>
@@ -21,7 +22,7 @@ namespace GTAServer.Console.Modules
 
             instance.AddCommand("version", args =>
             {
-                // TODO: add version stuff
+                instance.WriteLn($"You are running commit {version} ({branch})");
             });
         }
     }

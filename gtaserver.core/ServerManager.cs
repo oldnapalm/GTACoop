@@ -153,6 +153,8 @@ namespace GTAServer
             instance.AddModule(new CommandsModule());
             instance.AddModule(new ServerCommandsModule());
 
+            instance.AddModule(new VersionModule());
+
             instance.Start();
 
             while(true) Thread.Sleep(1);
