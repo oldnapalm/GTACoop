@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using static System.Console;
 using System.Collections.Generic;
 using System.Threading;
@@ -73,7 +74,21 @@ namespace GTAServer
             {
                 SentrySdk.Init("https://61668555fb9846bd8a2451366f50e5d3@sentry.io/1320932");
 
-                SentrySdk.ConfigureScope(scope => scope.SetExtra("configuration", _gameServerConfiguration));
+                SentrySdk.ConfigureScope(scope =>
+                {
+                    // add configuration to crash reports
+                    scope.SetExtra("configuration", _gameServerConfiguration);
+
+                    // also add branch and commit so bugs can be reproduced on that version
+                    var commit = VersionModule.ReadVersion(out var branch);
+                    var tags = new List<KeyValuePair<string, string>>()
+                    {
+                        new KeyValuePair<string, string>("commit", commit),
+                        new KeyValuePair<string, string>("branch", branch)
+                    };
+
+                    scope.SetTags(tags);
+                });
             }
 
             if (_gameServerConfiguration.ServerVariables.Any(v => v.Key == "tickEvery"))
