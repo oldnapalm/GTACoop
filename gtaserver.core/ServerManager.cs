@@ -80,14 +80,17 @@ namespace GTAServer
                     scope.SetExtra("configuration", _gameServerConfiguration);
 
                     // also add branch and commit so bugs can be reproduced on that version
-                    var commit = VersionModule.ReadVersion(out var branch);
-                    var tags = new List<KeyValuePair<string, string>>()
+                    if (File.Exists("version"))
                     {
-                        new KeyValuePair<string, string>("commit", commit),
-                        new KeyValuePair<string, string>("branch", branch)
-                    };
+                        var commit = VersionModule.ReadVersion(out var branch);
+                        var tags = new List<KeyValuePair<string, string>>()
+                        {
+                            new KeyValuePair<string, string>("commit", commit),
+                            new KeyValuePair<string, string>("branch", branch)
+                        };
 
-                    scope.SetTags(tags);
+                        scope.SetTags(tags);
+                    }
                 });
             }
 

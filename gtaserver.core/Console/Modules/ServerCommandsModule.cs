@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 namespace GTAServer.Console.Modules
@@ -8,7 +9,11 @@ namespace GTAServer.Console.Modules
     {
         public void OnEnable(ConsoleInstance instance)
         {
-            var version = VersionModule.ReadVersion(out var branch);
+            string version = "Unknown", branch = "Unknown";
+            if (File.Exists("version"))
+            {
+                VersionModule.ReadVersion(out branch);
+            }
 
             instance.AddCommand("about", args =>
             {
