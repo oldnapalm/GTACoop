@@ -15,7 +15,7 @@ namespace GTAServer.Commands
         public void OnCommandExec(Client caller, ChatData chatData)
         {
             caller.SendMessage("Available commands:\n" +
-                string.Join(", ", ServerManager.GameServer.Commands.Select(x => (caller.Console) ? x.Key : "/" + x.Key)));
+                string.Join(", ", ServerManager.GameServer.Commands.Select(x => "/" + x.Key)));
         }
     }
 }

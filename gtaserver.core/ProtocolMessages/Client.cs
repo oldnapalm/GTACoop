@@ -24,12 +24,9 @@ namespace GTAServer.ProtocolMessages
 
         public Vector3 Position
         {
-            get => LastKnownPosition;
-            set => GameServer.SetPlayerPosition(this, value);
+            get { return LastKnownPosition; }
+            set { GameServer.SetPlayerPosition(this, value); }
         }
-
-        // if the client is the console so it wil log messages instead of sending to a client which doesn't exist
-        public bool Console { get; set; } = false;
 
         private GameServer GameServer { get; set; }
 
@@ -49,13 +46,7 @@ namespace GTAServer.ProtocolMessages
 
         public void SendMessage(string message)
         {
-            if (Console)
-            {
-                GameServer.logger.LogInformation(message);
-            }
-            else {
-                GameServer.SendChatMessageToPlayer(this, message);
-            }
+            GameServer.SendChatMessageToPlayer(this, message);
         }
 
         public void SendNativeCall(ulong hash, params object[] arguments)

@@ -12,7 +12,7 @@ namespace GTAServer.World
     {
         private readonly GameServer _gameServer;
 
-        private int lastIndex = 0;
+        private int _lastIndex = 0;
         private readonly ILogger _logger;
 
         public World(GameServer gameServer)
@@ -25,7 +25,7 @@ namespace GTAServer.World
         {
             var vehicle = new VehicleData()
             {
-                Name = "Vehicle " + lastIndex++,
+                Name = "Vehicle " + _lastIndex++,
                 Position = position,
                 IsEngineRunning = engineRunning,
                 VehicleModelHash = model,

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace GTAServer.Console.Modules
@@ -17,18 +18,23 @@ namespace GTAServer.Console.Modules
 
             instance.AddCommand("about", args =>
             {
-                instance.WriteLn($"This server is running GTAServer.core, commit {version}. For more info see gtacoop.com");
+                instance.Log($"This server is running GTAServer.core, commit {version}. For more info see gtacoop.com");
             });
 
             instance.AddCommand("tps", args =>
             {
-                instance.WriteLn("TPS: " + ServerManager.GameServer.TicksPerSecond);
+                instance.Log("TPS: " + ServerManager.GameServer.TicksPerSecond);
             });
 
             instance.AddCommand("version", args =>
             {
-                instance.WriteLn($"You are running commit {version} ({branch})");
+                instance.Log($"You are running commit {version} ({branch})");
             });
         }
+
+        public string Name => "Server commands module";
+
+        public string Description =>
+            "Contains helpful console commands which gives info about the server; tps, version build etc";
     }
 }

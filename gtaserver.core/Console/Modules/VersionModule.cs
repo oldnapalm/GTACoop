@@ -7,7 +7,6 @@ using GTAServer.Console;
 using GTAServer.Console.Modules;
 using Microsoft.Extensions.Logging;
 using System.Linq;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace GTAServer.Console.Modules
@@ -97,5 +96,10 @@ namespace GTAServer.Console.Modules
             branch = lines[1]; // assume branch is always on second line (if not modified by user)
             return lines[0];
         }
+
+        public string Name => "Version module";
+
+        public string Description =>
+            "Checks current server commit and do a version check";
     }
 }

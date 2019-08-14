@@ -14,7 +14,7 @@ namespace GTAServer.Console.Modules
             {
                 var clients = ServerManager.GameServer.Clients;
 
-                instance.WriteLn($"There are {clients.Count} clients connected:\n" +
+                instance.Log($"There are {clients.Count} clients connected:\n" +
                     string.Join("\n", clients.Select((c, i) => $"{i} {c.DisplayName} {c.Latency}ms")));
             });
 
@@ -23,7 +23,7 @@ namespace GTAServer.Console.Modules
                 if (args.Count > 0)
                 {
                     ServerManager.GameServer.SendChatMessageToAll(string.Join(" ", args));
-                    instance.WriteLn("[Chat] <Server>: " + string.Join(" ", args));
+                    instance.Log("[Chat] <Server>: " + string.Join(" ", args));
                 }
             });
 
@@ -31,7 +31,7 @@ namespace GTAServer.Console.Modules
             {
                 if (!args.Any())
                 {
-                    instance.WriteLn("Please specify a player you want to kick.");
+                    instance.Log("Please specify a player you want to kick.");
 
                     return;
                 }
@@ -39,7 +39,7 @@ namespace GTAServer.Console.Modules
                 var client = ServerManager.GameServer.Clients.Where(x => x.DisplayName == string.Join(" ", args));
                 if (!client.Any())
                 {
-                    instance.WriteLn("Player not found.");
+                    instance.Log("Player not found.");
 
                     return;
                 }
@@ -47,5 +47,10 @@ namespace GTAServer.Console.Modules
                 ServerManager.GameServer.KickPlayer(client.First(), "You have been kicked");
             });
         }
+
+        public string Name => "Commands module";
+
+        public string Description => 
+            "Contains default console commands like say, kick, who";
     }
 }
