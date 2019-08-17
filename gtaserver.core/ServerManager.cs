@@ -47,6 +47,7 @@ namespace GTAServer
 #if DEBUG
             _debugMode = true;
 #endif
+
             CreateNeededFiles();
 
             // can't use logger here since the logger config depends on if debug mode is on or off
@@ -80,7 +81,7 @@ namespace GTAServer
                     scope.SetExtra("configuration", _gameServerConfiguration);
 
                     // also add branch and commit so bugs can be reproduced on that version
-                    if (File.Exists("version"))
+                    /*if (File.Exists("version"))
                     {
                         var commit = VersionModule.ReadVersion(out var branch);
                         var tags = new List<KeyValuePair<string, string>>()
@@ -90,7 +91,7 @@ namespace GTAServer
                         };
 
                         scope.SetTags(tags);
-                    }
+                    }*/
                 });
             }
 
@@ -171,7 +172,7 @@ namespace GTAServer
             instance.AddModule(new CommandsModule());
             instance.AddModule(new ServerCommandsModule());
 
-            instance.AddModule(new VersionModule());
+            //instance.AddModule(new VersionModule());
 
             instance.Start();
 
