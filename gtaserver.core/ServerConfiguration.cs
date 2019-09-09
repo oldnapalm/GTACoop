@@ -29,6 +29,7 @@ namespace GTAServer
         public bool DebugMode { get; set; } = false;
 
         public string Motd { get; set; } = "Welcome to this GTA CooP server!";
+        public bool UseGroups { get; set; } = true;
 
         public List<string> ServerPlugins { get; set; } = new List<string>() {};
 

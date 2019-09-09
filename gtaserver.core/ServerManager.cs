@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using GTAServer.PluginAPI;
 using SimpleConsoleLogger;
 using GTAServer.ProtocolMessages;
+using GTAServer.Users;
 using Sentry;
 
 namespace GTAServer
@@ -125,6 +126,13 @@ namespace GTAServer
             };
             _gameServer.Start();
 
+            // Console module manager
+            ConsoleInstance instance = new ConsoleInstance(_logger);
+
+            // User module
+            if (_gameServerConfiguration.UseGroups)
+                instance.AddModule(new UserModule());
+
             // Plugin Code
             _logger.LogInformation("Loading plugins");
             //Plugins = PluginLoader.LoadPlugin("TestPlugin");
@@ -168,7 +176,6 @@ namespace GTAServer
                 Environment.Exit(0);
             };
 
-            ConsoleInstance instance = new ConsoleInstance(_logger);
             instance.AddModule(new CommandsModule());
             instance.AddModule(new ServerCommandsModule());
 
@@ -189,6 +196,9 @@ namespace GTAServer
             catch (Exception e)
             {
                 _logger.LogError("Exception while ticking", e.Message);
+                if (_debugMode)
+                    // rethrow exception
+                    throw;
             }
         }
         private static ServerConfiguration LoadServerConfiguration(string path)

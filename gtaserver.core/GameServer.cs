@@ -44,7 +44,7 @@ namespace GTAServer
         public string Motd { get; set; } = "Welcome to this GTA CooP server!";
         public readonly World.World World;
 
-        public readonly Dictionary<string, ICommand> Commands = new Dictionary<string, ICommand>();
+        public readonly Dictionary<string, Action<Client, ChatData>> Commands = new Dictionary<string, Action<Client, ChatData>>();
 
         public int TicksPerSecond { get; set; }
 
@@ -470,6 +470,9 @@ namespace GTAServer
                             {
                                 logger.LogInformation($"Player disconnected: {client.DisplayName}@{msg.SenderEndPoint.Address.ToString()}");
                             }
+
+                            ConnectionEvents.Disconnect(client);
+
                             Clients.Remove(client);
                         }
                         break;
@@ -531,8 +534,7 @@ namespace GTAServer
                                 var cmdName = cmdArgs[0].Remove(0, 1);
                                 if (Commands.ContainsKey(cmdName))
                                 {
-                                    var cmd = Commands[cmdName];
-                                    cmd.OnCommandExec(client, chatData);
+                                    Commands[cmdName](client, chatData);
 
                                     return;
                                 }
@@ -769,12 +771,23 @@ namespace GTAServer
         /// </summary>
         /// <param name="command">The name of the command</param>
         /// <param name="commandHandler">The class which will handle the command</param>
+        [Obsolete]
         public void RegisterCommand(string command, ICommand commandHandler)
+        {
+            RegisterCommand(command, commandHandler.OnCommandExec);
+        }
+
+        /// <summary>
+        /// Registers a command to the server
+        /// </summary>
+        /// <param name="command">The name of the command</param>
+        /// <param name="callback">The callback which will get triggered while executing the command</param>
+        public void RegisterCommand(string command, Action<Client, ChatData> callback)
         {
             if(Commands.ContainsKey(command))
                 throw new Exception("A command with this name has already been registered");
 
-            Commands.Add(command, commandHandler);
+            Commands.Add(command, callback);
         }
 
         public void SendToAll(object dataToSend, PacketType packetType, bool packetIsImportant)

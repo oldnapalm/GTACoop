@@ -60,6 +60,7 @@ namespace GTAServer.Console
 
                     TextEntered?.Invoke(this, input);
                 }
+                // ReSharper disable once FunctionNeverReturns
             }) {Name = "Console Instance"};
 
             thread.Start();

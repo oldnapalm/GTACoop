@@ -45,7 +45,17 @@ namespace GTAServer.PluginAPI.Events
         /// <summary>
         /// Internal method. Triggers OnJoin.
         /// </summary>
-        /// <param name="c">Client who joined the server</param>
+        /// <param name="c">Client which joined the server</param>
         internal static void Join(Client c) => OnJoin.ForEach(f => f(c));
+
+        /// <summary>
+        /// Called whenever a client has disconnected from the server.
+        /// </summary>
+        public static List<Action<Client>> OnDisconnect = new List<Action<Client>>();
+        /// <summary>
+        /// Internal method. Triggers OnDisconnect.
+        /// </summary>
+        /// <param name="c">Client which disconnected</param>
+        internal static void Disconnect(Client c) => OnDisconnect.ForEach(f => f(c));
     }
 }
