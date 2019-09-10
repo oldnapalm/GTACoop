@@ -31,20 +31,20 @@ namespace GTAServer.Console.Modules
             {
                 if (!args.Any())
                 {
-                    instance.Log("Please specify a player you want to kick.");
+                    instance.Log("Please specify the player you want to kick");
 
                     return;
                 }
 
-                var client = ServerManager.GameServer.Clients.Where(x => x.DisplayName == string.Join(" ", args));
-                if (!client.Any())
+                var client = ServerManager.GameServer.Clients.Find(x => x.DisplayName == string.Join(" ", args));
+                if (client == null)
                 {
-                    instance.Log("Player not found.");
+                    instance.Log("Player not found");
 
                     return;
                 }
 
-                ServerManager.GameServer.KickPlayer(client.First(), "You have been kicked");
+                ServerManager.GameServer.KickPlayer(client, "You have been kicked");
             });
         }
 

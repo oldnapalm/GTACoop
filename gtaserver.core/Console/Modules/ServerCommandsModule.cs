@@ -28,10 +28,10 @@ namespace GTAServer.Console.Modules
                 instance.Log("TPS: " + ServerManager.GameServer.TicksPerSecond);
             });
 
-            instance.AddCommand("version", args =>
+            /*instance.AddCommand("version", args =>
             {
                 instance.Log($"You are running commit {version} ({branch})");
-            });
+            });*/
 
             // command showing dotnet version this server is running on will always be 2.2 if ran by publish build
             instance.AddCommand("_dotnet", args =>

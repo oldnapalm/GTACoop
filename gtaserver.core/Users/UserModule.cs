@@ -119,7 +119,7 @@ namespace GTAServer.Users
             }
             else
             {
-                _logger.LogInformation("No groups configuration found, creating a new one.");
+                _logger.LogInformation("No groups configuration found, creating a new one");
                 using (var stream = File.OpenWrite(path))
                 {
                     ser.Serialize(stream, cfg = new GroupsConfiguration(

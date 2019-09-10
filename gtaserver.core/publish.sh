@@ -24,11 +24,11 @@ printf "# This file contains the build commit id for versioning DO NOT MODIFY\n$
 
 # Automaticly build gamemodes and add them to the server
 
-mkdir publish/windows-Release/Gamemodes
-mkdir publish/linux-Release/Gamemodes
+#mkdir publish/windows-Release/Gamemodes
+#mkdir publish/linux-Release/Gamemodes
 
-cd ../Freeroam
-dotnet build -c Release
+#cd ../Freeroam
+#dotnet build -c Release
 
 #dotnet publish --no-dependencies -o ../gtaserver.core/publish/windows-Release/Gamemodes
 #dotnet publish --no-dependencies -o ../gtaserver.core/publish/linux-Release/Gamemodes
