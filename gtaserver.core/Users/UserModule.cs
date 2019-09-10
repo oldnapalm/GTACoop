@@ -73,15 +73,37 @@ namespace GTAServer.Users
 
             groups.Groups.ForEach(group =>
             {
+                var permissions = GetPermissions(groups.Groups, group.Name);
+
                 try
                 {
-                    Groups.Add(group.Name, group.Permissions.Select(Permission.Parse).ToList());
+                    Groups.Add(group.Name, permissions);
                 }
                 catch (Exception e)
                 {
                     _logger.LogWarning($"An exception occured while loading group '{group.Name}': {e.Message}");
                 }
             });
+        }
+
+        public List<Permission> GetPermissions(List<Group> groups, string group)
+        {
+            var permissions = new List<Permission>();
+
+            groups.Find(x => x.Name == group).Permissions.ForEach(x =>
+            {
+                var permission = Permission.Parse(x);
+
+                if (permission.Type == PermissionType.Group && groups.Any(y => y.Name == permission.Name))
+                {
+                    permissions.AddRange(GetPermissions(groups, permission.Name));
+                    return;
+                }
+
+                permissions.Add(permission);
+            });
+
+            return permissions;
         }
 
         public GroupsConfiguration LoadGroupsConfiguration()
