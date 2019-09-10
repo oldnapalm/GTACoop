@@ -199,6 +199,13 @@ namespace GTAServer.Users
                 };
                 Users.Add(user);
 
+                if (!Groups.ContainsKey(user.Group))
+                {
+                    SetGroup(user.Id, "user");
+
+                    _logger.LogWarning($"{user.Username} had an unknown group and has been reset to user");
+                }
+
                 client.SendMessage("Welcome back, use /login (password) to login to your account");
             }
             else
