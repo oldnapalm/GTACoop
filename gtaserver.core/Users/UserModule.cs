@@ -4,21 +4,23 @@ using System.Text;
 using System.Data.SQLite;
 using System.IO;
 using System.Linq;
+using System.Xml.Serialization;
 using GTAServer.Console;
 using GTAServer.Console.Modules;
 using GTAServer.PluginAPI.Events;
 using GTAServer.ProtocolMessages;
+using GTAServer.Users.Groups;
 using Microsoft.Extensions.Logging;
 
 namespace GTAServer.Users
 {
-    internal class UserModule : IModule
+    internal class UserModule : IModule, IPermissionProvider
     {
         private ILogger _logger;
         private SQLiteConnection _connection;
 
         private static readonly List<User> Users = new List<User>();
-        private static readonly Dictionary<string, List<string>> Groups = new Dictionary<string, List<string>>();
+        private static readonly Dictionary<string, List<Permission>> Groups = new Dictionary<string, List<Permission>>();
 
         public void OnEnable(ConsoleInstance instance)
         {
@@ -67,12 +69,47 @@ namespace GTAServer.Users
 
         public void LoadGroups()
         {
-            var groups = ServerManager.GameServer.InitConfiguration<Groups.Groups>(typeof(GTAServer.Users.Groups.Groups));
+            var groups = LoadGroupsConfiguration();
 
-            groups.GroupsList.ForEach(group =>
+            groups.Groups.ForEach(group =>
             {
-                Groups.Add(group.Name, group.Permissions);
+                try
+                {
+                    Groups.Add(group.Name, group.Permissions.Select(Permission.Parse).ToList());
+                }
+                catch (Exception e)
+                {
+                    _logger.LogWarning($"An exception occured while loading group '{group.Name}': {e.Message}");
+                }
             });
+        }
+
+        public GroupsConfiguration LoadGroupsConfiguration()
+        {
+            var ser = new XmlSerializer(typeof(GroupsConfiguration));
+            var path = System.AppContext.BaseDirectory + Path.DirectorySeparatorChar + "Configuration" +
+                       Path.DirectorySeparatorChar + "groups.xml";
+
+            GroupsConfiguration cfg = null;
+            if (File.Exists(path))
+            {
+                using (var stream = File.OpenRead(path)) cfg = (GroupsConfiguration)ser.Deserialize(stream);
+            }
+            else
+            {
+                _logger.LogInformation("No groups configuration found, creating a new one.");
+                using (var stream = File.OpenWrite(path))
+                {
+                    ser.Serialize(stream, cfg = new GroupsConfiguration(
+                        // default groups
+                        new Group("admin", "command.kick", "command.tp", "group.user"),
+                        new Group("user", "command.login", "command.register", "command.about", "command.help",
+                            "command.plugins", "command.tps"))
+                    );
+                }
+            }
+
+            return cfg;
         }
 
         /// <summary>
@@ -140,7 +177,7 @@ namespace GTAServer.Users
                 };
                 Users.Add(user);
 
-                client.SendMessage("Use /login (password) to login to your account");
+                client.SendMessage("Welcome back, use /login (password) to login to your account");
             }
             else
             {
@@ -237,6 +274,14 @@ namespace GTAServer.Users
             }
 
             Login(client);
+        }
+
+        public bool HasPermission(Client client, PermissionType type, string permission)
+        {
+            var user = Users.Find(x => x.Client == client);
+            var group = (user == null) ? "user" : user.Group;
+
+            return Groups[group].Any(x => x.Type == type && x.Name == permission);
         }
 
         public string Name => "User module";

@@ -131,7 +131,12 @@ namespace GTAServer
 
             // User module
             if (_gameServerConfiguration.UseGroups)
-                instance.AddModule(new UserModule());
+            {
+                var userModule = new UserModule();
+                _gameServer.PermissionProvider = userModule;
+
+                instance.AddModule(userModule);
+            }
 
             // Plugin Code
             _logger.LogInformation("Loading plugins");

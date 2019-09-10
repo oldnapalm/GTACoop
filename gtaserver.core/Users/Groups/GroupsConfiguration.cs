@@ -6,14 +6,18 @@ using System.Xml.Serialization;
 
 namespace GTAServer.Users.Groups
 {
-    public class Groups
+    public class GroupsConfiguration
     {
-        [XmlElement(ElementName = "Groups")]
-        public List<Group> GroupsList { get; set; } = new List<Group>()
+        public GroupsConfiguration() { }
+
+        public GroupsConfiguration(params Group[] groups)
         {
-            new Group("admin", "command.kick", "command.tp", "group.user"),
-            new Group("user", "command.login", "command.register", "command.about", "command.help", "command.plugins", "command.tps")
-        };
+            Groups = groups.ToList();
+        }
+
+        [XmlArray(ElementName = "Groups")]
+        [XmlArrayItem(ElementName = "Group")]
+        public List<Group> Groups { get; set; } = new List<Group>();
     }
 
     public class Group

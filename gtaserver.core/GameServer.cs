@@ -14,6 +14,8 @@ using GTAServer.ProtocolMessages;
 using Lidgren.Network;
 using Microsoft.Extensions.Logging;
 using GTAServer.PluginAPI.Events;
+using GTAServer.Users;
+using GTAServer.Users.Groups;
 
 namespace GTAServer
 {
@@ -43,6 +45,7 @@ namespace GTAServer
 
         public string Motd { get; set; } = "Welcome to this GTA CooP server!";
         public readonly World.World World;
+        public IPermissionProvider PermissionProvider { get; set; }
 
         public readonly Dictionary<string, Action<Client, ChatData>> Commands = new Dictionary<string, Action<Client, ChatData>>();
 
@@ -534,7 +537,14 @@ namespace GTAServer
                                 var cmdName = cmdArgs[0].Remove(0, 1);
                                 if (Commands.ContainsKey(cmdName))
                                 {
-                                    Commands[cmdName](client, chatData);
+                                    if (HasPermission(client, PermissionType.Command, cmdName))
+                                    {
+                                        Commands[cmdName](client, chatData);
+                                    }
+                                    else
+                                    {
+                                        SendChatMessageToPlayer(client, "You don't have the permission to execute this command");
+                                    }
 
                                     return;
                                 }
@@ -788,6 +798,21 @@ namespace GTAServer
                 throw new Exception("A command with this name has already been registered");
 
             Commands.Add(command, callback);
+        }
+
+        /// <summary>
+        /// Returns if the <see cref="Client"/> has the provided permissions
+        /// </summary>
+        /// <param name="client">The client to check on</param>
+        /// <param name="type">The permission type</param>
+        /// <param name="permission">The permission name to check</param>
+        /// <returns></returns>
+        public bool HasPermission(Client client, PermissionType type, string permission)
+        {
+            if (PermissionProvider == null)
+                return false;
+
+            return PermissionProvider.HasPermission(client, type, permission);
         }
 
         public void SendToAll(object dataToSend, PacketType packetType, bool packetIsImportant)
