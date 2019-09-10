@@ -12,12 +12,13 @@ using Microsoft.Extensions.Logging;
 
 namespace GTAServer.Users
 {
-    class UserModule : IModule
+    internal class UserModule : IModule
     {
         private ILogger _logger;
         private SQLiteConnection _connection;
 
-        public static readonly List<User> Users = new List<User>();
+        private static readonly List<User> Users = new List<User>();
+        private static readonly Dictionary<string, List<string>> Groups = new Dictionary<string, List<string>>();
 
         public void OnEnable(ConsoleInstance instance)
         {
@@ -54,11 +55,24 @@ namespace GTAServer.Users
                 , _connection).ExecuteNonQuery();
             }
 
+            LoadGroups();
+
             ConnectionEvents.OnJoin.Add(OnJoin);
             ConnectionEvents.OnDisconnect.Add(OnLeave);
 
             ServerManager.GameServer.RegisterCommand("register", OnRegister);
             ServerManager.GameServer.RegisterCommand("login", OnLogin);
+            instance.AddCommand("setgroup", OnSetGroup);
+        }
+
+        public void LoadGroups()
+        {
+            var groups = ServerManager.GameServer.InitConfiguration<Groups.Groups>(typeof(GTAServer.Users.Groups.Groups));
+
+            groups.GroupsList.ForEach(group =>
+            {
+                Groups.Add(group.Name, group.Permissions);
+            });
         }
 
         /// <summary>
@@ -98,6 +112,17 @@ namespace GTAServer.Users
             client.SendMessage("You have been logged in");
         }
 
+        public void SetGroup(long id, string group)
+        {
+            var query = new SQLiteCommand("UPDATE `users` SET `Group` = @group WHERE `Id` = @id", _connection);
+            query.Parameters.AddWithValue("@id", id);
+            query.Parameters.AddWithValue("@group", group);
+
+            query.ExecuteNonQuery();
+
+            Users.Find(x => x.Id == id).Group = group;
+        }
+
         private void OnJoin(Client client)
         {
             var query = new SQLiteCommand("SELECT * FROM `users` WHERE `username` = @username;", _connection);
@@ -125,7 +150,7 @@ namespace GTAServer.Users
             reader.Close();
         }
 
-        public void OnLeave(Client client)
+        private void OnLeave(Client client)
         {
             if (Users.Any(x => x.Username == client.DisplayName))
             {
@@ -133,6 +158,27 @@ namespace GTAServer.Users
 
                 _logger.LogDebug($"{client.DisplayName} left, removing from memory ({id})");
             }
+        }
+
+        private void OnSetGroup(List<string> args)
+        {
+            if (args.Count < 2) return;
+
+            var user = Users.Find(x => x.Username == args[0]);
+            if (user == null)
+            {
+                _logger.LogInformation("User not found.");
+                return;
+            }
+
+            if (!Groups.ContainsKey(args[1]))
+            {
+                _logger.LogInformation("Group not found.");
+                return;
+            }
+
+            SetGroup(user.Id, args[1]);
+            _logger.LogInformation("Group updated.");
         }
 
         private void OnRegister(Client client, ChatData chatData)
