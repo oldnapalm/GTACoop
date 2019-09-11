@@ -247,16 +247,13 @@ namespace GTAServer.Users
             _logger.LogInformation("Group updated.");
         }
 
-        private void OnRegister(Client client, ChatData chatData)
+        private void OnRegister(Client client, List<string> args)
         {
             if (Users.Any(user => user.Username == client.DisplayName))
             {
                 client.SendMessage("Can't register an account on this username");
                 return;
             }
-
-            var args = chatData.Message.Split().ToList();
-            args.RemoveAt(0);
 
             if (args.Count == 0)
             {
@@ -277,7 +274,7 @@ namespace GTAServer.Users
             Login(client);
         }
 
-        private void OnLogin(Client client, ChatData chatData)
+        private void OnLogin(Client client, List<string> args)
         {
             if (Users.All(x => x.Username != client.DisplayName))
             {
@@ -285,8 +282,8 @@ namespace GTAServer.Users
                 return;
             }
 
-            var args = chatData.Message.Split().ToList();
-            args.RemoveAt(0);
+            if (Users.Any(x => x.Client == client))
+                return;
 
             if (args.Count == 0)
             {

@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml.Serialization;
 using GTAServer.PluginAPI;
+using GTAServer.PluginAPI.Attributes;
 using GTAServer.ProtocolMessages;
 using Lidgren.Network;
 using Microsoft.Extensions.Logging;
@@ -47,7 +48,7 @@ namespace GTAServer
         public readonly World.World World;
         public IPermissionProvider PermissionProvider { get; set; }
 
-        public readonly Dictionary<string, Action<Client, ChatData>> Commands = new Dictionary<string, Action<Client, ChatData>>();
+        public readonly Dictionary<string, Action<Client, List<string>>> Commands = new Dictionary<string, Action<Client, List<string>>>();
 
         public int TicksPerSecond { get; set; }
 
@@ -539,7 +540,7 @@ namespace GTAServer
                                 {
                                     if (HasPermission(client, PermissionType.Command, cmdName))
                                     {
-                                        Commands[cmdName](client, chatData);
+                                        Commands[cmdName](client, cmdArgs.Skip(1).ToList());
                                     }
                                     else
                                     {
@@ -784,7 +785,11 @@ namespace GTAServer
         [Obsolete]
         public void RegisterCommand(string command, ICommand commandHandler)
         {
-            RegisterCommand(command, commandHandler.OnCommandExec);
+            // hacky way to still support old ICommand commands
+            RegisterCommand(command, ((c, args) => commandHandler.OnCommandExec(c, new ChatData()
+            {
+                Message = $"/{command} {string.Join("", args)}"
+            })));
         }
 
         /// <summary>
@@ -792,12 +797,28 @@ namespace GTAServer
         /// </summary>
         /// <param name="command">The name of the command</param>
         /// <param name="callback">The callback which will get triggered while executing the command</param>
-        public void RegisterCommand(string command, Action<Client, ChatData> callback)
+        public void RegisterCommand(string command, Action<Client, List<string>> callback)
         {
             if(Commands.ContainsKey(command))
                 throw new Exception("A command with this name has already been registered");
 
             Commands.Add(command, callback);
+        }
+
+        /// <summary>
+        /// Registers an class with commands
+        /// </summary>
+        /// <typeparam name="T">The class to look for commands</typeparam>
+        public void RegisterCommands<T>()
+        {
+            var commands = typeof(T).GetMethods().Where(method => method.GetCustomAttributes(typeof(Command), false).Any());
+
+            foreach (var method in commands)
+            {
+                var name = method.GetCustomAttribute<Command>(true).Name;
+
+                RegisterCommand(name, (Action<Client, List<string>>)Delegate.CreateDelegate(typeof(Action<Client, List<string>>), method));
+            }
         }
 
         /// <summary>

@@ -7,6 +7,7 @@ using GTAServer.ProtocolMessages;
 
 namespace GTAServer.PluginAPI
 {
+    [Obsolete]
     public interface ICommand
     {
         /// <summary>
