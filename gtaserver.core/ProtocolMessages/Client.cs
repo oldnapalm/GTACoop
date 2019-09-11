@@ -53,5 +53,10 @@ namespace GTAServer.ProtocolMessages
         {
             GameServer.SendNativeCallToPlayer(this, hash, arguments);
         }
+
+        public void Kick(string reason = null, bool silent = false, Client sender = null)
+        {
+            GameServer.KickPlayer(this, reason, silent, sender);
+        }
     }
 }

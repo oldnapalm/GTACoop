@@ -44,7 +44,7 @@ namespace GTAServer.Console.Modules
                     return;
                 }
 
-                ServerManager.GameServer.KickPlayer(client, "You have been kicked");
+                client.Kick("Kicked by server");
             });
         }
 

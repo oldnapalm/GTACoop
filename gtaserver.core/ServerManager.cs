@@ -230,12 +230,9 @@ namespace GTAServer
         // register server commands
         private static void RegisterCommands()
         {
-            _gameServer.RegisterCommand("help", new HelpCommand());
-            _gameServer.RegisterCommand("tps", new TpsCommand());
-            _gameServer.RegisterCommand("about", new AboutCommand());
-            _gameServer.RegisterCommand("plugins", new PluginsCommand());
-
-            //_gameServer.RegisterCommand("kick", new KickCommand());
+            _gameServer.RegisterCommands<UserCommands>();
+            _gameServer.RegisterCommands<AdminCommands>();
+            _gameServer.RegisterCommands<InfoCommands>();
         }
 
         public static List<IPlugin> GetPlugins() => Plugins;
