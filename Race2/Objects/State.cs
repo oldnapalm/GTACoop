@@ -4,11 +4,11 @@ using System.Text;
 
 namespace Race.Objects
 {
-    internal enum RaceState
+    public enum State
     {
         Voting,
         Starting,
-        Countdown,
-        Started
+        Started,
+        Finished
     }
 }

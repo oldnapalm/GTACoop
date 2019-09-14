@@ -3,7 +3,7 @@
 namespace GTAServer.PluginAPI.Attributes
 {
     [AttributeUsage(AttributeTargets.Method)]
-    class Command : Attribute
+    public class Command : Attribute
     {
         public string Name { get; set; }
 
