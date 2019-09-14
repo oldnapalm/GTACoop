@@ -9,5 +9,9 @@ namespace Race.Objects
     {
         public State State;
         public Dictionary<Client, string> Votes;
+        public DateTime NextEvent;
+
+        public Dictionary<Client, int> Players;
+        public Map Map;
     }
 }

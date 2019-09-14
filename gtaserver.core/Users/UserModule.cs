@@ -126,7 +126,7 @@ namespace GTAServer.Users
                         // default groups
                         new Group("admin", "command.kick", "command.tp", "group.user"),
                         new Group("user", "command.login", "command.register", "command.about", "command.help",
-                            "command.plugins", "command.tps"))
+                            "command.plugins", "command.tps", "command.vote"))
                     );
                 }
             }
