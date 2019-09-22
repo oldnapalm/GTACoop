@@ -11,7 +11,7 @@ using Newtonsoft.Json.Linq;
 
 namespace GTAServer.Console.Modules
 {
-    class VersionModule : IModule
+    internal class VersionModule : IModule
     {
         public void OnEnable(ConsoleInstance instance)
         {

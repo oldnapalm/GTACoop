@@ -6,7 +6,7 @@ using GTAServer.Console;
 
 namespace GTAServer.Console.Modules
 {
-    class CommandsModule : IModule
+    internal class CommandsModule : IModule
     {
         public void OnEnable(ConsoleInstance instance)
         {

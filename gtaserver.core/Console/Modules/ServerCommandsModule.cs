@@ -8,7 +8,7 @@ using System.Runtime.Versioning;
 
 namespace GTAServer.Console.Modules
 {
-    class ServerCommandsModule : IModule
+    internal class ServerCommandsModule : IModule
     {
         public void OnEnable(ConsoleInstance instance)
         {
