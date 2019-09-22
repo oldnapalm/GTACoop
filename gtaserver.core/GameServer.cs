@@ -45,7 +45,6 @@ namespace GTAServer
         public int CurrentTick { get; set; } = 0;
 
         public string Motd { get; set; } = "Welcome to this GTA CooP server!";
-        public readonly World.World World;
         public IPermissionProvider PermissionProvider { get; set; }
 
         public readonly Dictionary<string, Action<Client, List<string>>> Commands = new Dictionary<string, Action<Client, List<string>>>();
@@ -69,8 +68,6 @@ namespace GTAServer
             Port = port;
             MasterServer = "https://master.gtacoop.com/";
             BackupMasterServer = "http://clan-banderos.de/gta/";
-
-            World = new World.World(this);
 
             Config = new NetPeerConfiguration("GTAVOnlineRaces") { Port = port };
             Config.EnableMessageType(NetIncomingMessageType.ConnectionApproval);
