@@ -12,26 +12,15 @@ namespace GTAServer.Console.Modules
     {
         public void OnEnable(ConsoleInstance instance)
         {
-            string version = "Unknown", branch = "Unknown";
-            if (File.Exists("version"))
-            {
-                //VersionModule.ReadVersion(out branch);
-            }
-
             instance.AddCommand("about", args =>
             {
-                instance.Log($"This server is running GTAServer.core, commit {version}. For more info see gtacoop.com");
+                instance.Log("This server is running GTAServer.core, for more info see gtacoop.com");
             });
 
             instance.AddCommand("tps", args =>
             {
                 instance.Log("TPS: " + ServerManager.GameServer.TicksPerSecond);
             });
-
-            /*instance.AddCommand("version", args =>
-            {
-                instance.Log($"You are running commit {version} ({branch})");
-            });*/
 
             // command showing dotnet version this server is running on will always be 2.2 if ran by publish build
             instance.AddCommand("_dotnet", args =>
