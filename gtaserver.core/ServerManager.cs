@@ -21,7 +21,7 @@ namespace GTAServer
     public class ServerManager
     {
         private static ServerConfiguration _gameServerConfiguration;
-        private static GameServer _gameServer;
+        internal static GameServer GameServer;
         private static ILogger _logger;
         private static readonly List<IPlugin> Plugins= new List<IPlugin>();
         private static readonly string Location = System.AppContext.BaseDirectory;
@@ -112,7 +112,7 @@ namespace GTAServer
             
             _logger.LogInformation("Server preparing to start...");
 
-            _gameServer = new GameServer(_gameServerConfiguration.Port, _gameServerConfiguration.ServerName,
+            GameServer = new GameServer(_gameServerConfiguration.Port, _gameServerConfiguration.ServerName,
                 _gameServerConfiguration.GamemodeName, _debugMode)
             {
                 Password = _gameServerConfiguration.Password,
@@ -124,7 +124,7 @@ namespace GTAServer
                 MaxPlayers = _gameServerConfiguration.MaxClients,
                 Motd = _gameServerConfiguration.Motd
             };
-            _gameServer.Start();
+            GameServer.Start();
 
             // Console module manager
             ConsoleInstance instance = new ConsoleInstance(_logger);
@@ -133,7 +133,7 @@ namespace GTAServer
             if (_gameServerConfiguration.UseGroups)
             {
                 var userModule = new UserModule();
-                _gameServer.PermissionProvider = userModule;
+                GameServer.PermissionProvider = userModule;
 
                 instance.AddModule(userModule);
             }
@@ -154,7 +154,7 @@ namespace GTAServer
             _logger.LogInformation("Plugins loaded. Enabling plugins...");
             foreach (var plugin in Plugins)
             {
-                if (!plugin.OnEnable(_gameServer, false))
+                if (!plugin.OnEnable(GameServer, false))
                 {
                     _logger.LogWarning("Plugin " + plugin.Name + " returned false when enabling, marking as disabled, although it may still have hooks registered and called.");
                 }
@@ -162,13 +162,13 @@ namespace GTAServer
 
             _logger.LogInformation("Starting server main loop, ready to accept connections.");
 
-            var t = new Timer(DoServerTick, _gameServer, 0, _tickEvery);
+            var t = new Timer(DoServerTick, GameServer, 0, _tickEvery);
 
             CancelKeyPress += (sender, e) =>
             {
                 _logger.LogInformation("Kicking all clients");
 
-                _gameServer.Clients.ForEach(client => _gameServer.KickPlayer(client, "Server shutdown", true));
+                GameServer.Clients.ForEach(client => GameServer.KickPlayer(client, "Server shutdown", true));
 
                 // give the other thread some time to kick all the clients
                 Thread.Sleep(1000);
@@ -230,13 +230,11 @@ namespace GTAServer
         // register server commands
         private static void RegisterCommands()
         {
-            _gameServer.RegisterCommands<UserCommands>();
-            _gameServer.RegisterCommands<AdminCommands>();
-            _gameServer.RegisterCommands<InfoCommands>();
+            GameServer.RegisterCommands<UserCommands>();
+            GameServer.RegisterCommands<AdminCommands>();
+            GameServer.RegisterCommands<InfoCommands>();
         }
 
         public static List<IPlugin> GetPlugins() => Plugins;
-
-        internal static GameServer GameServer => _gameServer;
     }
 }
