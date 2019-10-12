@@ -98,7 +98,7 @@ namespace GTAServer
                 }
                 catch (Exception)
                 {
-                    logger.LogWarning("Given gamemode not found, using none");
+                    logger.LogWarning("Given gamemode couldn't be loaded, using none");
                 }
 
                 if (pluginAssembly != null)
