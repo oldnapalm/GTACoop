@@ -18,7 +18,7 @@ namespace GTAServer
     {
         public int Port { get; set; } = 4499;
         public int MaxClients { get; set; } = 16;
-        public string GamemodeName { get; set; } = "freeroam";
+        public string GamemodeName { get; set; } = "none";
         public string ServerName { get; set; } = "GTACoOp Server";
         public string Password { get; set; } = "";
         public string PrimaryMasterServer { get; set; } = "https://master.gtacoop.com/";
@@ -29,6 +29,7 @@ namespace GTAServer
         public bool DebugMode { get; set; } = false;
 
         public string Motd { get; set; } = "Welcome to this GTA CooP server!";
+        public bool UseGroups { get; set; } = true;
 
         public List<string> ServerPlugins { get; set; } = new List<string>() {};
 

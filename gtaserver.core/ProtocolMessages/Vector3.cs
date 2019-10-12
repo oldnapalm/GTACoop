@@ -1,4 +1,5 @@
-﻿using ProtoBuf;
+﻿using System.Numerics;
+using ProtoBuf;
 
 namespace GTAServer.ProtocolMessages
 {
@@ -18,6 +19,15 @@ namespace GTAServer.ProtocolMessages
             Y = y;
             Z = z;
         }
+
+        /// <summary>
+        /// Converts to <see cref="System.Numerics.Vector3"/>
+        /// </summary>
+        public System.Numerics.Vector3 ToVector3()
+        {
+            return new System.Numerics.Vector3(X, Y, Z);
+        }
+
         /// <summary>
         /// X
         /// </summary>

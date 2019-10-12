@@ -11,6 +11,7 @@ namespace GTAServer.Console
     internal class ConsoleInstance
     {
         private readonly Dictionary<string, Action<List<string>>> _consoleCommands = new Dictionary<string, Action<List<string>>>();
+        public readonly List<IModule> LoadedModules = new List<IModule>();
 
         public readonly ILogger Logger;
         public delegate void TextEnteredHandler(ConsoleInstance sender, string text);
@@ -59,6 +60,7 @@ namespace GTAServer.Console
 
                     TextEntered?.Invoke(this, input);
                 }
+                // ReSharper disable once FunctionNeverReturns
             }) {Name = "Console Instance"};
 
             thread.Start();
@@ -84,15 +86,27 @@ namespace GTAServer.Console
         public void AddModule(IModule module)
         {
             module.OnEnable(this);
+
+            LoadedModules.Add(module);
         }
 
         /// <summary>
-        /// Writes an new line to console using internal logger
+        /// Logs a new line to console using internal logger
         /// </summary>
         /// <param name="text">The text to write to logger</param>
-        public void WriteLn(string text)
+        public void Log(string text)
         {
             Logger.LogInformation(text);
+        }
+
+        /// <summary>
+        /// Logs a new line to console with the given log level
+        /// </summary>
+        /// <param name="text">The text to write to logger</param>
+        /// <param name="logLevel">The log level</param>
+        public void Log(string text, LogLevel logLevel)
+        {
+            Logger.Log(logLevel, text);
         }
     }
 }

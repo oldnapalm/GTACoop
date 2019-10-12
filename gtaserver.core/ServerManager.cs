@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using static System.Console;
 using System.Collections.Generic;
 using System.Threading;
@@ -12,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using GTAServer.PluginAPI;
 using SimpleConsoleLogger;
 using GTAServer.ProtocolMessages;
+using GTAServer.Users;
 using Sentry;
 
 namespace GTAServer
@@ -19,9 +21,9 @@ namespace GTAServer
     public class ServerManager
     {
         private static ServerConfiguration _gameServerConfiguration;
-        private static GameServer _gameServer;
+        internal static GameServer GameServer;
         private static ILogger _logger;
-        private static readonly List<IPlugin> Plugins= new List<IPlugin>();
+        internal static readonly List<IPlugin> Plugins = new List<IPlugin>();
         private static readonly string Location = System.AppContext.BaseDirectory;
 
         private static bool _debugMode = false;
@@ -46,6 +48,7 @@ namespace GTAServer
 #if DEBUG
             _debugMode = true;
 #endif
+
             CreateNeededFiles();
 
             // can't use logger here since the logger config depends on if debug mode is on or off
@@ -73,7 +76,24 @@ namespace GTAServer
             {
                 SentrySdk.Init("https://61668555fb9846bd8a2451366f50e5d3@sentry.io/1320932");
 
-                SentrySdk.ConfigureScope(scope => scope.SetExtra("configuration", _gameServerConfiguration));
+                SentrySdk.ConfigureScope(scope =>
+                {
+                    // add configuration to crash reports
+                    scope.SetExtra("configuration", _gameServerConfiguration);
+
+                    // also add branch and commit so bugs can be reproduced on that version
+                    /*if (File.Exists("version"))
+                    {
+                        var commit = VersionModule.ReadVersion(out var branch);
+                        var tags = new List<KeyValuePair<string, string>>()
+                        {
+                            new KeyValuePair<string, string>("commit", commit),
+                            new KeyValuePair<string, string>("branch", branch)
+                        };
+
+                        scope.SetTags(tags);
+                    }*/
+                });
             }
 
             if (_gameServerConfiguration.ServerVariables.Any(v => v.Key == "tickEvery"))
@@ -92,7 +112,7 @@ namespace GTAServer
             
             _logger.LogInformation("Server preparing to start...");
 
-            _gameServer = new GameServer(_gameServerConfiguration.Port, _gameServerConfiguration.ServerName,
+            GameServer = new GameServer(_gameServerConfiguration.Port, _gameServerConfiguration.ServerName,
                 _gameServerConfiguration.GamemodeName, _debugMode)
             {
                 Password = _gameServerConfiguration.Password,
@@ -104,7 +124,19 @@ namespace GTAServer
                 MaxPlayers = _gameServerConfiguration.MaxClients,
                 Motd = _gameServerConfiguration.Motd
             };
-            _gameServer.Start();
+            GameServer.Start();
+
+            // Console module manager
+            ConsoleInstance instance = new ConsoleInstance(_logger);
+
+            // User module
+            if (_gameServerConfiguration.UseGroups)
+            {
+                var userModule = new UserModule();
+                GameServer.PermissionProvider = userModule;
+
+                instance.AddModule(userModule);
+            }
 
             // Plugin Code
             _logger.LogInformation("Loading plugins");
@@ -122,7 +154,7 @@ namespace GTAServer
             _logger.LogInformation("Plugins loaded. Enabling plugins...");
             foreach (var plugin in Plugins)
             {
-                if (!plugin.OnEnable(_gameServer, false))
+                if (!plugin.OnEnable(GameServer, false))
                 {
                     _logger.LogWarning("Plugin " + plugin.Name + " returned false when enabling, marking as disabled, although it may still have hooks registered and called.");
                 }
@@ -130,13 +162,13 @@ namespace GTAServer
 
             _logger.LogInformation("Starting server main loop, ready to accept connections.");
 
-            var t = new Timer(DoServerTick, _gameServer, 0, _tickEvery);
+            var t = new Timer(DoServerTick, GameServer, 0, _tickEvery);
 
             CancelKeyPress += (sender, e) =>
             {
                 _logger.LogInformation("Kicking all clients");
 
-                _gameServer.Clients.ForEach(client => _gameServer.KickPlayer(client, "Server shutdown", true));
+                GameServer.Clients.ForEach(client => GameServer.KickPlayer(client, "Server shutdown", true));
 
                 // give the other thread some time to kick all the clients
                 Thread.Sleep(1000);
@@ -149,9 +181,10 @@ namespace GTAServer
                 Environment.Exit(0);
             };
 
-            ConsoleInstance instance = new ConsoleInstance(_logger);
             instance.AddModule(new CommandsModule());
             instance.AddModule(new ServerCommandsModule());
+
+            //instance.AddModule(new VersionModule());
 
             instance.Start();
 
@@ -168,6 +201,9 @@ namespace GTAServer
             catch (Exception e)
             {
                 _logger.LogError("Exception while ticking", e.Message);
+                if (_debugMode)
+                    // rethrow exception
+                    throw;
             }
         }
         private static ServerConfiguration LoadServerConfiguration(string path)
@@ -194,16 +230,9 @@ namespace GTAServer
         // register server commands
         private static void RegisterCommands()
         {
-            _gameServer.RegisterCommand("help", new HelpCommand());
-            _gameServer.RegisterCommand("tps", new TpsCommand());
-            _gameServer.RegisterCommand("about", new AboutCommand());
-            _gameServer.RegisterCommand("plugins", new PluginsCommand());
-
-            //_gameServer.RegisterCommand("kick", new KickCommand());
+            GameServer.RegisterCommands<UserCommands>();
+            GameServer.RegisterCommands<AdminCommands>();
+            GameServer.RegisterCommands<InfoCommands>();
         }
-
-        public static List<IPlugin> GetPlugins() => Plugins;
-
-        internal static GameServer GameServer => _gameServer;
     }
 }

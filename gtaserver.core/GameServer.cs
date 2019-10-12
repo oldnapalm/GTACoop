@@ -10,10 +10,13 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml.Serialization;
 using GTAServer.PluginAPI;
+using GTAServer.PluginAPI.Attributes;
 using GTAServer.ProtocolMessages;
 using Lidgren.Network;
 using Microsoft.Extensions.Logging;
 using GTAServer.PluginAPI.Events;
+using GTAServer.Users;
+using GTAServer.Users.Groups;
 
 namespace GTAServer
 {
@@ -42,9 +45,9 @@ namespace GTAServer
         public int CurrentTick { get; set; } = 0;
 
         public string Motd { get; set; } = "Welcome to this GTA CooP server!";
-        public readonly World.World World;
+        public IPermissionProvider PermissionProvider { get; set; }
 
-        public readonly Dictionary<string, ICommand> Commands = new Dictionary<string, ICommand>();
+        public readonly Dictionary<string, Action<Client, List<string>>> Commands = new Dictionary<string, Action<Client, List<string>>>();
 
         public int TicksPerSecond { get; set; }
 
@@ -65,8 +68,6 @@ namespace GTAServer
             Port = port;
             MasterServer = "https://master.gtacoop.com/";
             BackupMasterServer = "http://clan-banderos.de/gta/";
-
-            World = new World.World(this);
 
             Config = new NetPeerConfiguration("GTAVOnlineRaces") { Port = port };
             Config.EnableMessageType(NetIncomingMessageType.ConnectionApproval);
@@ -97,7 +98,7 @@ namespace GTAServer
                 }
                 catch (Exception)
                 {
-                    logger.LogWarning("Given gamemode not found, using none");
+                    logger.LogWarning("Given gamemode couldn't be loaded, using none");
                 }
 
                 if (pluginAssembly != null)
@@ -470,6 +471,9 @@ namespace GTAServer
                             {
                                 logger.LogInformation($"Player disconnected: {client.DisplayName}@{msg.SenderEndPoint.Address.ToString()}");
                             }
+
+                            ConnectionEvents.Disconnect(client);
+
                             Clients.Remove(client);
                         }
                         break;
@@ -531,8 +535,14 @@ namespace GTAServer
                                 var cmdName = cmdArgs[0].Remove(0, 1);
                                 if (Commands.ContainsKey(cmdName))
                                 {
-                                    var cmd = Commands[cmdName];
-                                    cmd.OnCommandExec(client, chatData);
+                                    if (HasPermission(client, PermissionType.Command, cmdName))
+                                    {
+                                        Commands[cmdName](client, cmdArgs.Skip(1).ToList());
+                                    }
+                                    else
+                                    {
+                                        SendChatMessageToPlayer(client, "You don't have the permission to execute this command");
+                                    }
 
                                     return;
                                 }
@@ -769,12 +779,58 @@ namespace GTAServer
         /// </summary>
         /// <param name="command">The name of the command</param>
         /// <param name="commandHandler">The class which will handle the command</param>
+        [Obsolete]
         public void RegisterCommand(string command, ICommand commandHandler)
+        {
+            // hacky way to still support old ICommand commands
+            RegisterCommand(command, ((c, args) => commandHandler.OnCommandExec(c, new ChatData()
+            {
+                Message = $"/{command} {string.Join("", args)}"
+            })));
+        }
+
+        /// <summary>
+        /// Registers a command to the server
+        /// </summary>
+        /// <param name="command">The name of the command</param>
+        /// <param name="callback">The callback which will get triggered while executing the command</param>
+        public void RegisterCommand(string command, Action<Client, List<string>> callback)
         {
             if(Commands.ContainsKey(command))
                 throw new Exception("A command with this name has already been registered");
 
-            Commands.Add(command, commandHandler);
+            Commands.Add(command, callback);
+        }
+
+        /// <summary>
+        /// Registers an class with commands
+        /// </summary>
+        /// <typeparam name="T">The class to look for commands</typeparam>
+        public void RegisterCommands<T>()
+        {
+            var commands = typeof(T).GetMethods().Where(method => method.GetCustomAttributes(typeof(Command), false).Any());
+
+            foreach (var method in commands)
+            {
+                var name = method.GetCustomAttribute<Command>(true).Name;
+
+                RegisterCommand(name, (Action<Client, List<string>>)Delegate.CreateDelegate(typeof(Action<Client, List<string>>), method));
+            }
+        }
+
+        /// <summary>
+        /// Returns if the <see cref="Client"/> has the provided permissions
+        /// </summary>
+        /// <param name="client">The client to check on</param>
+        /// <param name="type">The permission type</param>
+        /// <param name="permission">The permission name to check</param>
+        /// <returns></returns>
+        public bool HasPermission(Client client, PermissionType type, string permission)
+        {
+            if (PermissionProvider == null)
+                return false;
+
+            return PermissionProvider.HasPermission(client, type, permission);
         }
 
         public void SendToAll(object dataToSend, PacketType packetType, bool packetIsImportant)
