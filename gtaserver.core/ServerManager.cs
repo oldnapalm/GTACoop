@@ -23,7 +23,7 @@ namespace GTAServer
         private static ServerConfiguration _gameServerConfiguration;
         internal static GameServer GameServer;
         private static ILogger _logger;
-        private static readonly List<IPlugin> Plugins= new List<IPlugin>();
+        internal static readonly List<IPlugin> Plugins = new List<IPlugin>();
         private static readonly string Location = System.AppContext.BaseDirectory;
 
         private static bool _debugMode = false;
@@ -234,7 +234,5 @@ namespace GTAServer
             GameServer.RegisterCommands<AdminCommands>();
             GameServer.RegisterCommands<InfoCommands>();
         }
-
-        public static List<IPlugin> GetPlugins() => Plugins;
     }
 }
