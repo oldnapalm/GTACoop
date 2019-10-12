@@ -19,8 +19,8 @@ namespace GTAServer.Commands
         [Command("plugins")]
         public static void Plugins(Client client, List<string> args)
         {
-            client.SendMessage("Plugins (" + ServerManager.GetPlugins().Count + "): \n " +
-                               string.Join(", ", ServerManager.GetPlugins().Select(x => x.Name)));
+            client.SendMessage("Plugins (" + ServerManager.Plugins.Count + "): \n " +
+                               string.Join(", ", ServerManager.Plugins.Select(x => x.Name)));
         }
 
         [Command("about")]
