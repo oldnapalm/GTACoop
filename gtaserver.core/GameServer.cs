@@ -185,10 +185,6 @@ namespace GTAServer
 
         }
 
-        // temporary
-        [DllImport("kernel32.dll")]
-        static extern void RaiseException(uint dwExceptionCode, uint dwExceptionFlags, uint nNumberOfArguments, IntPtr lpArguments);
-
         public void Tick()
         {
             CurrentTick++;
@@ -275,7 +271,6 @@ namespace GTAServer
                         break;
                     case NetIncomingMessageType.WarningMessage:
                         logger.LogWarning("Network WarningMessage: " + msg.ReadString());
-                        RaiseException(13, 0, 0, new IntPtr(1));
                         break;
                     case NetIncomingMessageType.ErrorMessage:
                         logger.LogError("Network ErrorMessage: " + msg.ReadString());
