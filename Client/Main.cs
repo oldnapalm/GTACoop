@@ -17,7 +17,10 @@ using Control = GTA.Control;
 using System.Text.RegularExpressions;
 using System.Globalization;
 using MaxMind.GeoIP2;
+
+#if VOICE
 using NAudio.Wave;
+#endif
 
 namespace GTACoOp
 {
@@ -85,6 +88,7 @@ namespace GTACoOp
 
         private static UIMenuItem _passItem;
 
+#if VOICE
         // NAUDIO
         private static WaveInEvent _waveInput;
         private static WaveOut _waveOutput;
@@ -93,6 +97,7 @@ namespace GTACoOp
         private static BufferedWaveProvider _playBuffer;
 
         private static bool _isTalking = false;
+#endif
         
         private enum NativeType
         {
@@ -107,14 +112,9 @@ namespace GTACoOp
         {
              return Regex.Replace(Regex.Replace(LocalScriptVersion.ToString(), "VERSION_", "", RegexOptions.IgnoreCase), "_", ".", RegexOptions.IgnoreCase);
         }
-
-        void waveIn_RecordingStopped(object sender, EventArgs e)
-        {
-            _waveInput.Dispose();
-            _waveInput = null;
-        }
         public Main()
         {
+#if VOICE
             //NAUDIO
             _waveInput = new WaveInEvent();
             _waveOutput = new WaveOut();
@@ -125,7 +125,11 @@ namespace GTACoOp
 			_waveInput.DeviceNumber = 0;
             _waveInput.DataAvailable += SendVoiceData;
             _waveInput.WaveFormat = new WaveFormat(44200, 2);
-            _waveInput.RecordingStopped += waveIn_RecordingStopped;
+            _waveInput.RecordingStopped += (object sender, EventArgs e) =>
+            {
+                _waveInput.Dispose();
+                _waveInput = null;
+            };
 
             var voiceStream = new MemoryStream();
             _waveWriter = new WaveFileWriter(voiceStream, _waveInput.WaveFormat);
@@ -134,6 +138,7 @@ namespace GTACoOp
 
             _waveOutput.Init(_playBuffer);
             _waveOutput.Play();
+#endif
 
             PlayerSettings = Util.ReadSettings(Program.Location + Path.DirectorySeparatorChar + "ClientSettings.xml");
             _threadJumping = new Queue<Action>();
@@ -185,7 +190,6 @@ namespace GTACoOp
             _config = new NetPeerConfiguration("GTAVOnlineRaces");
             _config.Port = 8888;
             _config.EnableMessageType(NetIncomingMessageType.ConnectionLatencyUpdated);
-
 
             #region Menu Set up
             // #warning Affects performance when open, drops from 80~100 on a GTX 980 to high 30s ~ 60
@@ -317,7 +321,9 @@ namespace GTACoOp
                 }
             };
 
+#if VOICE
             var inputDeviceItem = new UIMenuListItem("Input device", GetInputDevices(), 0);
+#endif
 
             var masterItem = new UIMenuItem("Master Server");
             masterItem.SetRightLabel(PlayerSettings.MasterServerAddress);
@@ -457,7 +463,9 @@ namespace GTACoOp
             _settingsMenu.AddItem(nameItem);
             _settingsMenu.AddItem(npcItem);
             _settingsMenu.AddItem(trafficItem);
+#if VOICE
             _settingsMenu.AddItem(inputDeviceItem);
+#endif
             _settingsMenu.AddItem(chatLogItem);
             _settingsMenu.AddItem(hidePasswordsItem);
             _settingsMenu.AddItem(autoConnectItem);
@@ -476,7 +484,7 @@ namespace GTACoOp
             _menuPool.Add(_mainMenu);
             _menuPool.Add(_serverBrowserMenu);
             _menuPool.Add(_settingsMenu);
-            #endregion
+#endregion
 
             _debug = new DebugWindow();
             UI.Notify("~g~GTA V Coop mod v" + ReadableScriptVersion() + " by Guad, Bluscream, TheIndra and wolfmitchell loaded successfully.~w~");
@@ -785,6 +793,7 @@ namespace GTACoOp
             }
         }
 
+#if VOICE
         void SendVoiceData(object sender, WaveInEventArgs e)
         {
             if (!IsOnServer())
@@ -802,6 +811,7 @@ namespace GTACoOp
                 _client.SendMessage(msg, NetDeliveryMethod.Unreliable, _channel);
             }
         }
+#endif
 
         public void OnTick(object sender, EventArgs e)
         {
@@ -921,11 +931,13 @@ namespace GTACoOp
                     }
                 }
 
+#if VOICE
                 // push to talk
                 if (Game.IsControlPressed(0, Control.PushToTalk))
                     _isTalking = true;
                 else
                     _isTalking = false;
+#endif
 
                 Dictionary<string, NativeData> tickNatives = null;
                 lock (_tickNatives) tickNatives = new Dictionary<string, NativeData>(_tickNatives);
@@ -1051,6 +1063,7 @@ namespace GTACoOp
                     var type = (PacketType)msg.ReadInt32();
                     switch (type)
                     {
+#if VOICE
                         case PacketType.VoiceChatData:
                             {
                                 var user = msg.ReadInt32();
@@ -1063,6 +1076,7 @@ namespace GTACoOp
                                 _playBuffer.AddSamples(data, 0, data.Length);
                             }
                             break;
+#endif
                         case PacketType.VehiclePositionData:
                             {
                                 var len = msg.ReadInt32();
@@ -1385,7 +1399,9 @@ namespace GTACoOp
                         case NetConnectionStatus.Connected:
                             UI.Notify("Connection successful!");
                             Util.DisplayHelpText("Press ~INPUT_MULTIPLAYER_INFO~ to view a list of online players");
+#if VOICE
                             _waveInput.StartRecording();
+#endif
 
                             // close F9 menu when connected
                             if (_menuPool.IsAnyMenuOpen())
@@ -1526,7 +1542,7 @@ namespace GTACoOp
             }
         }
 
-        #region debug stuff
+#region debug stuff
 
         private DateTime _artificialLagCounter = DateTime.MinValue;
         private bool _debugStarted;
@@ -1543,15 +1559,15 @@ namespace GTACoOp
                 debugText += "\n\n\n\n\nRPM: " + Game.Player.Character.CurrentVehicle.EngineRunning.ToString();
             }
 
-            debugText += "\n" + _isTalking.ToString();
-
             new UIResText(debugText, new Point(10, 10), 0.5f).Draw();
 
             _debug.Visible = true;
             _debug.Draw();
 
-            return;
+            var nul = 1 - 1;
+            Console.WriteLine(1 / nul);
 
+            return;
             // ignore
             if (_debugSyncPed == null)
             {
@@ -1624,7 +1640,7 @@ namespace GTACoOp
 
         }
         
-        #endregion
+#endregion
 
         public void DecodeNativeCall(NativeData obj)
         {
@@ -2009,6 +2025,7 @@ namespace GTACoOp
             return range.Except(portsInUse).FirstOrDefault();
         }
 
+#if VOICE
         public static List<Object> GetInputDevices()
         {
             var list = new List<Object>();
@@ -2020,6 +2037,7 @@ namespace GTACoOp
             }
             return list;
         }
+#endif
     }
 
     public class MasterServerList
