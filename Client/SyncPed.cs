@@ -328,9 +328,11 @@ namespace GTACoOp
                         MainVehicle.NumberPlate = Plate;
                     }
 
-                    if (Enum.IsDefined(typeof(RadioStation), RadioStation))
+                    var radioStations = Util.GetRadioStations();
+
+                    if (radioStations?.ElementAtOrDefault(RadioStation) != null)
                     {
-                        MainVehicle.RadioStation = (RadioStation) RadioStation;
+                        Function.Call(Hash.SET_VEH_RADIO_STATION, radioStations[RadioStation]);
                     }
 
                     if (VehicleMods != null && _modSwitch%50 == 0 &&
@@ -521,6 +523,8 @@ namespace GTACoOp
             }
             catch (Exception ex)
             {
+                Sentry.Capture(ex);
+
                 UI.Notify("Sync error: "+ex.Message);
             }
         }

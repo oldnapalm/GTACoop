@@ -30,6 +30,11 @@ namespace GTACoOp
             return Function.Call<string>(Hash.GET_RADIO_STATION_NAME, id);
         }
 
+        public static string[] GetRadioStations()
+        {
+            return (string[]) typeof(Game).GetProperty("radioNames")?.GetValue(typeof(Game));
+        }
+
         public static int GetTrackId()
         {
             if (!Game.Player.Character.IsInVehicle()) return -1;
