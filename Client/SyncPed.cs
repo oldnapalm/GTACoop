@@ -523,6 +523,8 @@ namespace GTACoOp
             }
             catch (Exception ex)
             {
+                Sentry.Capture(ex);
+
                 UI.Notify("Sync error: "+ex.Message);
             }
         }

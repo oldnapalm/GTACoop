@@ -12,7 +12,7 @@
     <PackageReference Include="Lidgren.Network" Version="1.0.2" />
     <PackageReference Include="Microsoft.Extensions.Logging.Log4Net.AspNetCore" Version="2.2.12" />
     <PackageReference Include="protobuf-net" Version="3.0.0-alpha.3" />
-    <PackageReference Include="Sentry" Version="2.0.0-beta4" />
+    <PackageReference Include="Sentry" Version="2.0.0-beta6" />
     <PackageReference Include="SimpleConsoleLogger" Version="1.0.2" />
     <PackageReference Include="System.Data.SQLite" Version="1.0.111" />
     <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />

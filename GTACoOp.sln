@@ -21,7 +21,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NativeUI", "NativeUI\Native
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Gamemodes", "Gamemodes", "{566C9B77-5952-483C-993C-2A661AC29E73}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Freeroam", "Freeroam\Freeroam.csproj", "{5BB59EB1-E68A-47E0-9FEB-D0A4DF37F8EF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Freeroam", "Freeroam\Freeroam.csproj", "{5BB59EB1-E68A-47E0-9FEB-D0A4DF37F8EF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

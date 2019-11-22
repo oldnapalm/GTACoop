@@ -17,6 +17,7 @@ using Control = GTA.Control;
 using System.Text.RegularExpressions;
 using System.Globalization;
 using MaxMind.GeoIP2;
+using SharpRaven;
 
 #if VOICE
 using NAudio.Wave;
@@ -98,7 +99,7 @@ namespace GTACoOp
 
         private static bool _isTalking = false;
 #endif
-        
+
         private enum NativeType
         {
             Unknown = 0,
@@ -139,6 +140,7 @@ namespace GTACoOp
             _waveOutput.Init(_playBuffer);
             _waveOutput.Play();
 #endif
+            Sentry.Raven = new RavenClient("https://71a61960693c46f5a78fadf72b96874c@sentry.io/1485502");
 
             PlayerSettings = Util.ReadSettings(Program.Location + Path.DirectorySeparatorChar + "ClientSettings.xml");
             _threadJumping = new Queue<Action>();
@@ -151,7 +153,6 @@ namespace GTACoOp
             _entityCleanup = new List<int>();
             _blipCleanup = new List<int>();
 
-            
             _emptyVehicleMods = new Dictionary<int, int>();
             for (int i = 0; i < 50; i++) _emptyVehicleMods.Add(i, 0);
 
@@ -943,7 +944,10 @@ namespace GTACoOp
                 lock (_tickNatives) tickNatives = new Dictionary<string, NativeData>(_tickNatives);
 
                 for (int i = 0; i < tickNatives.Count; i++) DecodeNativeCall(tickNatives.ElementAt(i).Value);
-            }catch(Exception ex) {
+            }catch(Exception ex)
+            {
+                Sentry.Capture(ex);
+
                 UI.Notify("<ERROR> Could not handle this tick: " + ex.ToString());
                 if(Main.PlayerSettings.Logging)
                     File.AppendAllText("scripts\\GTACOOP.log", "[" + DateTime.UtcNow + "] <ERROR> Could not handle this tick: " + ex.Message+"\n");
