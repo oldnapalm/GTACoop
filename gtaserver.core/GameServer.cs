@@ -473,9 +473,8 @@ namespace GTAServer
                                 logger.LogInformation($"Player disconnected: {client.DisplayName}@{msg.SenderEndPoint.Address.ToString()}");
                             }
 
-                            ConnectionEvents.Disconnect(client);
-
                             Clients.Remove(client);
+                            ConnectionEvents.Disconnect(client);
                         }
                         break;
                     }
