@@ -1568,9 +1568,6 @@ namespace GTACoOp
             _debug.Visible = true;
             _debug.Draw();
 
-            var nul = 1 - 1;
-            Console.WriteLine(1 / nul);
-
             return;
             // ignore
             if (_debugSyncPed == null)
