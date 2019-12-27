@@ -294,6 +294,9 @@ namespace GTAServer
                         }
                         HandleClientConnectionApproval(client, msg);
                         break;
+                    case NetIncomingMessageType.Error:
+                        logger.LogError("Network Error: " + msg.ReadString());
+                        break;
                     case NetIncomingMessageType.StatusChanged:
                         pluginPacketHandlerResult = PacketEvents.IncomingStatusChange(client, msg);
                         msg = pluginPacketHandlerResult.Data;
