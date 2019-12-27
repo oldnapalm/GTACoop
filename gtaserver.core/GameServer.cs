@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Text.RegularExpressions;
@@ -128,7 +129,21 @@ namespace GTAServer
             }
             logger.LogDebug("Gamemode loaded");
 
-            Server.Start();
+            try
+            {
+                Server.Start();
+            }
+            catch (SocketException e)
+            {
+                logger.LogCritical($"Couldn't bind port {Port}: {e.Message}");
+                Environment.Exit(0);
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                logger.LogCritical($"Couldn't bind port {Port}: Not a valid 16-bit port number");
+                Environment.Exit(0);
+            }
+
             if (AnnounceSelf)
             {
                 AnnounceToMaster();
