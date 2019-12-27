@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using static System.Console;
 using System.Collections.Generic;
 using System.Threading;
@@ -12,7 +11,6 @@ using GTAServer.Console.Modules;
 using Microsoft.Extensions.Logging;
 using GTAServer.PluginAPI;
 using SimpleConsoleLogger;
-using GTAServer.ProtocolMessages;
 using GTAServer.Users;
 using Sentry;
 

@@ -172,7 +172,7 @@ namespace GTAServer
                     {
                         logger.LogError($"Failed to announce to master {master + 1}: URL is invalid");
                     }
-                    catch (Exception e)
+                    catch (Exception)
                     {
                         logger.LogWarning($"Failed to announce to master {master + 1}");
                     }
