@@ -116,14 +116,17 @@ namespace GTAServer
                 _gameServerConfiguration.GamemodeName, _debugMode)
             {
                 Password = _gameServerConfiguration.Password,
-                MasterServer = _gameServerConfiguration.PrimaryMasterServer,
-                BackupMasterServer = _gameServerConfiguration.BackupMasterServer,
                 AnnounceSelf = _gameServerConfiguration.AnnounceSelf,
                 AllowNicknames = _gameServerConfiguration.AllowNicknames,
                 AllowOutdatedClients = _gameServerConfiguration.AllowOutdatedClients,
                 MaxPlayers = _gameServerConfiguration.MaxClients,
                 Motd = _gameServerConfiguration.Motd
             };
+
+            // push master servers (backwards compatible)
+            GameServer.MasterServers.AddRange(
+                new []{ _gameServerConfiguration.PrimaryMasterServer, _gameServerConfiguration.BackupMasterServer});
+
             GameServer.Start();
 
             // Console module manager
