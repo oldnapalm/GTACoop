@@ -22,15 +22,18 @@ namespace GTAServer
         internal static GameServer GameServer;
         private static ILogger _logger;
         internal static readonly List<IPlugin> Plugins = new List<IPlugin>();
-        private static readonly string Location = System.AppContext.BaseDirectory;
+        private static readonly string _location = System.AppContext.BaseDirectory;
 
         private static bool _debugMode = false;
         private static int _tickEvery = 10;
 
         private static void CreateNeededFiles()
         {
-            if (!Directory.Exists(Location + Path.DirectorySeparatorChar + "Plugins")) Directory.CreateDirectory(Location + Path.DirectorySeparatorChar + "Plugins");
-            if (!Directory.Exists(Location + Path.DirectorySeparatorChar + "Configuration")) Directory.CreateDirectory(Location + Path.DirectorySeparatorChar + "Configuration");
+            if (!Directory.Exists(Path.Combine(_location, "Plugins")))
+                Directory.CreateDirectory(Path.Combine(_location, "Plugins"));
+
+            if (!Directory.Exists(Path.Combine(_location, "Configuration")))
+                Directory.CreateDirectory(Path.Combine(_location, "Configuration"));
         }
 
         private static void DoDebugWarning()
@@ -52,7 +55,8 @@ namespace GTAServer
             // can't use logger here since the logger config depends on if debug mode is on or off
             WriteLine("Reading server configuration...");
 
-            _gameServerConfiguration = LoadServerConfiguration(Location + Path.DirectorySeparatorChar + "Configuration" + Path.DirectorySeparatorChar + "serverSettings.xml");
+            _gameServerConfiguration =
+                LoadServerConfiguration(Path.Combine(_location, "Configuration", "serverSettings.xml"));
             if (!_debugMode) _debugMode = _gameServerConfiguration.DebugMode;
 
             if (_debugMode)
