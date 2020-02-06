@@ -46,6 +46,15 @@ namespace GTAServer.Console.Modules
 
                 client.Kick("Kicked by server");
             });
+
+            instance.AddCommand("help", args =>
+            {
+                // magic to display commands in list/next to eachother form
+                var help = instance.Commands.Select((x, i) => x + (((i+1) % 2 == 0) ? "\n" : "\t"));
+
+                // write without [INFO][ etc
+                System.Console.WriteLine(string.Join("", help));
+            });
         }
 
         public string Name => "Commands module";
