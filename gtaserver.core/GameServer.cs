@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -172,9 +172,9 @@ namespace GTAServer
                     {
                         logger.LogError($"Failed to announce to master {master + 1}: URL is invalid");
                     }
-                    catch (Exception)
+                    catch (Exception e)
                     {
-                        logger.LogWarning($"Failed to announce to master {master + 1}");
+                        logger.LogWarning($"Failed to announce to master {master + 1}: {e.Message}");
                     }
                 }
 
