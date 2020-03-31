@@ -9,6 +9,6 @@ namespace Race.Objects
     {
         public string Name { get; set; }
 
-        public List<Vector3> Waypoints { get; set; }
+        public List<Vector3> Checkpoints { get; set; }
     }
 }

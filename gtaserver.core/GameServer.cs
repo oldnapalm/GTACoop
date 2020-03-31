@@ -1,12 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
+using System.Net.Http;
+using System.Net.Sockets;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Runtime.Loader;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml.Serialization;
@@ -33,8 +32,7 @@ namespace GTAServer
         public string Name { get; set; }
         public string Password { get; set; }
         public bool PasswordProtected => !string.IsNullOrEmpty(Password);
-        public string MasterServer { get; set; }
-        public string BackupMasterServer { get; set; }
+        public List<string> MasterServers { get; } = new List<string>();
         public bool AnnounceSelf { get; set; }
         public bool AllowNicknames { get; set; }
         public bool AllowOutdatedClients { get; set; }
@@ -67,8 +65,6 @@ namespace GTAServer
             GamemodeName = gamemodeName;
             Name = name;
             Port = port;
-            MasterServer = "https://master.gtacoop.com/";
-            BackupMasterServer = "http://clan-banderos.de/gta/";
 
             Config = new NetPeerConfiguration("GTAVOnlineRaces") { Port = port };
             Config.EnableMessageType(NetIncomingMessageType.ConnectionApproval);
@@ -133,7 +129,21 @@ namespace GTAServer
             }
             logger.LogDebug("Gamemode loaded");
 
-            Server.Start();
+            try
+            {
+                Server.Start();
+            }
+            catch (SocketException e)
+            {
+                logger.LogCritical($"Couldn't bind port {Port}: {e.Message}");
+                Environment.Exit(0);
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                logger.LogCritical($"Couldn't bind port {Port}: Not a valid 16-bit port number");
+                Environment.Exit(0);
+            }
+
             if (AnnounceSelf)
             {
                 AnnounceToMaster();
@@ -147,32 +157,28 @@ namespace GTAServer
 
             logger.LogInformation("Announcing to master server");
             _lastAnnounceDateTime = DateTime.Now;
-            var payload = Port.ToString();
-            var enc = new UTF8Encoding();
 
-            var request = WebRequest.Create(MasterServer);
-            request.Method = "POST";
-            request.ContentType = "text/plain";
-            try
+            using (var client = new HttpClient())
             {
-                var dataStream = await request.GetRequestStreamAsync();
-                dataStream.Write(enc.GetBytes(payload), 0, payload.Length);
-                await request.GetResponseAsync();
-            }catch(WebException)
-            {
-                logger.LogWarning("Couldn't announce to masterserver (primary)");
-            }
+                var content = new StringContent(Port.ToString());
 
-            request = WebRequest.Create(BackupMasterServer);
-            request.Method = "POST";
-            request.ContentType = "text/plain";
-            try
-            {
-                var dataStream = await request.GetRequestStreamAsync();
-                dataStream.Write(enc.GetBytes(payload), 0, payload.Length);
-                await request.GetResponseAsync();
-            } catch (WebException) {
-                logger.LogWarning("Couldn't announce to masterserver (secondary)");
+                for (var master = 0; master < MasterServers.Count; master++)
+                {
+                    try
+                    {
+                        await client.PostAsync(MasterServers[master], content);
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        logger.LogError($"Failed to announce to master {master + 1}: URL is invalid");
+                    }
+                    catch (Exception e)
+                    {
+                        logger.LogWarning($"Failed to announce to master {master + 1}: {e.Message}");
+                    }
+                }
+
+                content.Dispose();
             }
         }
 
@@ -287,6 +293,9 @@ namespace GTAServer
                             return;
                         }
                         HandleClientConnectionApproval(client, msg);
+                        break;
+                    case NetIncomingMessageType.Error:
+                        logger.LogError("Network Error: " + msg.ReadString());
                         break;
                     case NetIncomingMessageType.StatusChanged:
                         pluginPacketHandlerResult = PacketEvents.IncomingStatusChange(client, msg);
@@ -473,9 +482,8 @@ namespace GTAServer
                                 logger.LogInformation($"Player disconnected: {client.DisplayName}@{msg.SenderEndPoint.Address.ToString()}");
                             }
 
-                            ConnectionEvents.Disconnect(client);
-
                             Clients.Remove(client);
+                            ConnectionEvents.Disconnect(client);
                         }
                         break;
                     }

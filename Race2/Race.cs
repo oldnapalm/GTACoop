@@ -20,7 +20,7 @@ namespace Race
         public string GamemodeName => "Race";
         public string Name => "Race gamemode";
         public string Description
-            => "The orginal race gamemode rewritten for new GTAServer.core";
+            => "The original race gamemode rewritten for new GTAServer.core";
         public string Author => "TheIndra";
 
         public static GameServer GameServer;
@@ -38,6 +38,12 @@ namespace Race
 
             GameServer.RegisterCommands<RaceCommands>();
 
+            Maps = Util.GetMaps()?
+                .Select(map => 
+                    JsonConvert.DeserializeObject<Map>(
+                        File.ReadAllText(map)))
+                .ToList();
+
             ConnectionEvents.OnJoin.Add(OnJoin);
             ConnectionEvents.OnDisconnect.Add(OnLeave);
 
@@ -46,7 +52,7 @@ namespace Race
             return true;
         }
 
-        private void OnTick(int tick)
+        private static void OnTick(int tick)
         {
             if(Session.State == State.Voting && GameServer.Clients.Count() >= 1)
             {
@@ -60,7 +66,15 @@ namespace Race
             {
                 Session.State = State.Started;
 
-                // TODO: get most voted map or random
+                var map = Session.Votes
+                    .GroupBy(x => x.Value)
+                    .OrderByDescending(vote => vote.Count())
+                    .FirstOrDefault()
+                    ?.Key 
+                          ?? Util.GetRandomMap();
+
+                GameServer.SendChatMessageToAll("Map: " + map);
+
                 // TODO: teleport everyone and further stuff
             }
 
@@ -68,28 +82,28 @@ namespace Race
             {
                 foreach (var client in Session.Players)
                 {
-                    var nextWaypoint = Session.Map.Waypoints[client.Value + 1];
+                    var nextWaypoint = Session.Map.Checkpoints[client.Value + 1];
 
                     // if close/at waypoint
                     if (System.Numerics.Vector3.Distance(client.Key.Position.ToVector3(), nextWaypoint.ToVector3()) < 5)
                     {
                         Session.Players[client.Key]++;
 
-                        if (Session.Players[client.Key] == Session.Map.Waypoints.Count)
+                        if (Session.Players[client.Key] == Session.Map.Checkpoints.Count)
                         {
                             GameServer.SendNotificationToPlayer(client.Key, "Finish!");
                             GameServer.SendNotificationToAll($"~y~{client.Key.DisplayName} ~s~finished the race!");
                         }
                         else
                         {
-                            GameServer.SendNotificationToPlayer(client.Key, $"{Session.Players[client.Key]}/{Session.Map.Waypoints.Count}");
+                            GameServer.SendNotificationToPlayer(client.Key, $"{Session.Players[client.Key]}/{Session.Map.Checkpoints.Count}");
                         }
                     }
                 }
             }
         }
 
-        public void OnJoin(Client client)
+        private static void OnJoin(Client client)
         {
             if (Session.State != State.Voting && Session.State != State.Starting)
             {
@@ -101,7 +115,7 @@ namespace Race
             }
         }
 
-        private void OnLeave(Client client)
+        private static void OnLeave(Client client)
         {
             if (!GameServer.Clients.Any())
             {

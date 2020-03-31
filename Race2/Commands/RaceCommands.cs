@@ -13,7 +13,7 @@ namespace Race.Commands
         [Command("vote")]
         public static void Vote(Client client, List<string> args)
         {
-            if (Race.Session.State != State.Voting) return;
+            if (Race.Session.State != State.Voting && Race.Session.State != State.Starting) return;
             if (!args.Any())
             {
                 client.SendMessage("Use /vote (map), Maps: " + string.Join(", ", Race.Maps.Select(x => x.Name)));

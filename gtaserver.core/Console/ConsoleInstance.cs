@@ -13,6 +13,11 @@ namespace GTAServer.Console
         private readonly Dictionary<string, Action<List<string>>> _consoleCommands = new Dictionary<string, Action<List<string>>>();
         public readonly List<IModule> LoadedModules = new List<IModule>();
 
+        public List<string> Commands
+        {
+            get { return _consoleCommands.Keys.ToList(); }
+        }
+
         public readonly ILogger Logger;
         public delegate void TextEnteredHandler(ConsoleInstance sender, string text);
 

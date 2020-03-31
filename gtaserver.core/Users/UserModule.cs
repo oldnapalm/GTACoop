@@ -27,7 +27,7 @@ namespace GTAServer.Users
             _logger = Util.LoggerFactory.CreateLogger<UserModule>();
             _logger.LogInformation("Loading user storage");
 
-            var filename = System.AppContext.BaseDirectory + Path.DirectorySeparatorChar + "users.db";
+            var filename = Path.Combine(System.AppContext.BaseDirectory, "users.db");
             var create = false;
 
             if (!File.Exists(filename))
