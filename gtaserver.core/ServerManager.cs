@@ -82,19 +82,6 @@ namespace GTAServer
                 {
                     // add configuration to crash reports
                     scope.SetExtra("configuration", _gameServerConfiguration);
-
-                    // also add branch and commit so bugs can be reproduced on that version
-                    /*if (File.Exists("version"))
-                    {
-                        var commit = VersionModule.ReadVersion(out var branch);
-                        var tags = new List<KeyValuePair<string, string>>()
-                        {
-                            new KeyValuePair<string, string>("commit", commit),
-                            new KeyValuePair<string, string>("branch", branch)
-                        };
-
-                        scope.SetTags(tags);
-                    }*/
                 });
             }
 
@@ -188,8 +175,6 @@ namespace GTAServer
 
             instance.AddModule(new CommandsModule());
             instance.AddModule(new ServerCommandsModule());
-
-            //instance.AddModule(new VersionModule());
 
             instance.Start();
 
