@@ -3,8 +3,9 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-	<NoWarn>NU1605</NoWarn>
-	<RootNamespace>GTAServer</RootNamespace>
+	  <NoWarn>NU1605</NoWarn>
+	  <RootNamespace>GTAServer</RootNamespace>
+	  <Version Condition=" '$(CI_PIPELINE_ID)' != '' ">1.0.0-$(CI_PIPELINE_ID)</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,7 +14,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Log4Net.AspNetCore" Version="2.2.12" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="protobuf-net" Version="3.0.0-alpha.3" />
-    <PackageReference Include="Sentry" Version="2.0.0-beta6" />
+    <PackageReference Include="Sentry" Version="2.1.1" />
     <PackageReference Include="SimpleConsoleLogger" Version="1.0.2" />
     <PackageReference Include="System.Data.SQLite" Version="1.0.112" />
     <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
