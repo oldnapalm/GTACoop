@@ -17,6 +17,7 @@ using Microsoft.Extensions.Logging;
 using GTAServer.PluginAPI.Events;
 using GTAServer.Users;
 using GTAServer.Users.Groups;
+using GTAServer.PluginAPI.Entities;
 
 namespace GTAServer
 {
@@ -46,7 +47,7 @@ namespace GTAServer
         public string Motd { get; set; } = "Welcome to this GTA CooP server!";
         public IPermissionProvider PermissionProvider { get; set; }
 
-        public readonly Dictionary<string, Action<Client, List<string>>> Commands = new Dictionary<string, Action<Client, List<string>>>();
+        public readonly Dictionary<string, Action<CommandContext, List<string>>> Commands = new Dictionary<string, Action<CommandContext, List<string>>>();
 
         public int TicksPerSecond { get; set; }
 
@@ -546,7 +547,14 @@ namespace GTAServer
                                 {
                                     if (HasPermission(client, PermissionType.Command, cmdName))
                                     {
-                                        Commands[cmdName](client, cmdArgs.Skip(1).ToList());
+                                        var ctx = new CommandContext
+                                        {
+                                            Client = client,
+                                            GameServer = this,
+                                            ChatData = chatData
+                                        };
+
+                                        Commands[cmdName](ctx, cmdArgs.Skip(1).ToList());
                                     }
                                     else
                                     {
@@ -787,23 +795,8 @@ namespace GTAServer
         /// Registers a command to the server
         /// </summary>
         /// <param name="command">The name of the command</param>
-        /// <param name="commandHandler">The class which will handle the command</param>
-        [Obsolete]
-        public void RegisterCommand(string command, ICommand commandHandler)
-        {
-            // hacky way to still support old ICommand commands
-            RegisterCommand(command, ((c, args) => commandHandler.OnCommandExec(c, new ChatData()
-            {
-                Message = $"/{command} {string.Join("", args)}"
-            })));
-        }
-
-        /// <summary>
-        /// Registers a command to the server
-        /// </summary>
-        /// <param name="command">The name of the command</param>
         /// <param name="callback">The callback which will get triggered while executing the command</param>
-        public void RegisterCommand(string command, Action<Client, List<string>> callback)
+        public void RegisterCommand(string command, Action<CommandContext, List<string>> callback)
         {
             if(Commands.ContainsKey(command))
                 throw new Exception("A command with this name has already been registered");
@@ -823,7 +816,7 @@ namespace GTAServer
             {
                 var name = method.GetCustomAttribute<Command>(true).Name;
 
-                RegisterCommand(name, (Action<Client, List<string>>)Delegate.CreateDelegate(typeof(Action<Client, List<string>>), method));
+                RegisterCommand(name, (Action<CommandContext, List<string>>)Delegate.CreateDelegate(typeof(Action<CommandContext, List<string>>), method));
             }
         }
 

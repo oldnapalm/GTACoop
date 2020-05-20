@@ -5,16 +5,16 @@ using System.Data.SQLite;
 using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
-using GTAServer.Console;
-using GTAServer.Console.Modules;
 using GTAServer.PluginAPI.Events;
 using GTAServer.ProtocolMessages;
 using GTAServer.Users.Groups;
 using Microsoft.Extensions.Logging;
+using GTAServer.PluginAPI;
+using GTAServer.PluginAPI.Entities;
 
 namespace GTAServer.Users
 {
-    internal class UserModule : IModule, IPermissionProvider
+    public class UserModule : IPermissionProvider
     {
         private ILogger _logger;
         private SQLiteConnection _connection;
@@ -22,11 +22,18 @@ namespace GTAServer.Users
         private static readonly List<User> Users = new List<User>();
         private static readonly Dictionary<string, List<Permission>> Groups = new Dictionary<string, List<Permission>>();
 
-        public void OnEnable(ConsoleInstance instance)
+        private GameServer _gameServer;
+
+        public UserModule(GameServer gameServer)
         {
+            _gameServer = gameServer;
+
             _logger = Util.LoggerFactory.CreateLogger<UserModule>();
             _logger.LogInformation("Loading user storage");
+        }
 
+        public void Start()
+        {
             var filename = Path.Combine(System.AppContext.BaseDirectory, "users.db");
             var create = false;
 
@@ -62,9 +69,17 @@ namespace GTAServer.Users
             ConnectionEvents.OnJoin.Add(OnJoin);
             ConnectionEvents.OnDisconnect.Add(OnLeave);
 
-            ServerManager.GameServer.RegisterCommand("register", OnRegister);
-            ServerManager.GameServer.RegisterCommand("login", OnLogin);
-            instance.AddCommand("setgroup", OnSetGroup);
+            _gameServer.RegisterCommand("register", OnRegister);
+            _gameServer.RegisterCommand("login", OnLogin);
+
+            _gameServer.RegisterCommand("setgroup", OnSetGroup);
+        }
+
+        public void Stop()
+        {
+            // TODO save all the unsaved
+            _logger.LogInformation("Closing database");
+            _connection.Close();
         }
 
         public void LoadGroups()
@@ -124,9 +139,9 @@ namespace GTAServer.Users
                 {
                     ser.Serialize(stream, cfg = new GroupsConfiguration(
                         // default groups
-                        new Group("admin", "command.kick", "command.tp", "group.user"),
+                        new Group("admin", "command.kick", "command.tp", "command.setgroup", "group.user"),
                         new Group("user", "command.login", "command.register", "command.about", "command.help",
-                            "command.plugins", "command.tps", "command.vote"))
+                            "command.plugins", "command.tps", "command.vote", "command.say", "command.who"))
                     );
                 }
             }
@@ -226,38 +241,44 @@ namespace GTAServer.Users
             }
         }
 
-        private void OnSetGroup(List<string> args)
+        private void OnSetGroup(CommandContext ctx, List<string> args)
         {
             if (args.Count < 2) return;
 
             var user = Users.Find(x => x.Username == args[0]);
             if (user == null)
             {
-                _logger.LogInformation("User not found.");
+                ctx.SendMessage("User not found.");
                 return;
             }
 
             if (!Groups.ContainsKey(args[1]))
             {
-                _logger.LogInformation("Group not found.");
+                ctx.SendMessage("Group not found.");
                 return;
             }
 
             SetGroup(user.Id, args[1]);
-            _logger.LogInformation("Group updated.");
+            ctx.SendMessage("Group updated.");
         }
 
-        private void OnRegister(Client client, List<string> args)
+        private void OnRegister(CommandContext ctx, List<string> args)
         {
-            if (Users.Any(user => user.Username == client.DisplayName))
+            if(ctx.Sender is ConsoleCommandSender)
             {
-                client.SendMessage("Can't register an account on this username");
+                ctx.SendMessage("You cannot execute this command as console");
+                return;
+            }
+			
+            if (Users.Any(user => user.Username == ctx.Client.DisplayName))
+            {
+                ctx.SendMessage("Can't register an account on this username");
                 return;
             }
 
             if (args.Count == 0)
             {
-                client.SendMessage("Usage /register (password)");
+                ctx.SendMessage("Usage /register (password)");
                 return;
             }
 
@@ -266,40 +287,46 @@ namespace GTAServer.Users
             // bcrypt limits
             if (password.Length > 50)
             {
-                client.SendMessage("Please keep your password under 50 characters");
+                ctx.SendMessage("Please keep your password under 50 characters");
                 return;
             }
 
-            CreateUser(client.DisplayName, password);
-            Login(client);
+            CreateUser(ctx.Client.DisplayName, password);
+            Login(ctx.Client);
         }
 
-        private void OnLogin(Client client, List<string> args)
+        private void OnLogin(CommandContext ctx, List<string> args)
         {
-            if (Users.All(x => x.Username != client.DisplayName))
+            if(ctx.Sender is ConsoleCommandSender)
             {
-                client.SendMessage("You need to register first");
+                ctx.SendMessage("You cannot execute this command as console");
+                return;
+            }
+			
+            if (Users.All(x => x.Username != ctx.Client.DisplayName))
+            {
+                ctx.SendMessage("You need to register first");
                 return;
             }
 
-            if (Users.Any(x => x.Client == client))
+            if (Users.Any(x => x.Client == ctx.Client))
                 return;
 
             if (args.Count == 0)
             {
-                client.SendMessage("Usage /login (password)");
+                ctx.SendMessage("Usage /login (password)");
                 return;
             }
 
             var password = string.Join(" ", args);
-            var user = Users.Single(x => x.Username == client.DisplayName);
+            var user = Users.Single(x => x.Username == ctx.Client.DisplayName);
             if (!user.PasswordVerify(password))
             {
-                client.SendMessage("Password incorrect");
+                ctx.SendMessage("Password incorrect");
                 return;
             }
 
-            Login(client);
+            Login(ctx.Client);
         }
 
         public bool HasPermission(Client client, PermissionType type, string permission)

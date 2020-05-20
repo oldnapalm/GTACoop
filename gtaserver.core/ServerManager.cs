@@ -1,31 +1,33 @@
 ﻿using System;
-using static System.Console;
 using System.Collections.Generic;
 using System.Threading;
 using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
 using GTAServer.Commands;
-using GTAServer.Console;
-using GTAServer.Console.Modules;
 using Microsoft.Extensions.Logging;
 using GTAServer.PluginAPI;
 using SimpleConsoleLogger;
-using GTAServer.Users;
 using Sentry;
+using GTAServer.PluginAPI.Entities;
+using GTAServer.Users;
 
 namespace GTAServer
 {
     public class ServerManager
     {
         private static ServerConfiguration _gameServerConfiguration;
-        internal static GameServer GameServer;
+        private static GameServer _gameServer;
         private static ILogger _logger;
-        internal static readonly List<IPlugin> Plugins = new List<IPlugin>();
+        private static readonly List<IPlugin> _plugins = new List<IPlugin>();
         private static readonly string _location = System.AppContext.BaseDirectory;
 
         private static bool _debugMode = false;
         private static int _tickEvery = 10;
+
+        private static UserModule _userModule;
+
+        private static CancellationTokenSource _cancellationToken;
 
         private static void CreateNeededFiles()
         {
@@ -53,7 +55,7 @@ namespace GTAServer
             CreateNeededFiles();
 
             // can't use logger here since the logger config depends on if debug mode is on or off
-            WriteLine("Reading server configuration...");
+            Console.WriteLine("Reading server configuration...");
 
             _gameServerConfiguration =
                 LoadServerConfiguration(Path.Combine(_location, "Configuration", "serverSettings.xml"));
@@ -73,7 +75,7 @@ namespace GTAServer
             _logger = Util.LoggerFactory.CreateLogger<ServerManager>();
             DoDebugWarning();
 
-            // enable Sentry (sadly we can't catch errors above cause sentry depends on debug mode
+            // enable Sentry
             if(!_debugMode)
             {
                 SentrySdk.Init("https://61668555fb9846bd8a2451366f50e5d3@sentry.io/1320932");
@@ -101,7 +103,7 @@ namespace GTAServer
             
             _logger.LogInformation("Server preparing to start...");
 
-            GameServer = new GameServer(_gameServerConfiguration.Port, _gameServerConfiguration.ServerName,
+            _gameServer = new GameServer(_gameServerConfiguration.Port, _gameServerConfiguration.ServerName,
                 _gameServerConfiguration.GamemodeName, _debugMode)
             {
                 Password = _gameServerConfiguration.Password,
@@ -113,22 +115,10 @@ namespace GTAServer
             };
 
             // push master servers (backwards compatible)
-            GameServer.MasterServers.AddRange(
+            _gameServer.MasterServers.AddRange(
                 new []{ _gameServerConfiguration.PrimaryMasterServer, _gameServerConfiguration.BackupMasterServer});
 
-            GameServer.Start();
-
-            // Console module manager
-            ConsoleInstance instance = new ConsoleInstance(_logger);
-
-            // User module
-            if (_gameServerConfiguration.UseGroups)
-            {
-                var userModule = new UserModule();
-                GameServer.PermissionProvider = userModule;
-
-                instance.AddModule(userModule);
-            }
+            _gameServer.Start();
 
             // Plugin Code
             _logger.LogInformation("Loading plugins");
@@ -137,47 +127,46 @@ namespace GTAServer
             {
                 foreach (var loadedPlugin in PluginLoader.LoadPlugin(pluginName))
                 {
-                    Plugins.Add(loadedPlugin);
+                    _plugins.Add(loadedPlugin);
                 }
+            }
+
+            // TODO future refactor
+            if (_gameServerConfiguration.UseGroups)
+            {
+                _userModule = new UserModule(_gameServer);
+                _userModule.Start();
+				
+                _gameServer.PermissionProvider = _userModule;
             }
 
             RegisterCommands();
 
             _logger.LogInformation("Plugins loaded. Enabling plugins...");
-            foreach (var plugin in Plugins)
+            foreach (var plugin in _plugins)
             {
-                if (!plugin.OnEnable(GameServer, false))
+                if (!plugin.OnEnable(_gameServer, false))
                 {
                     _logger.LogWarning("Plugin " + plugin.Name + " returned false when enabling, marking as disabled, although it may still have hooks registered and called.");
                 }
             }
 
-            _logger.LogInformation("Starting server main loop, ready to accept connections.");
-
-            var t = new Timer(DoServerTick, GameServer, 0, _tickEvery);
-
-            CancelKeyPress += (sender, e) =>
+            // prepare console
+            _cancellationToken = new CancellationTokenSource();
+            var console = new ConsoleThread
             {
-                _logger.LogInformation("Kicking all clients");
-
-                GameServer.Clients.ForEach(client => GameServer.KickPlayer(client, "Server shutdown", true));
-
-                // give the other thread some time to kick all the clients
-                Thread.Sleep(1000);
-
-                _logger.LogInformation("Quitting...");
-
-                t.Dispose();
-
-                // and.. exit
-                Environment.Exit(0);
+                CancellationToken = _cancellationToken.Token,
+                GameServer = _gameServer
             };
 
-            instance.AddModule(new CommandsModule());
-            instance.AddModule(new ServerCommandsModule());
+            Console.CancelKeyPress += Console_CancelKeyPress;
+            Thread c = new Thread(new ThreadStart(console.ThreadProc)) { Name = "Server console thread" };
+            c.Start();
 
-            instance.Start();
-
+            // ready
+            _logger.LogInformation("Starting server main loop, ready to accept connections.");
+            
+            var t = new Timer(DoServerTick, _gameServer, 0, _tickEvery);
             while(true) Thread.Sleep(1);
         }
 
@@ -196,6 +185,17 @@ namespace GTAServer
                     throw;
             }
         }
+
+        private static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
+        {
+            _logger.LogInformation("^c detected, exiting.");
+            _cancellationToken.Cancel();
+
+            _userModule?.Stop();
+
+            Environment.Exit(0);
+        }
+
         private static ServerConfiguration LoadServerConfiguration(string path)
         {
             var ser = new XmlSerializer(typeof(ServerConfiguration));
@@ -210,7 +210,7 @@ namespace GTAServer
             }
             else
             {
-                WriteLine("No configuration found, creating a new one.");
+                Console.WriteLine("No configuration found, creating a new one.");
                 using (var stream = File.OpenWrite(path)) ser.Serialize(stream, cfg = new ServerConfiguration());
             }
 
@@ -220,9 +220,45 @@ namespace GTAServer
         // register server commands
         private static void RegisterCommands()
         {
-            GameServer.RegisterCommands<UserCommands>();
-            GameServer.RegisterCommands<AdminCommands>();
-            GameServer.RegisterCommands<InfoCommands>();
+            _gameServer.RegisterCommands<UserCommands>();
+            _gameServer.RegisterCommands<AdminCommands>();
+            _gameServer.RegisterCommands<InfoCommands>();
+        }
+    }
+
+    class ConsoleThread
+    {
+        public CancellationToken CancellationToken { get; set; }
+        public GameServer GameServer { get; set; }
+
+        public void ThreadProc()
+        {
+            var sender = new ConsoleCommandSender
+            {
+                GameServer = GameServer
+            };
+
+            // continue until we're told to stop
+            while (!CancellationToken.IsCancellationRequested)
+            {
+                // read the input from the console and attempt to parse it as command
+                // this will find the command in the gameserver and execute if it exist
+
+                var input = Console.ReadLine();
+                if (input == null) continue;
+                // TODO this needs to take quotes into account
+                var arguments = input.Split(" ");
+
+                // continue if the command exists
+                if (!GameServer.Commands.ContainsKey(arguments[0])) continue;
+
+                // invoke the command
+                GameServer.Commands[arguments[0]].Invoke(new CommandContext
+                {
+                    Sender = sender                                                             ,
+                    GameServer = GameServer
+                }, arguments.Skip(1).ToList());
+            }
         }
     }
 }

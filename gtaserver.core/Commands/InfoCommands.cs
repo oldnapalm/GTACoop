@@ -1,30 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using GTAServer.PluginAPI.Attributes;
-using GTAServer.ProtocolMessages;
+using GTAServer.PluginAPI.Entities;
 
 namespace GTAServer.Commands
 {
     class InfoCommands
     {
         [Command("tps")]
-        public static void TicksPerSecond(Client client, List<string> args)
+        public static void TicksPerSecond(CommandContext ctx, List<string> args)
         {
-            client.SendMessage("TPS: " + ServerManager.GameServer.TicksPerSecond);
-        }
-
-        [Command("plugins")]
-        public static void Plugins(Client client, List<string> args)
-        {
-            client.SendMessage("Plugins (" + ServerManager.Plugins.Count + "): \n " +
-                               string.Join(", ", ServerManager.Plugins.Select(x => x.Name)));
+            ctx.SendMessage("TPS: " + ctx.GameServer.TicksPerSecond);
         }
 
         [Command("about")]
-        public static void About(Client client, List<string> args)
+        public static void About(CommandContext ctx, List<string> args)
         {
             string os = "";
 
@@ -41,8 +32,15 @@ namespace GTAServer.Commands
                 os = "OSX";
             }
 
-            client.SendMessage($"This server runs GTAServer.core on {os} {RuntimeInformation.OSArchitecture}.\n" +
+            ctx.SendMessage($"This server runs GTAServer.core on {os} {RuntimeInformation.OSArchitecture}.\n" +
                                $"More info about this build see gtacoop.com");
+        }
+
+        [Command("who")]
+        public static void Who(CommandContext ctx, List<string> args)
+        {
+            var clients = ctx.GameServer.Clients;
+            ctx.SendMessage($"Online ({clients.Count}): " + string.Join(", ", clients.Select(x => x.DisplayName)));
         }
     }
 }
