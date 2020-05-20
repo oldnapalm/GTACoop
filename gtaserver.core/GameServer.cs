@@ -15,7 +15,6 @@ using GTAServer.ProtocolMessages;
 using Lidgren.Network;
 using Microsoft.Extensions.Logging;
 using GTAServer.PluginAPI.Events;
-using GTAServer.Users;
 using GTAServer.Users.Groups;
 using GTAServer.PluginAPI.Entities;
 
@@ -46,6 +45,7 @@ namespace GTAServer
 
         public string Motd { get; set; } = "Welcome to this GTA CooP server!";
         public IPermissionProvider PermissionProvider { get; set; }
+        public bool UPnP { get; set; }
 
         public readonly Dictionary<string, Action<CommandContext, List<string>>> Commands = new Dictionary<string, Action<CommandContext, List<string>>>();
 
@@ -57,7 +57,7 @@ namespace GTAServer
         private int _ticksLastSecond;
 
         private readonly Timer _tpsTimer;
-        public GameServer(int port, string name, string gamemodeName, bool isDebug)
+        public GameServer(int port, string name, string gamemodeName, bool isDebug, bool upnp = false)
         {
             logger = Util.LoggerFactory.CreateLogger<GameServer>();
             logger.LogInformation("Server ready to start");
@@ -66,8 +66,9 @@ namespace GTAServer
             GamemodeName = gamemodeName;
             Name = name;
             Port = port;
+            UPnP = upnp;
 
-            Config = new NetPeerConfiguration("GTAVOnlineRaces") { Port = port };
+            Config = new NetPeerConfiguration("GTAVOnlineRaces") { Port = port, EnableUPnP = UPnP };
             Config.EnableMessageType(NetIncomingMessageType.ConnectionApproval);
             Config.EnableMessageType(NetIncomingMessageType.DiscoveryRequest);
             Config.EnableMessageType(NetIncomingMessageType.UnconnectedData);
@@ -143,6 +144,17 @@ namespace GTAServer
             {
                 logger.LogCritical($"Couldn't bind port {Port}: Not a valid 16-bit port number");
                 Environment.Exit(0);
+            }
+
+            if (UPnP)
+            {
+                logger.LogInformation("Attempting to forward port " + Port);
+
+                if(Server.UPnP.ForwardPort(Port, "GTAServer.core server"))
+                {
+                    var ip = Server.UPnP.GetExternalIP();
+                    logger.LogInformation($"Server available on {ip}, Port = {Port}");
+                }
             }
 
             if (AnnounceSelf)
