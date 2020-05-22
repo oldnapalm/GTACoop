@@ -427,6 +427,7 @@ namespace GTAServer
                 if (Clients.Any(c => c.DisplayName == client.DisplayName))
                 {
                     DenyConnect(client, "A player already exists with the current display name.");
+                    return;
                 }
                 else
                 {
