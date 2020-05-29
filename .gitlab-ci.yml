@@ -8,12 +8,30 @@ before_script:
     - "cd gtaserver.core"
     - "dotnet restore"
     
-build:
+build_windows:
     stage: build
     script:
-        - "chmod +x publish.sh"
-        - "./publish.sh"
+        # windows 7 is EOL, win10 includes win81
+        - dotnet publish -r win10-x64 -c Release -o publish/windows-Release
+        - zip -r publish/windows-Release.zip publish/windows-Release
     artifacts:
         paths:
             - "gtaserver.core/publish/windows-Release.zip"
+
+build_linux:
+    stage: build
+    script:
+        - dotnet publish -r ubuntu-x64 -c Release -o publish/linux-Release
+        - zip -r publish/linux-Release.zip publish/linux-Release
+    artifacts:
+        paths:
             - "gtaserver.core/publish/linux-Release.zip"
+
+build_linux_arm:
+    stage: build
+    script:
+        - dotnet publish -r linux-arm -c Release -o publish/arm-Release
+        - zip -r publish/arm-Release.zip publish/arm-Release
+    artifacts:
+        paths:
+            - "gtaserver.core/publish/arm-Release.zip"
