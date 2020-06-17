@@ -11,6 +11,7 @@ using SimpleConsoleLogger;
 using Sentry;
 using GTAServer.PluginAPI.Entities;
 using GTAServer.Users;
+using JetBrains.Profiler.Api;
 
 namespace GTAServer
 {
@@ -165,14 +166,30 @@ namespace GTAServer
 
             // ready
             _logger.LogInformation("Starting server main loop, ready to accept connections.");
-            
+
+            _profiling = _gameServerConfiguration.ServerVariables.Any(x => x.Key == "profiler");
+
             var t = new Timer(DoServerTick, _gameServer, 0, _tickEvery);
             while(true) Thread.Sleep(1);
         }
 
+        private static bool _profiling;
+
         public static void DoServerTick(object serverObject)
         {
-            var server = (GameServer) serverObject;
+            var server = (GameServer)serverObject;
+
+            if (_profiling)
+            {
+                MeasureProfiler.StartCollectingData();
+
+                server.Tick();
+
+                MeasureProfiler.StopCollectingData();
+                return;
+            }
+
+            // normal tick logic
             try
             {
                 server.Tick();
@@ -183,6 +200,8 @@ namespace GTAServer
                 if (_debugMode)
                     // rethrow exception
                     throw;
+                else
+                    SentrySdk.CaptureException(e);
             }
         }
 
