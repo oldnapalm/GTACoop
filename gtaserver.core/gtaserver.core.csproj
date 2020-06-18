@@ -10,7 +10,6 @@
 
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.0" />
-    <PackageReference Include="JetBrains.Profiler.Api" Version="1.1.6" />
     <PackageReference Include="Lidgren.Network" Version="1.0.2" />
     <PackageReference Include="Microsoft.Extensions.Logging.Log4Net.AspNetCore" Version="2.2.12" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
