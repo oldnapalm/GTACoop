@@ -252,11 +252,14 @@ namespace GTAServer
                 // TODO this needs to take quotes into account
                 var arguments = input.Split(" ");
 
+                Dictionary<string, Action<CommandContext, List<string>>> commands;
+                lock (GameServer.Commands) commands = GameServer.Commands;
+
                 // continue if the command exists
-                if (!GameServer.Commands.ContainsKey(arguments[0])) continue;
+                if (!commands.ContainsKey(arguments[0])) continue;
 
                 // invoke the command
-                GameServer.Commands[arguments[0]].Invoke(new CommandContext
+                commands[arguments[0]].Invoke(new CommandContext
                 {
                     Sender = sender                                                             ,
                     GameServer = GameServer
