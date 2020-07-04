@@ -152,16 +152,22 @@ namespace GTAServer
             }
 
             // prepare console
-            _cancellationToken = new CancellationTokenSource();
-            var console = new ConsoleThread
+
+            if (!_gameServerConfiguration.NoConsole)
             {
-                CancellationToken = _cancellationToken.Token,
-                GameServer = _gameServer
-            };
+                _cancellationToken = new CancellationTokenSource();
+                var console = new ConsoleThread
+                {
+                    CancellationToken = _cancellationToken.Token,
+                    GameServer = _gameServer
+                };
+
+                Thread c = new Thread(new ThreadStart(console.ThreadProc)) { Name = "Server console thread" };
+                c.Start();
+
+            }
 
             Console.CancelKeyPress += Console_CancelKeyPress;
-            Thread c = new Thread(new ThreadStart(console.ThreadProc)) { Name = "Server console thread" };
-            c.Start();
 
             // ready
             _logger.LogInformation("Starting server main loop, ready to accept connections.");
@@ -253,17 +259,20 @@ namespace GTAServer
                 var arguments = input.Split(" ");
 
                 Dictionary<string, Action<CommandContext, List<string>>> commands;
-                lock (GameServer.Commands) commands = GameServer.Commands;
-
-                // continue if the command exists
-                if (!commands.ContainsKey(arguments[0])) continue;
-
-                // invoke the command
-                commands[arguments[0]].Invoke(new CommandContext
+                lock (GameServer)
                 {
-                    Sender = sender                                                             ,
-                    GameServer = GameServer
-                }, arguments.Skip(1).ToList());
+                    commands = GameServer.Commands;
+
+                    // continue if the command exists
+                    if (!commands.ContainsKey(arguments[0])) continue;
+
+                    // invoke the command
+                    commands[arguments[0]].Invoke(new CommandContext
+                    {
+                        Sender = sender,
+                        GameServer = GameServer
+                    }, arguments.Skip(1).ToList());
+                }
             }
         }
     }
