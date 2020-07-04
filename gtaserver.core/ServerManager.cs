@@ -198,7 +198,7 @@ namespace GTAServer
         private static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
         {
             _logger.LogInformation("^c detected, exiting.");
-            _cancellationToken.Cancel();
+            _cancellationToken?.Cancel();
 
             _userModule?.Stop();
 
