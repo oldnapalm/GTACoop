@@ -28,6 +28,8 @@ namespace GTAServer
         private static UserModule _userModule;
 
         private static CancellationTokenSource _cancellationToken;
+        private static AutoResetEvent _autoResetEvent = new AutoResetEvent(false);
+        private static Timer _timer;
 
         private static void CreateNeededFiles()
         {
@@ -152,7 +154,6 @@ namespace GTAServer
             }
 
             // prepare console
-
             if (!_gameServerConfiguration.NoConsole)
             {
                 _cancellationToken = new CancellationTokenSource();
@@ -172,8 +173,8 @@ namespace GTAServer
             // ready
             _logger.LogInformation("Starting server main loop, ready to accept connections.");
 
-            var t = new Timer(DoServerTick, _gameServer, 0, _tickEvery);
-            while(true) Thread.Sleep(1);
+            _timer = new Timer(DoServerTick, _gameServer, 0, _tickEvery);
+            _autoResetEvent.WaitOne();
         }
 
         public static void DoServerTick(object serverObject)
@@ -201,6 +202,9 @@ namespace GTAServer
             _cancellationToken?.Cancel();
 
             _userModule?.Stop();
+
+            _timer.Dispose();
+            _autoResetEvent.Set();
 
             Environment.Exit(0);
         }
