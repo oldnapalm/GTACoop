@@ -5,10 +5,10 @@ using System.Text;
 
 namespace GTAServer.PluginAPI.Entities
 {
-    class ConsoleCommandSender : ICommandSender
+    public class ConsoleCommandSender : ICommandSender
     {
-        public string DisplayName { get; set; } = "Console";
-        public GameServer GameServer { get; set; }
+        public string DisplayName { get; } = "Console";
+        public GameServer GameServer { get; internal set; }
 
         public void SendMessage(string message)
         {
