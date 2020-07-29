@@ -11,6 +11,7 @@ using SimpleConsoleLogger;
 using Sentry;
 using GTAServer.PluginAPI.Entities;
 using GTAServer.Users;
+using System.Runtime.InteropServices;
 
 namespace GTAServer
 {
@@ -80,7 +81,16 @@ namespace GTAServer
             // enable Sentry
             if(!_debugMode)
             {
-                SentrySdk.Init("https://61668555fb9846bd8a2451366f50e5d3@sentry.io/1320932");
+                SentrySdk.Init(config =>
+                {
+                    config.Dsn = new Dsn("https://61668555fb9846bd8a2451366f50e5d3@sentry.io/1320932");
+
+                    // minidumps are only written on Windows as Linux has no such functionality
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    {
+                        config.AddExceptionProcessor(new MiniDump());
+                    }
+                });
 
                 SentrySdk.ConfigureScope(scope =>
                 {
