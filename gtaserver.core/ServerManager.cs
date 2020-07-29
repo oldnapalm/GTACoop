@@ -96,6 +96,20 @@ namespace GTAServer
                 {
                     // add configuration to crash reports
                     scope.SetExtra("configuration", _gameServerConfiguration);
+
+                    // if server is ran on Windows we attempt to find a local discord client
+                    // we will then get the username of the current user and include this in the event
+                    // assuming developers need more information about a crash they can contact the user
+                    // (this can be disabled by settings 'AnonymousCrashes' to true in the server configuration)
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && !_gameServerConfiguration.AnonymousCrashes)
+                    {
+                        var user = Discord.GetDiscordUser();
+                        if (user != null)
+                        {
+                            scope.User.Id = user.Id;
+                            scope.User.Username = $"{user.Name}#{user.Discriminator}";
+                        }
+                    }
                 });
             }
 

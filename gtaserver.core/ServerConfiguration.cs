@@ -28,6 +28,7 @@ namespace GTAServer
         public bool UseGroups { get; set; } = true;
         public bool UPnP { get; set; } = true;
         public bool NoConsole { get; set; } = false;
+        public bool AnonymousCrashes { get; set; } = false;
 
         public List<string> ServerPlugins { get; set; } = new List<string>() {};
 
