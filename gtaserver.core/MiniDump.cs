@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 
 namespace GTAServer
 {
-    class MiniDump : ISentryEventExceptionProcessor
+    internal class MiniDump : ISentryEventExceptionProcessor
     {
         // https://www.pinvoke.net/default.aspx/dbghelp/MiniDumpWriteDump.html
         [DllImport("Dbghelp.dll")]
-        static extern bool MiniDumpWriteDump(
+        private static extern bool MiniDumpWriteDump(
             IntPtr hProcess,
             uint ProcessId,
             IntPtr hFile,
@@ -20,13 +20,13 @@ namespace GTAServer
             IntPtr CallbackParam);
 
         [DllImport("kernel32.dll")]
-        static extern IntPtr GetCurrentProcess();
+        private static extern IntPtr GetCurrentProcess();
 
         [DllImport("kernel32.dll")]
-        static extern uint GetCurrentProcessId();
+        private static extern uint GetCurrentProcessId();
 
         [DllImport("kernel32.dll")]
-        static extern uint GetCurrentThreadId();
+        private static extern uint GetCurrentThreadId();
 
         public void Process(Exception exception, SentryEvent sentryEvent)
         {
@@ -62,14 +62,14 @@ namespace GTAServer
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 4)]
-    struct MINIDUMP_EXCEPTION_INFORMATION
+    internal struct MINIDUMP_EXCEPTION_INFORMATION
     {
         public uint ThreadId;
         public IntPtr ExceptionPointers;
         public int ClientPointers;
     }
 
-    enum MINIDUMP_TYPE
+    internal enum MINIDUMP_TYPE
     {
         MiniDumpNormal = 0,
         MiniDumpWithFullMemory = 2

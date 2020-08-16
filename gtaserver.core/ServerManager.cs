@@ -263,7 +263,7 @@ namespace GTAServer
         }
     }
 
-    class ConsoleThread
+    internal class ConsoleThread
     {
         public CancellationToken CancellationToken { get; set; }
         public GameServer GameServer { get; set; }

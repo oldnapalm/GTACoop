@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Data.SQLite;
 using System.IO;
 using System.Linq;
@@ -96,7 +95,7 @@ namespace GTAServer.Users
                 }
                 catch (Exception e)
                 {
-                    _logger.LogWarning($"An exception occured while loading group '{group.Name}': {e.Message}");
+                    _logger.LogWarning($"An exception occurred while loading group '{group.Name}': {e.Message}");
                 }
             });
         }
@@ -105,9 +104,18 @@ namespace GTAServer.Users
         {
             var permissions = new List<Permission>();
 
-            groups.Find(x => x.Name == group).Permissions.ForEach(x =>
+            groups.Find(x => x.Name == group)?.Permissions.ForEach(x =>
             {
-                var permission = Permission.Parse(x);
+                Permission permission;
+                try
+                {
+                    permission = Permission.Parse(x);
+                }
+                catch (InvalidPermissionException e)
+                {
+                    _logger.LogWarning($"Failed to parse permission {x}: {e.Message}");
+                    return;
+                }
 
                 if (permission.Type == PermissionType.Group && groups.Any(y => y.Name == permission.Name))
                 {
