@@ -4,6 +4,8 @@ stages:
     - build
     
 before_script:
+    # https://gitlab.com/TheIndra55/lidgren-network-gen3
+    - 'nuget source Add -Name "GitLab" -Source "https://gitlab.com/api/v4/projects/20574571/packages/nuget/index.json"'
     - "cd gtaserver.core"
     - "dotnet restore"
     
