@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.Loader;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml.Serialization;
@@ -46,6 +48,7 @@ namespace GTAServer
         public string Motd { get; set; } = "Welcome to this GTA CooP server!";
         public IPermissionProvider PermissionProvider { get; set; }
         public bool UPnP { get; set; }
+        public string RconPassword { get; set; }
 
         public readonly Dictionary<string, Action<CommandContext, List<string>>> Commands = new Dictionary<string, Action<CommandContext, List<string>>>();
 
@@ -249,6 +252,14 @@ namespace GTAServer
                 switch (msg.MessageType)
                 {
                     case NetIncomingMessageType.UnconnectedData:
+                        if (msg.IsOob)
+                        {
+                            var str = msg.ReadNullTerminatedString();
+                            if (str.StartsWith("rcon")) HandleRconConnection(msg, str);
+
+                            return;
+                        }
+
                         var ucType = msg.ReadString();
                         // ReSharper disable once ConvertIfStatementToSwitchStatement
                         if (ucType == "ping")
@@ -350,6 +361,56 @@ namespace GTAServer
                 Server.Recycle(msg);
             }
         }
+
+        private void HandleRconConnection(NetIncomingMessage msg, string str)
+        {
+            if (string.IsNullOrEmpty(RconPassword))
+            {
+                RespondRconMessage(msg.SenderEndPoint,
+                    "This feature has been disabled, enable it by setting RconPassword in the server configuration");
+                return;
+            }
+
+            var split = str.Split(' ');
+            if (split[1] != RconPassword)
+            {
+                RespondRconMessage(msg.SenderEndPoint, "Invalid rcon password");
+                return;
+            }
+
+            var command = string.Join(" ", split.Skip(2));
+            logger.LogInformation($"{msg.SenderEndPoint.Address.MapToIPv4()}: {command}");
+
+            // construct a new rcon commandsender
+            var sender = new RconCommandSender();
+            sender.Destination = msg.SenderEndPoint;
+            sender.GameServer = this;
+
+            // invoke command
+            split = command.Split(' ');
+            if (!Commands.ContainsKey(split[0]))
+            {
+                RespondRconMessage(msg.SenderEndPoint, "Command not found");
+                return;
+            }
+
+            Commands[split[0]].Invoke(new CommandContext
+            {
+                Sender = sender,
+                GameServer = this
+            }, split.Skip(1).ToList());
+        }
+
+        internal void RespondRconMessage(IPEndPoint destination, string response)
+        {
+            response = "print " + response + "\n";
+            var message = new byte[] {0xff, 0xff, 0xff, 0xff}.Concat(
+                Encoding.UTF8.GetBytes(response))
+                .ToArray();
+
+            Server.RawSend(message, 0, message.Length, destination);
+        }
+
         private void HandleClientConnectionApproval(Client client, NetIncomingMessage msg)
         {
             var type = msg.ReadInt32();

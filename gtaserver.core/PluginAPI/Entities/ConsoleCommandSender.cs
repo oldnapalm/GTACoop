@@ -10,7 +10,7 @@ namespace GTAServer.PluginAPI.Entities
         public string DisplayName { get; } = "Console";
         public GameServer GameServer { get; internal set; }
 
-        public void SendMessage(string message)
+        public virtual void SendMessage(string message)
         {
             GameServer.logger.LogInformation(message);
         }

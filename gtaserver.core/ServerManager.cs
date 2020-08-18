@@ -137,7 +137,8 @@ namespace GTAServer
                 AllowNicknames = _gameServerConfiguration.AllowNicknames,
                 AllowOutdatedClients = _gameServerConfiguration.AllowOutdatedClients,
                 MaxPlayers = _gameServerConfiguration.MaxClients,
-                Motd = _gameServerConfiguration.Motd
+                Motd = _gameServerConfiguration.Motd,
+                RconPassword = _gameServerConfiguration.RconPassword
             };
 
             // push master servers (backwards compatible)
