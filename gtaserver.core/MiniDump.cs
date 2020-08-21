@@ -58,6 +58,8 @@ namespace GTAServer
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("A minidump has been written to " + file.Name + ", please send this file to the developers.");
             Console.ResetColor();
+
+            sentryEvent.SetExtra("minidump", Path.GetFileName(file.Name));
         }
     }
 
