@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace GTAServer.Users.Groups
+﻿namespace GTAServer.Users.Groups
 {
     public enum PermissionType
     {

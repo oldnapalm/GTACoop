@@ -1,34 +1,37 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace GTAServer.Users.Groups
 {
     public class Permission
     {
+        public PermissionType Type { get; }
+        public string Name { get; }
+
         public Permission(PermissionType type, string permission)
         {
             Type = type;
             Name = permission;
         }
 
+        /// <summary>
+        /// Parses a string to permission
+        /// </summary>
+        /// <param name="permission"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidPermissionException"></exception>
         public static Permission Parse(string permission)
         {
             var split = permission.Split(".");
-            if(split.Length <= 1)
-                throw new Exception($"Invalid permission '{permission}'");
+            if (split.Length <= 1)
+                throw new InvalidPermissionException($"Permission contains no value");
 
-            PermissionType type;
-            if (!Enum.TryParse(split[0], true, out type))
+            if (!Enum.TryParse(split[0], true, out PermissionType type))
             {
-                throw new Exception($"Invalid permission '{permission}', type '{split[0]}' is not valid");
+                throw new InvalidPermissionException($"Invalid permission type");
             }
 
             return new Permission(type, string.Join(".", split.Skip(1)));
         }
-
-        public PermissionType Type { get; set; }
-        public string Name { get; set; }
     }
 }

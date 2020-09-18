@@ -4,16 +4,32 @@ stages:
     - build
     
 before_script:
-    - "apt-get update -qq && apt-get install -y -qq zip"
+    # https://gitlab.com/TheIndra55/lidgren-network-gen3
+    - "dotnet nuget add source https://gitlab.com/api/v4/projects/20574571/packages/nuget/index.json -n gitlab"
     - "cd gtaserver.core"
     - "dotnet restore"
     
-build:
+build_windows:
     stage: build
     script:
-        - "chmod +x publish.sh"
-        - "./publish.sh"
+        # windows 7 is EOL, win10 includes win81
+        - dotnet publish -r win10-x64 -c Release -o publish/windows-Release
     artifacts:
         paths:
-            - "gtaserver.core/publish/windows-Release.zip"
-            - "gtaserver.core/publish/linux-Release.zip"
+            - "gtaserver.core/publish/windows-Release"
+
+build_linux:
+    stage: build
+    script:
+        - dotnet publish -r ubuntu-x64 -c Release -o publish/linux-Release
+    artifacts:
+        paths:
+            - "gtaserver.core/publish/linux-Release"
+
+build_linux_arm:
+    stage: build
+    script:
+        - dotnet publish -r linux-arm -c Release -o publish/arm-Release
+    artifacts:
+        paths:
+            - "gtaserver.core/publish/arm-Release"

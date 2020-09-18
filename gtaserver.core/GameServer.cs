@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.Loader;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml.Serialization;
@@ -15,8 +17,8 @@ using GTAServer.ProtocolMessages;
 using Lidgren.Network;
 using Microsoft.Extensions.Logging;
 using GTAServer.PluginAPI.Events;
-using GTAServer.Users;
 using GTAServer.Users.Groups;
+using GTAServer.PluginAPI.Entities;
 
 namespace GTAServer
 {
@@ -45,8 +47,10 @@ namespace GTAServer
 
         public string Motd { get; set; } = "Welcome to this GTA CooP server!";
         public IPermissionProvider PermissionProvider { get; set; }
+        public bool UPnP { get; set; }
+        public string RconPassword { get; set; }
 
-        public readonly Dictionary<string, Action<Client, List<string>>> Commands = new Dictionary<string, Action<Client, List<string>>>();
+        public readonly Dictionary<string, Action<CommandContext, List<string>>> Commands = new Dictionary<string, Action<CommandContext, List<string>>>();
 
         public int TicksPerSecond { get; set; }
 
@@ -56,7 +60,7 @@ namespace GTAServer
         private int _ticksLastSecond;
 
         private readonly Timer _tpsTimer;
-        public GameServer(int port, string name, string gamemodeName, bool isDebug)
+        public GameServer(int port, string name, string gamemodeName, bool isDebug, bool upnp = false)
         {
             logger = Util.LoggerFactory.CreateLogger<GameServer>();
             logger.LogInformation("Server ready to start");
@@ -65,8 +69,9 @@ namespace GTAServer
             GamemodeName = gamemodeName;
             Name = name;
             Port = port;
+            UPnP = upnp;
 
-            Config = new NetPeerConfiguration("GTAVOnlineRaces") { Port = port };
+            Config = new NetPeerConfiguration("GTAVOnlineRaces") { Port = port, EnableUPnP = UPnP };
             Config.EnableMessageType(NetIncomingMessageType.ConnectionApproval);
             Config.EnableMessageType(NetIncomingMessageType.DiscoveryRequest);
             Config.EnableMessageType(NetIncomingMessageType.UnconnectedData);
@@ -142,6 +147,17 @@ namespace GTAServer
             {
                 logger.LogCritical($"Couldn't bind port {Port}: Not a valid 16-bit port number");
                 Environment.Exit(0);
+            }
+
+            if (UPnP)
+            {
+                logger.LogInformation("Attempting to forward port " + Port);
+
+                if(Server.UPnP.ForwardPort(Port, "GTAServer.core server"))
+                {
+                    var ip = Server.UPnP.GetExternalIP();
+                    logger.LogInformation($"Server available on {ip}, Port = {Port}");
+                }
             }
 
             if (AnnounceSelf)
@@ -236,6 +252,14 @@ namespace GTAServer
                 switch (msg.MessageType)
                 {
                     case NetIncomingMessageType.UnconnectedData:
+                        if (msg.IsOob)
+                        {
+                            var str = msg.ReadNullTerminatedString();
+                            if (str.StartsWith("rcon")) HandleRconConnection(msg, str);
+
+                            return;
+                        }
+
                         var ucType = msg.ReadString();
                         // ReSharper disable once ConvertIfStatementToSwitchStatement
                         if (ucType == "ping")
@@ -337,6 +361,56 @@ namespace GTAServer
                 Server.Recycle(msg);
             }
         }
+
+        private void HandleRconConnection(NetIncomingMessage msg, string str)
+        {
+            if (string.IsNullOrEmpty(RconPassword))
+            {
+                RespondRconMessage(msg.SenderEndPoint,
+                    "This feature has been disabled, enable it by setting RconPassword in the server configuration");
+                return;
+            }
+
+            var split = str.Split(' ');
+            if (split[1] != RconPassword)
+            {
+                RespondRconMessage(msg.SenderEndPoint, "Invalid rcon password");
+                return;
+            }
+
+            var command = string.Join(" ", split.Skip(2));
+            logger.LogInformation($"{msg.SenderEndPoint.Address.MapToIPv4()}: {command}");
+
+            // construct a new rcon commandsender
+            var sender = new RconCommandSender();
+            sender.Destination = msg.SenderEndPoint;
+            sender.GameServer = this;
+
+            // invoke command
+            split = command.Split(' ');
+            if (!Commands.ContainsKey(split[0]))
+            {
+                RespondRconMessage(msg.SenderEndPoint, "Command not found");
+                return;
+            }
+
+            Commands[split[0]].Invoke(new CommandContext
+            {
+                Sender = sender,
+                GameServer = this
+            }, split.Skip(1).ToList());
+        }
+
+        internal void RespondRconMessage(IPEndPoint destination, string response)
+        {
+            response = "print " + response + "\n";
+            var message = new byte[] {0xff, 0xff, 0xff, 0xff}.Concat(
+                Encoding.UTF8.GetBytes(response))
+                .ToArray();
+
+            Server.RawSend(message, 0, message.Length, destination);
+        }
+
         private void HandleClientConnectionApproval(Client client, NetIncomingMessage msg)
         {
             var type = msg.ReadInt32();
@@ -414,6 +488,7 @@ namespace GTAServer
                 if (Clients.Any(c => c.DisplayName == client.DisplayName))
                 {
                     DenyConnect(client, "A player already exists with the current display name.");
+                    return;
                 }
                 else
                 {
@@ -546,7 +621,14 @@ namespace GTAServer
                                 {
                                     if (HasPermission(client, PermissionType.Command, cmdName))
                                     {
-                                        Commands[cmdName](client, cmdArgs.Skip(1).ToList());
+                                        var ctx = new CommandContext
+                                        {
+                                            Client = client,
+                                            GameServer = this,
+                                            ChatData = chatData
+                                        };
+
+                                        Commands[cmdName](ctx, cmdArgs.Skip(1).ToList());
                                     }
                                     else
                                     {
@@ -787,23 +869,8 @@ namespace GTAServer
         /// Registers a command to the server
         /// </summary>
         /// <param name="command">The name of the command</param>
-        /// <param name="commandHandler">The class which will handle the command</param>
-        [Obsolete]
-        public void RegisterCommand(string command, ICommand commandHandler)
-        {
-            // hacky way to still support old ICommand commands
-            RegisterCommand(command, ((c, args) => commandHandler.OnCommandExec(c, new ChatData()
-            {
-                Message = $"/{command} {string.Join("", args)}"
-            })));
-        }
-
-        /// <summary>
-        /// Registers a command to the server
-        /// </summary>
-        /// <param name="command">The name of the command</param>
         /// <param name="callback">The callback which will get triggered while executing the command</param>
-        public void RegisterCommand(string command, Action<Client, List<string>> callback)
+        public void RegisterCommand(string command, Action<CommandContext, List<string>> callback)
         {
             if(Commands.ContainsKey(command))
                 throw new Exception("A command with this name has already been registered");
@@ -823,7 +890,7 @@ namespace GTAServer
             {
                 var name = method.GetCustomAttribute<Command>(true).Name;
 
-                RegisterCommand(name, (Action<Client, List<string>>)Delegate.CreateDelegate(typeof(Action<Client, List<string>>), method));
+                RegisterCommand(name, (Action<CommandContext, List<string>>)Delegate.CreateDelegate(typeof(Action<CommandContext, List<string>>), method));
             }
         }
 

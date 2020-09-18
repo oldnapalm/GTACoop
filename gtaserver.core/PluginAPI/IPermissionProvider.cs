@@ -4,7 +4,7 @@ using System.Text;
 using GTAServer.ProtocolMessages;
 using GTAServer.Users.Groups;
 
-namespace GTAServer.Users
+namespace GTAServer.PluginAPI
 {
     public interface IPermissionProvider
     {

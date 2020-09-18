@@ -1,41 +1,45 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using GTAServer.PluginAPI.Attributes;
-using GTAServer.ProtocolMessages;
+using GTAServer.PluginAPI.Entities;
 
 namespace GTAServer.Commands
 {
     class AdminCommands
     {
         [Command("tp")]
-        public static void Teleport(Client client, List<string> args)
+        public static void Teleport(CommandContext ctx, List<string> args)
         {
-            var target = ServerManager.GameServer.Clients.Find(x =>
-                string.Equals(x.DisplayName.ToLower(), string.Join(" ", args).ToLower(), StringComparison.Ordinal));
-            if (target == null)
+            if(ctx.Sender is ConsoleCommandSender)
             {
-                client.SendMessage("Player not found");
+                ctx.SendMessage("You cannot execute this command as console");
                 return;
             }
 
-            client.Position = target.Position;
-            client.SendMessage("Teleported to " + target.DisplayName);
+            var target = ctx.GameServer.Clients.Find(x =>
+                string.Equals(x.DisplayName.ToLower(), string.Join(" ", args).ToLower(), StringComparison.Ordinal));
+            if (target == null)
+            {
+                ctx.SendMessage("Player not found");
+                return;
+            }
+
+            ctx.Client.Position = target.Position;
+            ctx.SendMessage("Teleported to " + target.DisplayName);
         }
 
         [Command(("kick"))]
-        public static void Kick(Client client, List<string> args)
+        public static void Kick(CommandContext ctx, List<string> args)
         {
-            var target = ServerManager.GameServer.Clients.Find(x =>
+            var target = ctx.GameServer.Clients.Find(x =>
                 string.Equals(x.DisplayName.ToLower(), string.Join(" ", args).ToLower(), StringComparison.Ordinal));
             if (target == null)
             {
-                client.SendMessage("Player not found");
+                ctx.SendMessage("Player not found");
                 return;
             }
 
-            target.Kick("Kicked by " + client.DisplayName, false, client);
+            target.Kick("Kicked by " + ctx.Sender.DisplayName, false);
         }
     }
 }

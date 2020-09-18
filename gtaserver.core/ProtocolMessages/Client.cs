@@ -1,10 +1,11 @@
-﻿using Lidgren.Network;
+﻿using GTAServer.PluginAPI.Entities;
+using Lidgren.Network;
 using Microsoft.Extensions.Logging;
 
 namespace GTAServer.ProtocolMessages
 {
 
-    public class Client
+    public class Client : ICommandSender
     {
         public NetConnection NetConnection { get; set; }
         public string Name { get; set; }
