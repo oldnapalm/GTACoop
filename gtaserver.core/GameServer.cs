@@ -596,6 +596,8 @@ namespace GTAServer
 
         private void HandleClientIncomingData(Client client, NetIncomingMessage msg)
         {
+            if (msg.LengthBits == 0) return;
+
             var packetType = (PacketType)msg.ReadInt32();
 
             switch (packetType)
