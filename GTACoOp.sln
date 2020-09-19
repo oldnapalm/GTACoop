@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2003
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30503.244
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GTACoOp", "Client\GTACoOp.csproj", "{1BC495C9-DC44-478A-9E16-3FC482A8B850}"
 EndProject
@@ -10,8 +10,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdminTools", "AdminTools\AdminTools.csproj", "{158CCEB2-E6EC-457B-BA61-E448BD6B0F40}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Race", "Race\Race.csproj", "{988CD1D8-48ED-4C19-8953-79FAFDBB34DD}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "discord-rpc-test", "discord-rpc-test\discord-rpc-test.csproj", "{B6AE6D47-49C4-471C-A55D-DD44452DFF63}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "gtaserver.core", "gtaserver.core\gtaserver.core.csproj", "{6FD5243E-F355-4456-BD5A-A6F854103EA8}"
 EndProject
@@ -63,14 +61,6 @@ Global
 		{988CD1D8-48ED-4C19-8953-79FAFDBB34DD}.Release|Any CPU.Build.0 = Release|Any CPU
 		{988CD1D8-48ED-4C19-8953-79FAFDBB34DD}.Release|x64.ActiveCfg = Release|Any CPU
 		{988CD1D8-48ED-4C19-8953-79FAFDBB34DD}.Release|x64.Build.0 = Release|Any CPU
-		{B6AE6D47-49C4-471C-A55D-DD44452DFF63}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B6AE6D47-49C4-471C-A55D-DD44452DFF63}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B6AE6D47-49C4-471C-A55D-DD44452DFF63}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{B6AE6D47-49C4-471C-A55D-DD44452DFF63}.Debug|x64.Build.0 = Debug|Any CPU
-		{B6AE6D47-49C4-471C-A55D-DD44452DFF63}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B6AE6D47-49C4-471C-A55D-DD44452DFF63}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B6AE6D47-49C4-471C-A55D-DD44452DFF63}.Release|x64.ActiveCfg = Release|Any CPU
-		{B6AE6D47-49C4-471C-A55D-DD44452DFF63}.Release|x64.Build.0 = Release|Any CPU
 		{6FD5243E-F355-4456-BD5A-A6F854103EA8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6FD5243E-F355-4456-BD5A-A6F854103EA8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6FD5243E-F355-4456-BD5A-A6F854103EA8}.Debug|x64.ActiveCfg = Debug|Any CPU
