@@ -984,7 +984,7 @@ namespace GTACoOp
                 }
             }
 
-            if (e.KeyCode == Keys.T && IsOnServer())
+            if (Game.IsControlPressed(0, Control.MpTextChatAll) && IsOnServer())
             {
                 _chat.IsFocused = true;
                 _wasTyping = true;
