@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.0" />
-    <PackageReference Include="Lidgren.Network.MultiTarget" Version="1.0.3" />
+    <PackageReference Include="Lidgren.Network.MultiTarget" Version="2012.1.7.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Log4Net.AspNetCore" Version="2.2.12" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="protobuf-net" Version="3.0.0-alpha.3" />
