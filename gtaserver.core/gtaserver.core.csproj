@@ -5,7 +5,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
 	  <NoWarn>NU1605</NoWarn>
 	  <RootNamespace>GTAServer</RootNamespace>
-	  <Version Condition=" '$(CI_PIPELINE_ID)' != '' ">1.0.0-$(CI_PIPELINE_ID)</Version>
+	  <PublishRepositoryUrl>true</PublishRepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +19,8 @@
     <PackageReference Include="System.Data.SQLite" Version="1.0.112" />
     <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
     <PackageReference Include="System.Xml.XmlSerializer" Version="4.3.0" />
+
+    <PackageReference Include="Microsoft.SourceLink.GitLab" Version="1.0.0" PrivateAssets="All" />
   </ItemGroup>
 
 </Project>
