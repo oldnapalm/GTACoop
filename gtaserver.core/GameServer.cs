@@ -834,7 +834,8 @@ namespace GTAServer
                 default:
                     // ReSharper disable once NotResolvedInText
                     // resharper wants to see a variable name in the below... w/e.
-                    throw new ArgumentOutOfRangeException("Received unknown packet type. Server out of date or modded client?");
+                    logger.LogWarning("Received unknown packet type " + (int)packetType + " from " + client.DisplayName);
+                    break;
             }
         }
 
