@@ -30,6 +30,11 @@ namespace GTAServer
 
         public void Process(Exception exception, SentryEvent sentryEvent)
         {
+            if ((bool)exception.Data["TickException"])
+            {
+                return;
+            }
+
             // create folder "crashes"
             var crashes = Path.Combine(AppContext.BaseDirectory, "Crashes");
             Directory.CreateDirectory(crashes);

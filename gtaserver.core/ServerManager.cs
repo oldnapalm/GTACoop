@@ -217,7 +217,10 @@ namespace GTAServer
                     // rethrow exception
                     throw;
                 else
+                {
+                    e.Data.Add("TickException", true);
                     SentrySdk.CaptureException(e);
+                }
             }
         }
 
