@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Threading.Tasks;
+using GTAServer.Logging;
 using Microsoft.Extensions.Logging;
 
 namespace GTAServer.PluginAPI
@@ -25,13 +26,12 @@ namespace GTAServer.PluginAPI
 
             var pluginAssembly =
                 AssemblyLoadContext.Default.LoadFromAssemblyPath(assemblyName);
-            
 
             var types = pluginAssembly.GetExportedTypes();
             var validTypes = types.Where(t => typeof(IPlugin).IsAssignableFrom(t)).ToArray();
             if (!validTypes.Any())
             {
-                _logger.LogError("No classes found that extend IPlugin in assembly " + assemblyName);
+                _logger.LogError(LogEvent.PluginLoader, "No classes found that extend IPlugin in assembly " + assemblyName);;
                 return new List<IPlugin>();
             }
             foreach (var plugin in validTypes)
@@ -39,13 +39,13 @@ namespace GTAServer.PluginAPI
                 var curPlugin = Activator.CreateInstance(plugin) as IPlugin;
                 if (curPlugin == null)
                 {
-                    _logger.LogWarning("Could not create instance of " + plugin.Name +
+                    _logger.LogWarning(LogEvent.PluginLoader, "Could not create instance of " + plugin.Name +
                                        " (returned null after Activator.CreateInstance)");
                 }
                 else
                 {
                     pluginList.Add(curPlugin);
-                    _logger.LogInformation("Plugin loaded: " + curPlugin.Name + " by " + curPlugin.Author);
+                    _logger.LogInformation(LogEvent.PluginLoader, "Plugin loaded: " + curPlugin.Name + " by " + curPlugin.Author);
                 }
 
             }

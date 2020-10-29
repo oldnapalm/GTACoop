@@ -10,6 +10,7 @@ using GTAServer.Users.Groups;
 using Microsoft.Extensions.Logging;
 using GTAServer.PluginAPI;
 using GTAServer.PluginAPI.Entities;
+using GTAServer.Logging;
 
 namespace GTAServer.Users
 {
@@ -28,7 +29,7 @@ namespace GTAServer.Users
             _gameServer = gameServer;
 
             _logger = Util.LoggerFactory.CreateLogger<UserModule>();
-            _logger.LogInformation("Loading user storage");
+            _logger.LogInformation(LogEvent.UsersMgr, "Loading user storage");
         }
 
         public void Start()
@@ -77,7 +78,7 @@ namespace GTAServer.Users
         public void Stop()
         {
             // TODO save all the unsaved
-            _logger.LogInformation("Closing database");
+            _logger.LogInformation(LogEvent.UsersMgr, "Closing database");
             _connection.Close();
         }
 
@@ -95,7 +96,7 @@ namespace GTAServer.Users
                 }
                 catch (Exception e)
                 {
-                    _logger.LogWarning($"An exception occurred while loading group '{group.Name}': {e.Message}");
+                    _logger.LogWarning(LogEvent.UsersMgr, $"An exception occurred while loading group '{group.Name}': {e.Message}");
                 }
             });
         }
@@ -113,7 +114,7 @@ namespace GTAServer.Users
                 }
                 catch (InvalidPermissionException e)
                 {
-                    _logger.LogWarning($"Failed to parse permission {x}: {e.Message}");
+                    _logger.LogWarning(LogEvent.UsersMgr, $"Failed to parse permission {x}: {e.Message}");
                     return;
                 }
 
@@ -142,7 +143,7 @@ namespace GTAServer.Users
             }
             else
             {
-                _logger.LogInformation("No groups configuration found, creating a new one");
+                _logger.LogInformation(LogEvent.UsersMgr, "No groups configuration found, creating a new one");
                 using (var stream = File.OpenWrite(path))
                 {
                     ser.Serialize(stream, cfg = new GroupsConfiguration(
@@ -226,7 +227,7 @@ namespace GTAServer.Users
                 {
                     SetGroup(user.Id, "user");
 
-                    _logger.LogWarning($"{user.Username} had an unknown group and has been reset to user");
+                    _logger.LogWarning(LogEvent.UsersMgr, $"{user.Username} had an unknown group and has been reset to user");
                 }
 
                 client.SendMessage("Welcome back, use /login (password) to login to your account");
@@ -245,7 +246,7 @@ namespace GTAServer.Users
             {
                 var id = Users.RemoveAll(x => x.Username == client.DisplayName);
 
-                _logger.LogDebug($"{client.DisplayName} left, removing from memory ({id})");
+                _logger.LogDebug(LogEvent.UsersMgr, $"{client.DisplayName} left, removing from memory ({id})");
             }
         }
 

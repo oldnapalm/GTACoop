@@ -7,11 +7,11 @@ using System.Xml.Serialization;
 using GTAServer.Commands;
 using Microsoft.Extensions.Logging;
 using GTAServer.PluginAPI;
-using SimpleConsoleLogger;
 using Sentry;
 using GTAServer.PluginAPI.Entities;
 using GTAServer.Users;
 using System.Runtime.InteropServices;
+using GTAServer.Logging;
 
 namespace GTAServer
 {
@@ -64,16 +64,15 @@ namespace GTAServer
                 LoadServerConfiguration(Path.Combine(_location, "Configuration", "serverSettings.xml"));
             if (!_debugMode) _debugMode = _gameServerConfiguration.DebugMode;
 
+            Util.LoggerFactory = new LoggerFactory();
             if (_debugMode)
             {
 
-                Util.LoggerFactory = new LoggerFactory()
-                    .AddSimpleConsole();
+                Util.LoggerFactory.AddProvider(new DefaultLoggerProvider(LogLevel.Trace));
             }
             else
             {
-                Util.LoggerFactory = new LoggerFactory()
-                    .AddSimpleConsole((s, l) => (int) l >= (int) LogLevel.Information);
+                Util.LoggerFactory.AddProvider(new DefaultLoggerProvider(LogLevel.Information));
             }
             _logger = Util.LoggerFactory.CreateLogger<ServerManager>();
             DoDebugWarning();
@@ -118,16 +117,17 @@ namespace GTAServer
                 var tpsString = _gameServerConfiguration.ServerVariables.First(v => v.Key == "tickEvery").Value;
                 if (!int.TryParse(tpsString, out _tickEvery))
                 {
-                    _logger.LogError(
+                    _logger.LogError(LogEvent.Setup,
                         "Could not set ticks per second from server variable 'tps' (value is not an integer)");
                 }
                 else
                 {
-                    _logger.LogInformation("Custom tick rate set. Will try to tick every " + _tickEvery + "ms");
+                    _logger.LogInformation(LogEvent.Setup,
+                        "Custom tick rate set. Will try to tick every " + _tickEvery + "ms");
                 }
             }
             
-            _logger.LogInformation("Server preparing to start...");
+            _logger.LogInformation(LogEvent.Setup, "Server preparing to start...");
 
             _gameServer = new GameServer(_gameServerConfiguration.Port, _gameServerConfiguration.ServerName,
                 _gameServerConfiguration.GamemodeName, _debugMode, _gameServerConfiguration.UPnP)
@@ -148,7 +148,7 @@ namespace GTAServer
             _gameServer.Start();
 
             // Plugin Code
-            _logger.LogInformation("Loading plugins");
+            _logger.LogInformation(LogEvent.Setup, "Loading plugins");
             //Plugins = PluginLoader.LoadPlugin("TestPlugin");
             foreach (var pluginName in _gameServerConfiguration.ServerPlugins)
             {
@@ -169,12 +169,12 @@ namespace GTAServer
 
             RegisterCommands();
 
-            _logger.LogInformation("Plugins loaded. Enabling plugins...");
+            _logger.LogInformation(LogEvent.Setup, "Plugins loaded. Enabling plugins...");
             foreach (var plugin in _plugins)
             {
                 if (!plugin.OnEnable(_gameServer, false))
                 {
-                    _logger.LogWarning("Plugin " + plugin.Name + " returned false when enabling, marking as disabled, although it may still have hooks registered and called.");
+                    _logger.LogWarning(LogEvent.Setup, "Plugin " + plugin.Name + " returned false when enabling, marking as disabled, although it may still have hooks registered and called.");
                 }
             }
 
@@ -196,7 +196,7 @@ namespace GTAServer
             Console.CancelKeyPress += Console_CancelKeyPress;
 
             // ready
-            _logger.LogInformation("Starting server main loop, ready to accept connections.");
+            _logger.LogInformation(LogEvent.Setup, "Starting server main loop, ready to accept connections.");
 
             _timer = new Timer(DoServerTick, _gameServer, 0, _tickEvery);
             _autoResetEvent.WaitOne();
@@ -212,7 +212,7 @@ namespace GTAServer
             }
             catch (Exception e)
             {
-                _logger.LogError("Exception while ticking", e.Message);
+                _logger.LogError(LogEvent.Tick, e, "Exception while ticking");
                 if (_debugMode)
                     // rethrow exception
                     throw;

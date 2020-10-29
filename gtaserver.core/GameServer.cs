@@ -19,6 +19,7 @@ using Microsoft.Extensions.Logging;
 using GTAServer.PluginAPI.Events;
 using GTAServer.Users.Groups;
 using GTAServer.PluginAPI.Entities;
+using GTAServer.Logging;
 
 namespace GTAServer
 {
@@ -63,7 +64,7 @@ namespace GTAServer
         public GameServer(int port, string name, string gamemodeName, bool isDebug, bool upnp = false)
         {
             logger = Util.LoggerFactory.CreateLogger<GameServer>();
-            logger.LogInformation("Server ready to start");
+            logger.LogInformation(LogEvent.Setup, "Server ready to start");
             Clients = new List<Client>();
             MaxPlayers = 32;
             GamemodeName = gamemodeName;
@@ -78,16 +79,16 @@ namespace GTAServer
             Config.EnableMessageType(NetIncomingMessageType.ConnectionLatencyUpdated);
             Server = new NetServer(Config);
 
-            logger.LogInformation($"NetServer created with port {Config.Port}");
+            logger.LogInformation(LogEvent.Setup, $"NetServer created with port {Config.Port}");
 
             _tpsTimer = new Timer(state => CalculateTicksPerSecond(), null, 0, 1000);
         }
 
         public void Start()
         {
-            logger.LogInformation("Server starting");
+            logger.LogInformation(LogEvent.Start, "Server starting");
 
-            logger.LogDebug("Loading gamemode");
+            logger.LogDebug(LogEvent.Start, "Loading gamemode");
             if (GamemodeName != "none" && !string.IsNullOrEmpty(GamemodeName))
             {
                 var assemblyName = 
@@ -100,7 +101,7 @@ namespace GTAServer
                 }
                 catch (Exception)
                 {
-                    logger.LogWarning("Given gamemode couldn't be loaded, using none");
+                    logger.LogWarning(LogEvent.Start, "Given gamemode couldn't be loaded, using none");
                 }
 
                 if (pluginAssembly != null)
@@ -110,20 +111,20 @@ namespace GTAServer
                     var validTypes = types.Where(t => typeof(IGamemode).IsAssignableFrom(t)).ToArray();
                     if (!validTypes.Any())
                     {
-                        logger.LogError("No gamemodes found in gamemode assembly, using none");
+                        logger.LogError(LogEvent.Start, "No gamemodes found in gamemode assembly, using none");
                         GamemodeName = "none";
                         return;
                     }
                     if (validTypes.Count() > 1)
                     {
-                        logger.LogError("Multiple valid gamemodes found in gamemode assembly, using none");
+                        logger.LogError(LogEvent.Start, "Multiple valid gamemodes found in gamemode assembly, using none");
                         GamemodeName = "none";
                         return;
                     }
                     var gamemode = Activator.CreateInstance(validTypes.First()) as IGamemode;
                     if (gamemode == null)
                     {
-                        logger.LogError(
+                        logger.LogError(LogEvent.Start,
                             "Could not create instance of gamemode (Activator.CreateInstance returned null), using none");
                         GamemodeName = "none";
                         return;
@@ -132,7 +133,7 @@ namespace GTAServer
                     gamemode.OnEnable(this, false);
                 }
             }
-            logger.LogDebug("Gamemode loaded");
+            logger.LogDebug(LogEvent.Start, "Gamemode loaded");
 
             try
             {
@@ -140,23 +141,23 @@ namespace GTAServer
             }
             catch (SocketException e)
             {
-                logger.LogCritical($"Couldn't bind port {Port}: {e.Message}");
+                logger.LogCritical(LogEvent.Start, $"Couldn't bind port {Port}: {e.Message}");
                 Environment.Exit(0);
             }
             catch (ArgumentOutOfRangeException)
             {
-                logger.LogCritical($"Couldn't bind port {Port}: Not a valid 16-bit port number");
+                logger.LogCritical(LogEvent.Start, $"Couldn't bind port {Port}: Not a valid 16-bit port number");
                 Environment.Exit(0);
             }
 
             if (UPnP)
             {
-                logger.LogInformation("Attempting to forward port " + Port);
+                logger.LogInformation(LogEvent.Start, "Attempting to forward port " + Port);
 
                 if(Server.UPnP.ForwardPort(Port, "GTAServer.core server"))
                 {
                     var ip = Server.UPnP.GetExternalIP();
-                    logger.LogInformation($"Server available on {ip}, Port = {Port}");
+                    logger.LogInformation(LogEvent.Start, $"Server available on {ip}, Port = {Port}");
                 }
             }
 
@@ -171,7 +172,7 @@ namespace GTAServer
             if (DebugMode)
                 return;
 
-            logger.LogInformation("Announcing to master server");
+            logger.LogInformation(LogEvent.Announce, "Announcing to master server");
             _lastAnnounceDateTime = DateTime.Now;
 
             using (var client = new HttpClient())
@@ -186,11 +187,11 @@ namespace GTAServer
                     }
                     catch (InvalidOperationException)
                     {
-                        logger.LogError($"Failed to announce to master {master + 1}: URL is invalid");
+                        logger.LogError(LogEvent.Announce, $"Failed to announce to master {master + 1}: URL is invalid");
                     }
                     catch (Exception e)
                     {
-                        logger.LogWarning($"Failed to announce to master {master + 1}: {e.Message}");
+                        logger.LogWarning(LogEvent.Announce, $"Failed to announce to master {master + 1}: {e.Message}");
                     }
                 }
 
@@ -235,7 +236,7 @@ namespace GTAServer
                 }
                 if (client == null)
                 {
-                    logger.LogDebug("Client not found for remote ID " + msg.SenderConnection?.RemoteUniqueIdentifier + ", creating client. Current number of clients: " + Clients.Count());
+                    logger.LogDebug(LogEvent.Connection, "Client not found for remote ID " + msg.SenderConnection?.RemoteUniqueIdentifier + ", creating client. Current number of clients: " + Clients.Count());
                     client = new Client(msg.SenderConnection, this);
                 }
 
@@ -270,7 +271,7 @@ namespace GTAServer
                                 return;
                             }
 
-                            logger.LogInformation("Ping received from " + msg.SenderEndPoint.Address.ToString());
+                            logger.LogInformation(LogEvent.Connection, "Ping received from " + msg.SenderEndPoint.Address.ToString());
 
                             var reply = Server.CreateMessage("pong");
                             Server.SendUnconnectedMessage(reply, msg.SenderEndPoint);
@@ -283,7 +284,7 @@ namespace GTAServer
                                 return;
                             }
 
-                            logger.LogInformation("Query received from " + msg.SenderEndPoint.Address.ToString());
+                            logger.LogInformation(LogEvent.Connection, "Query received from " + msg.SenderEndPoint.Address.ToString());
 
                             // does anyone even use this?
                             object[] response = { Name, GamemodeName, Port, Clients.Count, MaxPlayers,
@@ -379,7 +380,7 @@ namespace GTAServer
             }
 
             var command = string.Join(" ", split.Skip(2));
-            logger.LogInformation($"{msg.SenderEndPoint.Address.MapToIPv4()}: {command}");
+            logger.LogInformation(LogEvent.Rcon, $"{msg.SenderEndPoint.Address.MapToIPv4()}: {command}");
 
             // construct a new rcon commandsender
             var sender = new RconCommandSender();
@@ -441,7 +442,7 @@ namespace GTAServer
             }
 
 
-            logger.LogInformation(
+            logger.LogInformation(LogEvent.Handshake,
                 $"New connection request: {client.DisplayName}@{msg.SenderEndPoint.Address.ToString()} | Game version: {client.GameVersion.ToString()} | Script version: {client.RemoteScriptVersion.ToString()}");
 
             var latestScriptVersion = Enum.GetValues(typeof(ScriptVersion)).Cast<ScriptVersion>().Last();
@@ -454,7 +455,7 @@ namespace GTAServer
                 latestReadableScriptVersion = Regex.Replace(latestReadableScriptVersion, "_", ".",
                     RegexOptions.IgnoreCase);
 
-                logger.LogInformation($"Client {client.DisplayName} tried to connect with an outdated script version {client.RemoteScriptVersion.ToString()} but the server requires {latestScriptVersion.ToString()}");
+                logger.LogInformation(LogEvent.Handshake, $"Client {client.DisplayName} tried to connect with an outdated script version {client.RemoteScriptVersion.ToString()} but the server requires {latestScriptVersion.ToString()}");
                 DenyConnect(client, $"Please update to version {latestReadableScriptVersion} from https://gtacoop.com", true, msg);
                 return;
             }
@@ -464,7 +465,7 @@ namespace GTAServer
             }
             else if (client.RemoteScriptVersion == ScriptVersion.VERSION_UNKNOWN)
             {
-                logger.LogInformation($"Client {client.DisplayName} tried to connect with an unknown script version (client too old?)");
+                logger.LogInformation(LogEvent.Handshake, $"Client {client.DisplayName} tried to connect with an unknown script version (client too old?)");
                 DenyConnect(client, $"Unknown version. Please re-download GTACoop from https://gtacoop.com", true, msg);
                 return;
             }
@@ -472,14 +473,14 @@ namespace GTAServer
             lock (Clients) numClients = Clients.Count;
             if (numClients >= MaxPlayers)
             {
-                logger.LogInformation($"Player tried to join while server is full: {client.DisplayName}");
+                logger.LogInformation(LogEvent.Handshake, $"Player tried to join while server is full: {client.DisplayName}");
                 DenyConnect(client, "No available player slots.", true, msg);
                 return;
             }
 
             if (PasswordProtected && connReq.Password != Password)
             {
-                logger.LogInformation($"Client {client.DisplayName} tried to connect with the wrong password.");
+                logger.LogInformation(LogEvent.Handshake, $"Client {client.DisplayName} tried to connect with the wrong password.");
                 DenyConnect(client, "Wrong password.", true, msg);
                 return;
             }
@@ -507,7 +508,7 @@ namespace GTAServer
             switch (newStatus)
             {
                 case NetConnectionStatus.Connected:
-                    logger.LogInformation($"Connected: {client.DisplayName}@{msg.SenderEndPoint.Address.ToString()}");
+                    logger.LogInformation(LogEvent.StatusChange, $"Connected: {client.DisplayName}@{msg.SenderEndPoint.Address.ToString()}");
                     SendNotificationToAll($"Player connected: {client.DisplayName}");
 
                     if (!string.IsNullOrEmpty(Motd)) 
@@ -547,14 +548,14 @@ namespace GTAServer
 
                             if (client.Kicked)
                             {
-                                logger.LogInformation(
+                                logger.LogInformation(LogEvent.StatusChange,
                                     $"Player kicked: {client.DisplayName}@{msg.SenderEndPoint.Address.ToString()}");
                                 LastKickedClient = client;
                                 LastKickedIP = client.NetConnection.RemoteEndPoint.ToString();
                             }
                             else
                             {
-                                logger.LogInformation($"Player disconnected: {client.DisplayName}@{msg.SenderEndPoint.Address.ToString()}");
+                                logger.LogInformation(LogEvent.StatusChange, $"Player disconnected: {client.DisplayName}@{msg.SenderEndPoint.Address.ToString()}");
                             }
 
                             Clients.Remove(client);
@@ -590,7 +591,7 @@ namespace GTAServer
             responsePkt.Write((int)PacketType.DiscoveryResponse);
             responsePkt.Write(serializedResponse.Length);
             responsePkt.Write(serializedResponse);
-            logger.LogInformation($"Server status requested by {msg.SenderEndPoint.Address.ToString()}");
+            logger.LogInformation(LogEvent.Connection, $"Server status requested by {msg.SenderEndPoint.Address.ToString()}");
             Server.SendDiscoveryResponse(responsePkt, msg.SenderEndPoint);
         }
 
@@ -834,7 +835,7 @@ namespace GTAServer
                 default:
                     // ReSharper disable once NotResolvedInText
                     // resharper wants to see a variable name in the below... w/e.
-                    logger.LogWarning("Received unknown packet type " + (int)packetType + " from " + client.DisplayName);
+                    logger.LogWarning(LogEvent.Incoming, "Received unknown packet type " + (int)packetType + " from " + client.DisplayName);
                     break;
             }
         }
@@ -936,7 +937,7 @@ namespace GTAServer
             int duraction = 60)
         {
             player.NetConnection.Deny(reason);
-            logger.LogInformation($"Player rejected from server: {player.DisplayName} for {reason}");
+            logger.LogInformation(LogEvent.Handshake, $"Player rejected from server: {player.DisplayName} for {reason}");
             if (!silent)
             {
                 SendNotificationToAll($"Player rejected by server: {player.DisplayName} - {reason}");
