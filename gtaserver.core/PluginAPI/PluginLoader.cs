@@ -25,7 +25,7 @@ namespace GTAServer.PluginAPI
             var pluginAssembly = Assembly.Load(asmName);*/
 
             var pluginAssembly =
-                AssemblyLoadContext.Default.LoadFromAssemblyPath(assemblyName);
+                Assembly.LoadFrom(assemblyName);
 
             var types = pluginAssembly.GetExportedTypes();
             var validTypes = types.Where(t => typeof(IPlugin).IsAssignableFrom(t)).ToArray();
