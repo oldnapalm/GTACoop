@@ -628,7 +628,8 @@ namespace GTAServer
                                         {
                                             Client = client,
                                             GameServer = this,
-                                            ChatData = chatData
+                                            ChatData = chatData,
+                                            Sender = client
                                         };
 
                                         Commands[cmdName](ctx, cmdArgs.Skip(1).ToList());
@@ -659,7 +660,7 @@ namespace GTAServer
                                 chatData.Message = Util.SanitizeString(chatData.Message);
 
                                 SendToAll(chatData, PacketType.ChatData, true);
-                                logger.LogInformation($"[Chat] <{chatData.Sender}>: {chatData.Message}");
+                                logger.LogInformation(LogEvent.Chat, $"<{chatData.Sender}>: {chatData.Message}");
                             }
                         }
                     }

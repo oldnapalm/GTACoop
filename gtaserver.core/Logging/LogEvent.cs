@@ -25,5 +25,7 @@ namespace GTAServer.Logging
         public static EventId UsersMgr { get; } = new EventId(19, "UsersMgr");
 
         public static EventId PluginLoader { get; } = new EventId(20, "PluginLoader");
+
+        public static EventId Chat { get; } = new EventId(21, "Chat");
     }
 }
