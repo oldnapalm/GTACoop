@@ -20,6 +20,7 @@ using GTAServer.PluginAPI.Events;
 using GTAServer.Users.Groups;
 using GTAServer.PluginAPI.Entities;
 using GTAServer.Logging;
+using Newtonsoft.Json;
 
 namespace GTAServer
 {
@@ -167,6 +168,21 @@ namespace GTAServer
             }
         }
 
+        internal sealed class MasterRequest
+        {
+            [JsonProperty("port")]
+            public int Port { get; set; }
+
+            [JsonProperty("version")]
+            public int Version { get; set; }
+
+            [JsonProperty("max_players")]
+            public int MaxPlayers { get; set; }
+
+            [JsonProperty("gamemode")]
+            public string GamemodeName { get; set; }
+        }
+
         private async void AnnounceToMaster()
         {
             if (DebugMode)
@@ -183,7 +199,21 @@ namespace GTAServer
                 {
                     try
                     {
+                        // old master announce
                         await client.PostAsync(MasterServers[master], content);
+
+                        // updated announce
+                        var request = new MasterRequest
+                        {
+                            Port = Port,
+                            MaxPlayers = MaxPlayers,
+                            GamemodeName = GamemodeName,
+                            Version = 0
+                        };
+
+                        await client.PutAsync(MasterServers[master],
+                            new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json"));
+
                     }
                     catch (InvalidOperationException)
                     {
@@ -204,7 +234,7 @@ namespace GTAServer
             TicksPerSecond = CurrentTick - _ticksLastSecond;
             _ticksLastSecond = CurrentTick;
 
-            System.Console.Title = "GTAServer - " + Name + " (" + Clients.Count + "/" + MaxPlayers + " players) - Port: " + Port + " - TPS: " + TicksPerSecond;
+            Console.Title = "GTAServer - " + Name + " (" + Clients.Count + "/" + MaxPlayers + " players) - Port: " + Port + " - TPS: " + TicksPerSecond;
 
         }
 
