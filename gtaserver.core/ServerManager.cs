@@ -68,11 +68,11 @@ namespace GTAServer
             if (_debugMode)
             {
 
-                Util.LoggerFactory.AddProvider(new DefaultLoggerProvider(LogLevel.Trace));
+                Util.LoggerFactory.AddProvider(new ConsoleLoggerProvider(LogLevel.Trace));
             }
             else
             {
-                Util.LoggerFactory.AddProvider(new DefaultLoggerProvider(LogLevel.Information));
+                Util.LoggerFactory.AddProvider(new ConsoleLoggerProvider(LogLevel.Information));
             }
             _logger = Util.LoggerFactory.CreateLogger<ServerManager>();
             DoDebugWarning();
@@ -233,6 +233,8 @@ namespace GTAServer
 
             _timer.Dispose();
             _autoResetEvent.Set();
+
+            Util.LoggerFactory.Dispose();
 
             Environment.Exit(0);
         }
