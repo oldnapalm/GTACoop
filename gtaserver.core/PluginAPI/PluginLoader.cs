@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Loader;
+using System.Threading.Tasks;
 using GTAServer.Logging;
 using Microsoft.Extensions.Logging;
 
@@ -10,16 +12,19 @@ namespace GTAServer.PluginAPI
 {
     public class PluginLoader
     {
-        private static readonly string _location = AppContext.BaseDirectory;
-        private static ILogger _logger;
+        private static readonly string Location = System.AppContext.BaseDirectory;
 
-        public static List<IPlugin> LoadPlugin(string targetAssemblyName, out Assembly pluginAssembly)
+        private static ILogger _logger;
+        public static List<IPlugin> LoadPlugin(string targetAssemblyName)
         {
             _logger = Util.LoggerFactory.CreateLogger<PluginLoader>();
-            var assemblyName = Path.Combine(_location, "Plugins", targetAssemblyName + ".dll");
+            var assemblyName = Location + Path.DirectorySeparatorChar + "Plugins" + Path.DirectorySeparatorChar + targetAssemblyName + ".dll";
             var pluginList = new List<IPlugin>();
 
-            pluginAssembly =
+            /*_logger.LogTrace(asmName.FullName);
+            var pluginAssembly = Assembly.Load(asmName);*/
+
+            var pluginAssembly =
                 Assembly.LoadFrom(assemblyName);
 
             var types = pluginAssembly.GetExportedTypes();

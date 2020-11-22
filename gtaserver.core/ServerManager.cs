@@ -12,7 +12,6 @@ using GTAServer.PluginAPI.Entities;
 using GTAServer.Users;
 using System.Runtime.InteropServices;
 using GTAServer.Logging;
-using System.Reflection;
 
 namespace GTAServer
 {
@@ -21,9 +20,8 @@ namespace GTAServer
         private static ServerConfiguration _gameServerConfiguration;
         private static GameServer _gameServer;
         private static ILogger _logger;
-        private static readonly List<PluginInstance> _plugins = new List<PluginInstance>();
-        internal static List<PluginInstance> Plugins => _plugins;
-        private static readonly string _location = AppContext.BaseDirectory;
+        private static readonly List<IPlugin> _plugins = new List<IPlugin>();
+        private static readonly string _location = System.AppContext.BaseDirectory;
 
         private static bool _debugMode = false;
         private static int _tickEvery = 10;
@@ -154,16 +152,9 @@ namespace GTAServer
             //Plugins = PluginLoader.LoadPlugin("TestPlugin");
             foreach (var pluginName in _gameServerConfiguration.ServerPlugins)
             {
-                Assembly assembly;
-                foreach (var loadedPlugin in PluginLoader.LoadPlugin(pluginName, out assembly))
+                foreach (var loadedPlugin in PluginLoader.LoadPlugin(pluginName))
                 {
-                    var instance = new PluginInstance
-                    {
-                        Plugin = loadedPlugin,
-                        Instance = assembly
-                    };
-
-                    _plugins.Add(instance);
+                    _plugins.Add(loadedPlugin);
                 }
             }
 
@@ -179,10 +170,8 @@ namespace GTAServer
             RegisterCommands();
 
             _logger.LogInformation(LogEvent.Setup, "Plugins loaded. Enabling plugins...");
-            foreach (var instance in _plugins)
+            foreach (var plugin in _plugins)
             {
-                var plugin = instance.Plugin;
-
                 if (!plugin.OnEnable(_gameServer, false))
                 {
                     _logger.LogWarning(LogEvent.Setup, "Plugin " + plugin.Name + " returned false when enabling, marking as disabled, although it may still have hooks registered and called.");
