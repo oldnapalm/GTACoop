@@ -49,6 +49,7 @@ namespace GTAServer
 
         public string Motd { get; set; } = "Welcome to this GTA CooP server!";
         public IPermissionProvider PermissionProvider { get; set; }
+        public PrometheusMetrics Metrics { get; set; }
         public bool UPnP { get; set; }
         public string RconPassword { get; set; }
 
@@ -287,6 +288,7 @@ namespace GTAServer
                         {
                             var str = msg.ReadNullTerminatedString();
                             if (str.StartsWith("rcon")) HandleRconConnection(msg, str);
+                            if (str.StartsWith("metrics")) Metrics.HandleConnection(this, msg, str);
 
                             return;
                         }
@@ -391,6 +393,8 @@ namespace GTAServer
                 }
                 Server.Recycle(msg);
             }
+
+            Metrics.Tick(this);
         }
 
         private void HandleRconConnection(NetIncomingMessage msg, string str)

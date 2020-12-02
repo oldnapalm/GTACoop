@@ -166,6 +166,7 @@ namespace GTAServer
 				
                 _gameServer.PermissionProvider = _userModule;
             }
+            _gameServer.Metrics = new PrometheusMetrics();
 
             RegisterCommands();
 
