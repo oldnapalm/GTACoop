@@ -1593,7 +1593,6 @@ namespace GTACoOp
             _debug.Visible = true;
             _debug.Draw();
 
-            return;
             // ignore
             if (_debugSyncPed == null)
             {
@@ -1670,6 +1669,12 @@ namespace GTACoOp
 
         public void DecodeNativeCall(NativeData obj)
         {
+            if(IsNativeBlocked(obj.Hash))
+            {
+                SendNativeCallResponse(obj.Id, "Native execution of this native blocked by client");
+                return;
+            }
+
             var list = new List<InputArgument>();
 
             foreach (var arg in obj.Arguments)
@@ -1837,8 +1842,6 @@ namespace GTACoOp
             msg.Write(bin);
             _client.SendMessage(msg, NetDeliveryMethod.ReliableOrdered, 0);
         }
-        
-
 
         private NativeType CheckNativeHash(ulong hash)
         {
@@ -1864,6 +1867,21 @@ namespace GTACoOp
                 case 0xBE339365C863BD36:
                 case 0x5A039BB0BCA604B6:
                     return NativeType.ReturnsBlip;
+            }
+        }
+
+        private bool IsNativeBlocked(ulong hash)
+        {
+            switch(hash)
+            {
+                default:
+                    return false;
+                case 0x213AEB2B90CBA7AC: // _COPY_MEMORY
+                case 0x5A5F40FE637EB584: // STRING_TO_INT
+                case 0xE80492A9AC099A93: // CLEAR_BIT
+                case 0x8EF07E15701D61ED: // SET_BITS_IN_RANGE
+                case 0x933D6A9EEC1BACD0: // SET_BIT
+                    return true;
             }
         }
 

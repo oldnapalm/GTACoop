@@ -35,7 +35,7 @@ namespace GTACoOp
                 _scaleform.CallFunction("SET_DATA_SLOT", i++, $"{TimeSpan.FromSeconds(player.Latency).TotalMilliseconds}ms", player.Name, 116, 0, "", "", "", 2, "", "", ' ');
             }
 
-            _scaleform.CallFunction("SET_TITLE", "GTA Coop", Main.Opponents.Count + " players");
+            _scaleform.CallFunction("SET_TITLE", "GTA Coop", (Main.Opponents.Count + 1) + " players");
             _scaleform.CallFunction("DISPLAY_VIEW");
 
             _lastUpdate = GetGameTimer();
