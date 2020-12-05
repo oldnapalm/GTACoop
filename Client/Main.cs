@@ -113,6 +113,7 @@ namespace GTACoOp
         {
              return Regex.Replace(Regex.Replace(LocalScriptVersion.ToString(), "VERSION_", "", RegexOptions.IgnoreCase), "_", ".", RegexOptions.IgnoreCase);
         }
+
         public Main()
         {
 #if VOICE
@@ -835,7 +836,7 @@ namespace GTACoOp
                 Ped player = Game.Player.Character;
                 _menuPool.ProcessMenus();
                 _chat.Tick();
-                _playerList.Tick(Opponents);
+                _playerList.Tick(!_menuPool.IsAnyMenuOpen());
 
                 if (_serverRunning) 
 
@@ -1004,16 +1005,18 @@ namespace GTACoOp
                 _wasTyping = true;
             }
 
-            if (Game.IsControlPressed(0, Control.MultiplayerInfo) && IsOnServer() && !_chat.IsFocused)
+            if (Game.IsControlJustPressed(0, Control.MultiplayerInfo) && IsOnServer() && !_chat.IsFocused)
             {
-                // toggle playerlist  
-                if (_playerList.Pressed.AddSeconds(5) < DateTime.Now)
+                var time = Function.Call<long>(Hash.GET_GAME_TIMER);
+
+                if ((time - _playerList.Pressed) < 5000)
                 {
-                    _playerList.Pressed = DateTime.Now;
+                    // still being drawn
+                    _playerList.Pressed = time - 6000;
                 }
                 else
                 {
-                    _playerList.Pressed = new DateTime();
+                    _playerList.Pressed = time;
                 }
             }
         }
@@ -1111,6 +1114,11 @@ namespace GTACoOp
                                         var repr = new SyncPed(data.PedModelHash, data.Position.ToVector(),
                                             data.Quaternion.ToQuaternion());
                                         Opponents.Add(data.Id, repr);
+
+                                        Opponents[data.Id].Name = data.Name;
+                                        Opponents[data.Id].Latency = data.Latency;
+
+                                        _playerList.Update(Opponents);
                                     }
 
                                     Opponents[data.Id].Name = data.Name;
@@ -1156,6 +1164,11 @@ namespace GTACoOp
                                         var repr = new SyncPed(data.PedModelHash, data.Position.ToVector(),
                                             data.Quaternion.ToQuaternion());
                                         Opponents.Add(data.Id, repr);
+
+                                        Opponents[data.Id].Name = data.Name;
+                                        Opponents[data.Id].Latency = data.Latency;
+
+                                        _playerList.Update(Opponents);
                                     }
 
                                     Opponents[data.Id].Name = data.Name;
@@ -1330,6 +1343,8 @@ namespace GTACoOp
                                                 Npcs.Remove(pair.Key);
                                             }
                                         }
+
+                                        _playerList.Update(Opponents);
                                     }
                                 }
                             }

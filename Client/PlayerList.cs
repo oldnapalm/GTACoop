@@ -11,83 +11,53 @@ namespace GTACoOp
 {
     class PlayerList
     {
-        // credits to https://github.com/jorjic/misc-fivereborn-scripts/blob/master/resources/jscoreboard/scoreboard.lua
+        private Scaleform _scaleform;
+        private long _lastUpdate;
 
-        public DateTime Pressed;
+        public long Pressed;
 
         public PlayerList()
         {
-
+            _scaleform = new Scaleform("mp_mm_card_freemode");
         }
 
-        public void Tick(Dictionary<long, SyncPed> opponents)
+        // don't call this at high rate unless you want your game to crash
+        public void Update(Dictionary<long, SyncPed> opponents)
         {
-            if (Pressed.AddSeconds(5) < DateTime.Now || Pressed == default(DateTime) || !Main.IsOnServer()) return;
+            _scaleform.CallFunction("SET_DATA_SLOT_EMPTY", 0);
+            _scaleform.CallFunction("SET_DATA_SLOT", 0, $"{TimeSpan.FromSeconds(Main.Latency).TotalMilliseconds}ms", Main.PlayerSettings.Username, 116, 0, "", "", "", 2, "", "", ' ');
 
-            var players = new List<SyncPed>(opponents.Select(pair => pair.Value));
-
-            var currentplayer = new SyncPed(0, new Vector3(0, 0,0 ), Quaternion.Identity);
-            currentplayer.Name = Main.PlayerSettings.Username;
-            currentplayer.Latency = Main.Latency;
-
-            players.Add(currentplayer);
-
-            Function.Call(Hash.DRAW_RECT, 0.11, 0.025, 0.2, 0.03, 0, 0, 0, 220);
-
-            Function.Call(Hash.SET_TEXT_FONT, 4);
-            Function.Call(Hash.SET_TEXT_SCALE, 0.45, 0.45);
-            Function.Call(Hash.SET_TEXT_COLOUR, 255, 255, 255, 255);
-            Function.Call((Hash)0x25FBB336DF1804CB, "STRING");
-
-            Function.Call(Hash._ADD_TEXT_COMPONENT_STRING, $"GTA CooP ({players.Count} online)");
-
-            Function.Call((Hash)0xCD015E5BB0D96A57, 0.015, 0.009);
-
-            int current = 1;
-            foreach (var player in players)
+            int i = 1;
+            foreach(var opponent in opponents)
             {
-                int r, g, b;
+                var player = opponent.Value;
 
-                if (current % 2 == 0)
-                {
-                    r = 28;
-                    g = 47;
-                    b = 68;
-                }
-                else
-                {
-                    r = 38;
-                    g = 57;
-                    b = 74;
-                }
+                _scaleform.CallFunction("SET_DATA_SLOT", i++, $"{TimeSpan.FromSeconds(player.Latency).TotalMilliseconds}ms", player.Name, 116, 0, "", "", "", 2, "", "", ' ');
+            }
 
-                Function.Call(Hash.DRAW_RECT, 0.11, 0.025 + (current * 0.03), 0.2, 0.03, r, g, b, 220);
+            _scaleform.CallFunction("SET_TITLE", "GTA Coop", Main.Opponents.Count + " players");
+            _scaleform.CallFunction("DISPLAY_VIEW");
 
-                //player name
-                Function.Call(Hash.SET_TEXT_FONT, 4);
-                Function.Call(Hash.SET_TEXT_SCALE, 0.45, 0.45);
-                Function.Call(Hash.SET_TEXT_COLOUR, 255, 255, 255, 255);
-                Function.Call((Hash)0x25FBB336DF1804CB, "STRING");
+            _lastUpdate = GetGameTimer();
+        }
 
-                Function.Call(Hash._ADD_TEXT_COMPONENT_STRING, player.Name);
+        public void Tick(bool draw)
+        {
+            if (draw && (GetGameTimer() - Pressed) < 5000 && Main.IsOnServer())
+            {
+                Function.Call(Hash.DRAW_SCALEFORM_MOVIE, _scaleform.Handle, 0.122f, 0.3f, 0.28f, 0.6f, 255, 255, 255, 255, 0);
+            }
 
-                Function.Call((Hash)0xCD015E5BB0D96A57, 0.015, 0.007 + (current * 0.03));
-
-                //latency
-                Function.Call(Hash.SET_TEXT_FONT, 4);
-                Function.Call(Hash.SET_TEXT_SCALE, 0.45, 0.45);
-                Function.Call(Hash.SET_TEXT_COLOUR, 255, 255, 255, 255);
-                Function.Call(Hash.SET_TEXT_RIGHT_JUSTIFY, true);
-                Function.Call(Hash.SET_TEXT_WRAP, 0, 0.2);
-                Function.Call((Hash)0x25FBB336DF1804CB, "STRING");
-
-                Function.Call(Hash._ADD_TEXT_COMPONENT_STRING, (int)(player.Latency * 1000) + "ms");
-
-                Function.Call((Hash)0xCD015E5BB0D96A57, 0.1, 0.007 + (current * 0.03));
-
-                current++;
+            // update ping every second
+            if ((GetGameTimer() - _lastUpdate) > 1000)
+            {
+                Update(Main.Opponents);
             }
         }
 
+        public long GetGameTimer()
+        {
+            return Function.Call<long>(Hash.GET_GAME_TIMER);
+        }
     }
 }
