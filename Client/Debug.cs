@@ -1,44 +1,76 @@
 ﻿using NativeUI;
 using System;
-using System.Linq;
-using System.Collections.Generic;
 using System.Drawing;
+using Lidgren.Network;
+using GTA.Native;
 
 namespace GTACoOp
 {
     public class Debug
     {
-        public Dictionary<string, DateTime> log;
+        private NetClient _client;
+
+        public NetClient NetClient
+        {
+            set
+            {
+                _client = value;
+
+                _client.Statistics.PacketReceived += PacketReceived;
+                _client.Statistics.PacketSent += PacketSent;
+            }
+        }
+
+        private int bytesReceived;
+        private int bytesSent;
+
+        private int lastBytesReceived;
+        private int lastBytesSent;
+        private long lastUpdate;
+
+        private void PacketReceived(object sender, PacketEventArgs e)
+        {
+            bytesReceived += e.NumBytes;
+        }
+
+        private void PacketSent(object sender, PacketEventArgs e)
+        {
+            bytesSent += e.NumBytes;
+        }
+
+        public bool Enabled { get; set; }
 
         public Debug()
         {
-            log = new Dictionary<string, DateTime>();
+            lastUpdate = GetGameTimer();
         }
 
         public void Tick()
         {
-            new UIResText(string.Join("\n", log.OrderBy(x => x.Value).Select(x => x.Value.ToString("HH:mm:ss") + " " + x.Key)), new Point(10, 10), 0.5f).Draw();
-        }
+            if (!Enabled) return;
+            if (!Main.IsOnServer()) return;
+            if (_client == null) return;
 
-        public void AddToDebug(string msg)
-        {
-            if (log.ContainsKey(msg))
+            var time = GetGameTimer();
+            if ((time - lastUpdate) > 1000)
             {
-                log[msg] = DateTime.Now;
-                return;
+                lastUpdate = time;
+
+                lastBytesReceived = bytesReceived;
+                lastBytesSent = bytesSent;
+
+                bytesReceived = 0;
+                bytesSent = 0;
             }
 
-            log.Add(msg, DateTime.Now);
-
-            if(log.Count > 10)
-            {
-                log.Remove(log.OrderBy(x => x.Value).Last().Key);
-            }
+            new UIResText("In:    " + NetUtility.ToHumanReadable(lastBytesReceived) + "/s", new Point(1400, 900), 0.5f).Draw();
+            new UIResText("Out:  " + NetUtility.ToHumanReadable(lastBytesSent) + "/s", new Point(1400, 930), 0.5f).Draw();
+            new UIResText("Ping: " + TimeSpan.FromSeconds(Main.Latency).TotalMilliseconds + "ms", new Point(1400, 960), 0.5f).Draw();
         }
 
-        public void Clear()
+        public long GetGameTimer()
         {
-            log.Clear();
+            return Function.Call<long>(Hash.GET_GAME_TIMER);
         }
     }
 }

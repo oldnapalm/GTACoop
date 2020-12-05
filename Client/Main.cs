@@ -461,6 +461,15 @@ namespace GTACoOp
                 debug = check;
             };
 
+            var netGraphItem = new UIMenuCheckboxItem("Show Network Info", PlayerSettings.ShowNetGraph);
+            netGraphItem.CheckboxEvent += (item, check) =>
+            {
+                PlayerSettings.ShowNetGraph = check;
+                DebugLogger.Enabled = check;
+
+                Util.SaveSettings(null);
+            };
+
             _settingsMenu.AddItem(nameItem);
             _settingsMenu.AddItem(npcItem);
             _settingsMenu.AddItem(trafficItem);
@@ -476,6 +485,7 @@ namespace GTACoOp
             _settingsMenu.AddItem(masterItem);
             _settingsMenu.AddItem(versionItem);
             _settingsMenu.AddItem(debugItem);
+            _settingsMenu.AddItem(netGraphItem);
 
             _mainMenu.RefreshIndex();
 
@@ -494,7 +504,9 @@ namespace GTACoOp
             }
 
             _playerList = new PlayerList();
+
             DebugLogger = new Debug();
+            DebugLogger.Enabled = PlayerSettings.ShowNetGraph;
         }
 
         private void RebuildServerBrowser()
@@ -575,6 +587,8 @@ namespace GTACoOp
                 _config.Port = port;
                 _client = new NetClient(_config);
                 _client.Start();
+
+                DebugLogger.NetClient = _client;
             }
 
             foreach (var server in dejson.list)
@@ -867,10 +881,10 @@ namespace GTACoOp
                 }
                 if (debug)
                 {
-                    DebugLogger.Tick();
                     Debug();
                 }
                 ProcessMessages();
+                DebugLogger.Tick();
 
                 if (_client == null || _client.ConnectionStatus == NetConnectionStatus.Disconnected ||
                     _client.ConnectionStatus == NetConnectionStatus.None) return;
@@ -1021,6 +1035,8 @@ namespace GTACoOp
                 _config.Port = cport;
                 _client = new NetClient(_config);
                 _client.Start();
+
+                DebugLogger.NetClient = _client;
             }
 
             lock (Opponents) Opponents = new Dictionary<long, SyncPed>();
@@ -1088,8 +1104,6 @@ namespace GTACoOp
 
                                 if (data == null) return;
 
-                                DebugLogger.AddToDebug("From: " + data.Name);
-
                                 lock (Opponents)
                                 {
                                     if (!Opponents.ContainsKey(data.Id))
@@ -1134,8 +1148,6 @@ namespace GTACoOp
                                 var len = msg.ReadInt32();
                                 var data = DeserializeBinary<PedData>(msg.ReadBytes(len)) as PedData;
                                 if (data == null) return;
-
-                                DebugLogger.AddToDebug("From: " + data.Name);
 
                                 lock (Opponents)
                                 {
@@ -1465,8 +1477,6 @@ namespace GTACoOp
 
                             // clear chat
                             _chat.Reset();
-
-                            DebugLogger.Clear();
 
                             break;
                     }

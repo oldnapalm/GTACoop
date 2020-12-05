@@ -22,13 +22,14 @@ namespace GTACoOp
         public string AutoLogin { get; set; }
         public bool AutoRegister { get; set; }
         public bool AutoStartServer { get; set; }
+        public bool ShowNetGraph { get; set; }
 
         public PlayerSettings()
         {
             Username = string.IsNullOrWhiteSpace(GTA.Game.Player.Name) ? "Player" : GTA.Game.Player.Name;
             MaxStreamedNpcs = 10;
-            MasterServerAddress = "http://clan-banderos.de/gta/";
-            BackupMasterServerAddress = "http://gtamaster.nofla.me/";
+            MasterServerAddress = "https://master.gtacoop.com";
+            BackupMasterServerAddress = "http://clan-banderos.de/gta/";
             ActivationKey = Keys.F9;
             HidePasswords = false;
             LastIP = "127.0.0.1";
@@ -43,6 +44,7 @@ namespace GTACoOp
             AutoLogin = "";
             AutoRegister = false;
             AutoStartServer = false;
+            ShowNetGraph = false;
         }
     }
 }
