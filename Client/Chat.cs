@@ -29,6 +29,12 @@ namespace GTACoOp
         {
             _mainScaleform.CallFunction("SET_FOCUS", 2, 2, "ALL");
             _mainScaleform.CallFunction("SET_FOCUS", 1, 2, "ALL");
+
+            var safezone = Function.Call<float>(Hash.GET_SAFE_ZONE_SIZE);
+            var widescreen = Function.Call<bool>(Hash.GET_IS_WIDESCREEN);
+            _mainScaleform.CallFunction(
+                "SET_DISPLAY_CONFIG", Game.ScreenResolution.Width, Game.ScreenResolution.Height, safezone, safezone, safezone, safezone, widescreen, false);
+
             HasInitialized = true;
         }
 
