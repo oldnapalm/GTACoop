@@ -47,6 +47,7 @@ namespace GTACoOp
         public bool Siren;
         public bool IsEngineRunning;
 
+        public float Steering;
         public float WheelSpeed;
         public string Plate;
         public int RadioStation;
@@ -369,6 +370,8 @@ namespace GTACoOp
                     else if (!MainVehicle.SirenActive && Siren)
                         MainVehicle.SirenActive = Siren;
 
+                    MainVehicle.SteeringAngle = (float)(Math.PI / 180) * Steering;
+
                     var dir = VehiclePosition - _lastVehiclePos;
 
                     dir.Normalize();
@@ -377,22 +380,28 @@ namespace GTACoOp
 
                     if (MainVehicle.IsInRangeOf(VehiclePosition, (float) range))
                     {
-                        if (Speed > 1)
+                        if (Speed > 1 && Character.IsOnBike && MainVehicle.ClassType == VehicleClass.Cycles)
                         {
-                            /*int[] wheels = { 11, 12, 15, 16, 13, 14, 11, 13 };
+                            var isPedaling = Function.Call<bool>(Hash.IS_ENTITY_PLAYING_ANIM, Character.Handle, "veh@bicycle@mountainfront@base", "cruise_pedal_left_char", 3);
+                            var isFastPedaling = Function.Call<bool>(Hash.IS_ENTITY_PLAYING_ANIM, Character.Handle, "veh@bicycle@mountainfront@base", "fast_pedal_right_char", 3);
 
-                            unsafe
+                            if (Speed < 4.5f && !isPedaling)
                             {
-                                var wheelsAddress = ((IntPtr)MainVehicle.MemoryAddress + 0xBB0).ToPointer();
+                                Character.Task.PlayAnimation("veh@bicycle@mountainfront@base", "cruise_pedal_left_char");
+                            }
 
-                                for (var i = 0; i <= 4; i++)
-                                {
-                                    var wheelAddress = ((IntPtr)wheelsAddress + 0x008 * wheels[i]).ToPointer();
+                            if(Speed > 4.5f && !isFastPedaling)
+                            {
+                                Character.Task.PlayAnimation("veh@bicycle@mountainfront@base", "fast_pedal_right_char");
+                            }
 
-                                    var wheelRot = (float*) ((IntPtr) wheelAddress + 0x008).ToPointer();
+                            // vehicle anim
+                            /*var time = Function.Call<long>(Hash.GET_GAME_TIMER);
+                            if ((time - _lastPedallingTick) > 1000)
+                            {
+                                _lastPedallingTick = time;
 
-                                    *wheelRot = new Random().Next(0, 200);
-                                }
+                                Function.Call(Hash.PLAY_ENTITY_ANIM, MainVehicle.Handle, "cruise_pedal_bike", "veh@bicycle@mountainfront@base", 1000f, false, 1, 0, 0, 0);
                             }*/
                         }
                         

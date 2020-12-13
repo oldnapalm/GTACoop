@@ -681,7 +681,7 @@ namespace GTACoOp
                 obj.VehicleMods = CheckPlayerVehicleMods();
                 obj.IsEngineRunning = veh.EngineRunning;
                 obj.WheelSpeed = veh.WheelSpeed;
-                obj.Steering = veh.SteeringScale;
+                obj.Steering = veh.SteeringAngle;
                 obj.Speed = veh.Speed;
 
                 obj.RadioStation = (int)Game.RadioStation;
@@ -758,7 +758,7 @@ namespace GTACoOp
                 obj.Speed = veh.Speed;
                 obj.IsSirenActive = veh.SirenActive;
                 obj.WheelSpeed = veh.WheelSpeed;
-                obj.Steering = veh.SteeringScale;
+                obj.Steering = veh.SteeringAngle;
                 obj.IsEngineRunning = veh.EngineRunning;
 
                 var bin = SerializeBinary(obj);
@@ -1145,6 +1145,7 @@ namespace GTACoOp
 
                                     Opponents[data.Id].IsEngineRunning = data.IsEngineRunning;
                                     Opponents[data.Id].WheelSpeed = data.WheelSpeed;
+                                    Opponents[data.Id].Steering = data.Steering;
 
                                     Opponents[data.Id].RadioStation = data.RadioStation;
                                     Opponents[data.Id].Plate = data.Plate;
@@ -1220,6 +1221,8 @@ namespace GTACoOp
                                     Npcs[data.Name].VehicleSecondaryColor = data.SecondaryColor;
                                     Npcs[data.Name].VehicleSeat = data.VehicleSeat;
                                     Npcs[data.Name].IsInVehicle = true;
+
+                                    Npcs[data.Name].Steering = data.Steering;
 
                                     Npcs[data.Name].IsHornPressed = data.IsPressingHorn;
                                     Npcs[data.Name].Speed = data.Speed;
@@ -1619,6 +1622,7 @@ namespace GTACoOp
                     _debugSyncPed.Siren = veh.SirenActive;
                     _debugSyncPed.VehicleMods = CheckPlayerVehicleMods();
                     _debugSyncPed.Speed = veh.Speed;
+                    _debugSyncPed.Steering = veh.SteeringAngle;
                     _debugSyncPed.IsInVehicle = true;
                     _debugSyncPed.LastUpdateReceived = DateTime.Now;
                 }
