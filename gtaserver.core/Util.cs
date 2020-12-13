@@ -1,12 +1,13 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using ProtoBuf;
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using ProtoBuf;
 
 namespace GTAServer
 {
@@ -35,7 +36,34 @@ namespace GTAServer
         {
             input = Regex.Replace(input, "~.~", "", RegexOptions.IgnoreCase);
             return input;
-        }   
+        }
+
+        public static List<string> SplitCommandString(string command)
+        {
+            var i = 0;
+            var inQuotes = false;
+            var args = new List<string>();
+
+            foreach (char rune in command.ToCharArray())
+            {
+                if (rune == ' ' && !inQuotes)
+                {
+                    i++;
+                    continue;
+                }
+
+                if (rune == '"')
+                {
+                    inQuotes = !inQuotes;
+                    continue;
+                }
+
+                if (args.ElementAtOrDefault(i) == null) args.Add("");
+                args[i] += rune;
+            }
+
+            return args;
+        }
     }
 
     public class Discord
@@ -48,7 +76,7 @@ namespace GTAServer
         /// <returns>The discord user object</returns>
         public static DiscordUser GetDiscordUser()
         {
-            if(User != null)
+            if (User != null)
             {
                 return User;
             }

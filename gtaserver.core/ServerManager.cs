@@ -291,7 +291,7 @@ namespace GTAServer
                 var input = Console.ReadLine();
                 if (input == null) continue;
                 // TODO this needs to take quotes into account
-                var arguments = input.Split(" ");
+                var arguments = Util.SplitCommandString(input);
 
                 Dictionary<string, Action<CommandContext, List<string>>> commands;
                 lock (GameServer)
