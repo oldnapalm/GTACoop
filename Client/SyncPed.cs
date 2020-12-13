@@ -390,7 +390,7 @@ namespace GTACoOp
                                 Character.Task.PlayAnimation("veh@bicycle@mountainfront@base", "cruise_pedal_left_char");
                             }
 
-                            if(Speed > 4.5f && !isFastPedaling)
+                            if (Speed > 4.5f && !isFastPedaling)
                             {
                                 Character.Task.PlayAnimation("veh@bicycle@mountainfront@base", "fast_pedal_right_char");
                             }

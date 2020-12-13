@@ -21,6 +21,8 @@
     <PackageReference Include="System.Xml.XmlSerializer" Version="4.3.0" />
 
     <PackageReference Include="Microsoft.SourceLink.GitLab" Version="1.0.0" PrivateAssets="All" />
+
+    <TrimmerRootAssembly Include="netstandard" />
   </ItemGroup>
 
 </Project>
