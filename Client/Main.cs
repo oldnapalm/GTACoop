@@ -17,7 +17,6 @@ using Control = GTA.Control;
 using System.Text.RegularExpressions;
 using System.Globalization;
 using MaxMind.GeoIP2;
-using SharpRaven;
 
 #if VOICE
 using NAudio.Wave;
@@ -141,7 +140,6 @@ namespace GTACoOp
             _waveOutput.Init(_playBuffer);
             _waveOutput.Play();
 #endif
-            Sentry.Raven = new RavenClient("https://71a61960693c46f5a78fadf72b96874c@sentry.io/1485502");
 
             PlayerSettings = Util.ReadSettings(Program.Location + Path.DirectorySeparatorChar + "ClientSettings.xml");
             _threadJumping = new Queue<Action>();
@@ -204,7 +202,6 @@ namespace GTACoOp
             //_playerMenu = new UIMenu("Co-oP", "PLAYER OPTIONS");
 
             var browserItem = new UIMenuItem("Server Browser");
-            _mainMenu.BindMenuToItem(_serverBrowserMenu, browserItem);
             browserItem.Activated += (sender, item) => RebuildServerBrowser();
             _serverBrowserMenu.SetMenuWidthOffset(300);
 
@@ -292,7 +289,6 @@ namespace GTACoOp
             };
 
             var settItem = new UIMenuItem("Client Settings");
-            _mainMenu.BindMenuToItem(_settingsMenu, settItem);
 
             var aboutItem = new UIMenuItem("~g~GTA V~w~ Coop mod v" + ReadableScriptVersion() + " by ~b~contributors~w~.");
             aboutItem.Activated += (menu, item) =>
@@ -309,6 +305,9 @@ namespace GTACoOp
             _mainMenu.AddItem(_passItem);
             _mainMenu.AddItem(settItem);
             _mainMenu.AddItem(aboutItem);
+
+            _mainMenu.BindMenuToItem(_serverBrowserMenu, browserItem);
+            _mainMenu.BindMenuToItem(_settingsMenu, settItem);
 
             var nameItem = new UIMenuItem("Display Name");
             nameItem.SetRightLabel(PlayerSettings.Username);
@@ -499,15 +498,16 @@ namespace GTACoOp
 #endregion
 
             _debug = new DebugWindow();
+
+            DebugLogger = new Debug();
+            DebugLogger.Enabled = PlayerSettings.ShowNetGraph;
+
             UI.Notify("~g~GTA V Coop mod v" + ReadableScriptVersion() + " by Guad, Bluscream, TheIndra and wolfmitchell loaded successfully.~w~");
             if (PlayerSettings.AutoConnect && !String.IsNullOrWhiteSpace(PlayerSettings.LastIP) && PlayerSettings.LastPort != -1 && PlayerSettings.LastPort != 0) { 
                 ConnectToServer(PlayerSettings.LastIP.ToString(), PlayerSettings.LastPort);
             }
 
             _playerList = new PlayerList();
-
-            DebugLogger = new Debug();
-            DebugLogger.Enabled = PlayerSettings.ShowNetGraph;
         }
 
         private void RebuildServerBrowser()
@@ -961,8 +961,6 @@ namespace GTACoOp
                 for (int i = 0; i < tickNatives.Count; i++) DecodeNativeCall(tickNatives.ElementAt(i).Value);
             }catch(Exception ex)
             {
-                Sentry.Capture(ex);
-
                 UI.Notify("<ERROR> Could not handle this tick: " + ex.ToString());
                 if(Main.PlayerSettings.Logging)
                     File.AppendAllText("scripts\\GTACOOP.log", "[" + DateTime.UtcNow + "] <ERROR> Could not handle this tick: " + ex.Message+"\n");
@@ -1269,7 +1267,7 @@ namespace GTACoOp
                                 if (data != null && !string.IsNullOrEmpty(data.Message))
                                 {
                                     var sender = string.IsNullOrEmpty(data.Sender) ? "SERVER" : data.Sender;
-                                    if (data.Message.ToString().Equals("Please authenticate to your account using /login [password]"))
+                                    if (data.Message.ToString().Equals("Welcome back, use /login (password) to login to your account"))
                                     {
                                         if (!String.IsNullOrWhiteSpace(PlayerSettings.AutoLogin))
                                         {
@@ -1287,7 +1285,7 @@ namespace GTACoOp
                                             return;
                                         }
                                     }
-                                    if (data.Message.ToString().Equals("You can register an account using /register [password]"))
+                                    if (data.Message.ToString().Equals("You can register an account using /register (password)"))
                                     {
                                         if (!String.IsNullOrWhiteSpace(PlayerSettings.AutoLogin) && PlayerSettings.AutoRegister)
                                         {
