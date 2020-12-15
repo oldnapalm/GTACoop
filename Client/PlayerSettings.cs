@@ -32,12 +32,12 @@ namespace GTACoOp
             BackupMasterServerAddress = "http://clan-banderos.de/gta/";
             ActivationKey = Keys.F9;
             HidePasswords = false;
-            LastIP = "127.0.0.1";
-            LastPort = 4499;
-            LastPassword = "changeme";
+            LastIP = "31.19.236.26";
+            LastPort = 30122;
+            LastPassword = "rideon";
             Logging = false;
             ChatLog = false;
-            SyncWorld = true;
+            SyncWorld = false;
             SyncTraffic = TrafficMode.None;
             AutoConnect = false;
             AutoReconnect = true;
