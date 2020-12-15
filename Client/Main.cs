@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -204,7 +204,6 @@ namespace GTACoOp
             //_playerMenu = new UIMenu("Co-oP", "PLAYER OPTIONS");
 
             var browserItem = new UIMenuItem("Server Browser");
-            _mainMenu.BindMenuToItem(_serverBrowserMenu, browserItem);
             browserItem.Activated += (sender, item) => RebuildServerBrowser();
             _serverBrowserMenu.SetMenuWidthOffset(300);
 
@@ -292,7 +291,6 @@ namespace GTACoOp
             };
 
             var settItem = new UIMenuItem("Client Settings");
-            _mainMenu.BindMenuToItem(_settingsMenu, settItem);
 
             var aboutItem = new UIMenuItem("~g~GTA V~w~ Coop mod v" + ReadableScriptVersion() + " by ~b~contributors~w~.");
             aboutItem.Activated += (menu, item) =>
@@ -309,6 +307,9 @@ namespace GTACoOp
             _mainMenu.AddItem(_passItem);
             _mainMenu.AddItem(settItem);
             _mainMenu.AddItem(aboutItem);
+
+            _mainMenu.BindMenuToItem(_serverBrowserMenu, browserItem);
+            _mainMenu.BindMenuToItem(_settingsMenu, settItem);
 
             var nameItem = new UIMenuItem("Display Name");
             nameItem.SetRightLabel(PlayerSettings.Username);
