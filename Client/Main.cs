@@ -397,7 +397,7 @@ namespace GTACoOp
             var trafficItem = new UIMenuListItem("Share Traffic With Players", new List<dynamic>(Enum.GetNames(typeof(TrafficMode))), 0);
             trafficItem.OnListChanged += (item, index) =>
             {
-                PlayerSettings.SyncTraffic = (TrafficMode) Enum.Parse(typeof(TrafficMode), item.IndexToItem(index).ToString());
+                PlayerSettings.SyncTraffic = (TrafficMode) Enum.Parse(typeof(TrafficMode), item.Items[index].ToString());
                 Util.SaveSettings(null);
             };
 
@@ -451,7 +451,7 @@ namespace GTACoOp
             var versionItem = new UIMenuListItem("Version", new List<dynamic>(Enum.GetNames(typeof(ScriptVersion))), 0);
             versionItem.OnListChanged += (item, index) =>
             {
-                LocalScriptVersion = (ScriptVersion) Enum.Parse(typeof(ScriptVersion), item.IndexToItem(index).ToString());
+                LocalScriptVersion = (ScriptVersion) Enum.Parse(typeof(ScriptVersion), item.Items[index].ToString());
                 //_mainMenu.Clear();_mainMenu.RefreshIndex();
             };
 
