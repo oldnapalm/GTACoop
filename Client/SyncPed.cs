@@ -385,12 +385,12 @@ namespace GTACoOp
                             var isPedaling = Function.Call<bool>(Hash.IS_ENTITY_PLAYING_ANIM, Character.Handle, "veh@bicycle@roadfront@base", "cruise_pedal_char", 3);
                             var isFastPedaling = Function.Call<bool>(Hash.IS_ENTITY_PLAYING_ANIM, Character.Handle, "veh@bicycle@roadfront@base", "fast_pedal_char", 3);
 
-                            if (Speed < 11.5f && !isPedaling)
+                            if (Speed < 11f && !isPedaling)
                             {
                                 Character.Task.PlayAnimation("veh@bicycle@roadfront@base", "cruise_pedal_char");
                             }
 
-                            if (Speed > 11.5f && !isFastPedaling)
+                            if (Speed >= 11f && !isFastPedaling)
                             {
                                 Character.Task.PlayAnimation("veh@bicycle@roadfront@base", "fast_pedal_char");
                             }
