@@ -500,15 +500,16 @@ namespace GTACoOp
 #endregion
 
             _debug = new DebugWindow();
+
+            DebugLogger = new Debug();
+            DebugLogger.Enabled = PlayerSettings.ShowNetGraph;
+
             UI.Notify("~g~GTA V Coop mod v" + ReadableScriptVersion() + " by Guad, Bluscream, TheIndra and wolfmitchell loaded successfully.~w~");
             if (PlayerSettings.AutoConnect && !String.IsNullOrWhiteSpace(PlayerSettings.LastIP) && PlayerSettings.LastPort != -1 && PlayerSettings.LastPort != 0) { 
                 ConnectToServer(PlayerSettings.LastIP.ToString(), PlayerSettings.LastPort);
             }
 
             _playerList = new PlayerList();
-
-            DebugLogger = new Debug();
-            DebugLogger.Enabled = PlayerSettings.ShowNetGraph;
         }
 
         private void RebuildServerBrowser()
@@ -1270,7 +1271,7 @@ namespace GTACoOp
                                 if (data != null && !string.IsNullOrEmpty(data.Message))
                                 {
                                     var sender = string.IsNullOrEmpty(data.Sender) ? "SERVER" : data.Sender;
-                                    if (data.Message.ToString().Equals("Please authenticate to your account using /login [password]"))
+                                    if (data.Message.ToString().Equals("Welcome back, use /login (password) to login to your account"))
                                     {
                                         if (!String.IsNullOrWhiteSpace(PlayerSettings.AutoLogin))
                                         {
@@ -1288,7 +1289,7 @@ namespace GTACoOp
                                             return;
                                         }
                                     }
-                                    if (data.Message.ToString().Equals("You can register an account using /register [password]"))
+                                    if (data.Message.ToString().Equals("You can register an account using /register (password)"))
                                     {
                                         if (!String.IsNullOrWhiteSpace(PlayerSettings.AutoLogin) && PlayerSettings.AutoRegister)
                                         {
