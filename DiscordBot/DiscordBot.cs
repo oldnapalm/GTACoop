@@ -103,7 +103,8 @@ namespace DiscordBot
             _client.Log += LogAsync;
             _client.Ready += ReadyAsync;
             _client.MessageReceived += MessageReceivedAsync;
-            _client.UserJoined += WelcomeJoinedUser;
+            if (_settings.WelcomeMessage.Length > 0)
+                _client.UserJoined += WelcomeJoinedUser;
             await _client.LoginAsync(TokenType.Bot, _settings.Token);
             await _client.StartAsync();
         }
@@ -127,7 +128,7 @@ namespace DiscordBot
                 return;
             if (message.Content == "!ping")
                 await message.Channel.SendMessageAsync("pong");
-            else if (message.Content == "!help")
+            else if (message.Content == "!help" && _settings.HelpMessage.Length > 0)
                 await message.Channel.SendMessageAsync(_settings.HelpMessage);
             else if (message.Channel == _channel && !message.Author.IsBot && message.Content.Length > 0)
                 _server.SendChatMessageToAll(message.Author.Username + " [Discord]: " + message.Content);
