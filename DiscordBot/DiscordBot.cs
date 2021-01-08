@@ -19,12 +19,16 @@ namespace DiscordBot
         public string Token { get; set; }
         public string Webhook { get; set; }
         public UInt64 Channel { get; set; }
+        public string WelcomeMessage { get; set; }
+        public string HelpMessage { get; set; }
 
         public DiscordSettings()
         {
             Token = "token";
             Webhook = "webhook URL";
             Channel = 0;
+            WelcomeMessage = "";
+            HelpMessage = "";
         }
 
         public static DiscordSettings ReadSettings(string path)
@@ -123,13 +127,15 @@ namespace DiscordBot
                 return;
             if (message.Content == "!ping")
                 await message.Channel.SendMessageAsync("pong");
+            else if (message.Content == "!help")
+                await message.Channel.SendMessageAsync(_settings.HelpMessage);
             else if (message.Channel == _channel && !message.Author.IsBot && message.Content.Length > 0)
                 _server.SendChatMessageToAll(message.Author.Username + " [Discord]: " + message.Content);
         }
 
         public async Task WelcomeJoinedUser(SocketUser user)
         {
-            await _channel.SendMessageAsync($"Welcome {user.Mention}! Please visit https://github.com/oldnapalm/GTACoOp/releases/latest to download the mod and connect to our server.");
+            await _channel.SendMessageAsync($"{user.Mention}\n" + _settings.WelcomeMessage);
         }
 
         public async Task SendToDiscord(String message, String name)
