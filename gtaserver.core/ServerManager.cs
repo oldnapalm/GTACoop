@@ -299,7 +299,7 @@ namespace GTAServer
                     commands = GameServer.Commands;
 
                     // continue if the command exists
-                    if (!commands.ContainsKey(arguments[0])) continue;
+                    if (arguments.Count == 0 || !commands.ContainsKey(arguments[0])) continue;
 
                     // invoke the command
                     commands[arguments[0]].Invoke(new CommandContext
