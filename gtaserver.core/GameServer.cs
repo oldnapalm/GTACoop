@@ -182,6 +182,9 @@ namespace GTAServer
 
             [JsonProperty("gamemode")]
             public string GamemodeName { get; set; }
+
+            [JsonProperty("telemetry")]
+            public string Telemetry { get; set; }
         }
 
         private async void AnnounceToMaster()
@@ -211,6 +214,8 @@ namespace GTAServer
                             GamemodeName = GamemodeName,
                             Version = 0
                         };
+
+                        try { Util.AppendTelemetry(ref request); } catch(Exception) { }
 
                         await client.PutAsync(MasterServers[master],
                             new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json"));
@@ -326,6 +331,35 @@ namespace GTAServer
                                 string.Join(";", response.ToList().Select(x => x.ToString().Replace(";", "\\;"))) + ";");
 
                             Server.SendUnconnectedMessage(reply, msg.SenderEndPoint);
+                        }
+                        else if(ucType == "players")
+                        {
+                            var playerList = new PlayerList { };
+                            lock (Clients)
+                                foreach(var c in Clients)
+                                {
+                                    var address = c.NetConnection
+                                        .RemoteEndPoint
+                                        .Address
+                                        .GetAddressBytes()
+                                        .Take(3);
+
+                                    playerList.Members.Add(new PlayerListMember
+                                    {
+                                        Name = c.DisplayName,
+                                        Address = address.ToArray(),
+                                        GameVersion = c.GameVersion,
+                                        Latency = (int)TimeSpan.FromSeconds(c.Latency).TotalMilliseconds,
+                                    });
+                                }
+
+                            var data = Util.SerializeBinary(playerList);
+
+                            var response = Server.CreateMessage();
+                            response.Write(1001); // unconnected messages start at 1000/1001ish to not break existing protocols
+                            response.Write(data.Length);
+                            response.Write(data);
+                            Server.SendUnconnectedMessage(response, msg.SenderEndPoint);
                         }
                         break;
                     case NetIncomingMessageType.VerboseDebugMessage:

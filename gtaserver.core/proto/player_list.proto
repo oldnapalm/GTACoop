@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package gtaserver.protocolmessages;
+
+message PlayerList {
+    // List of players
+    repeated PlayerListMember members = 1;
+}
+
+message PlayerListMember {
+    // Reserved for future use of ids
+    reserved 1;
+
+    // The display name of the player
+    string name = 2;
+
+    // The latency for the player in milliseconds
+    int32 latency = 3;
+
+    // Three octet IP address can be used for GeoIP
+    // exposing more than 3 octets exposes the user ip address and breaks this spec
+    bytes address = 4;
+
+    int32 game_version = 5;
+
+    // Reserved for future social identities
+    reserved 6;
+}

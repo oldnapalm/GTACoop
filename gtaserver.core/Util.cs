@@ -6,6 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -38,6 +41,10 @@ namespace GTAServer
             return input;
         }
 
+        /// <summary>
+        /// Split a string with or without quotes to arguments e.g. 'kick "wow a reason" Bob' becomes string[] { "kick", "wow a reason", "Bob" }
+        /// </summary>
+        /// <param name="command">The raw command</param>
         public static List<string> SplitCommandString(string command)
         {
             var i = 0;
@@ -63,6 +70,59 @@ namespace GTAServer
             }
 
             return args;
+        }
+
+        /// <summary>
+        /// Append **anonymous** telemetry to the master server request, this data is encrypted
+        /// </summary>
+        /// <param name="request"></param>
+        internal static void AppendTelemetry(ref GameServer.MasterRequest request)
+        {
+            var rsaKeyInfo = new RSAParameters();
+            rsaKeyInfo.Exponent = new byte[] { 0x01, 0x00, 0x01 };
+
+            if(Modulus == null)
+            {
+                // get public key from assembly
+                var resource = Assembly.GetExecutingAssembly().GetManifestResourceStream("GTAServer.public.pem");
+                Modulus = new byte[resource.Length];
+                resource.Read(Modulus, 0, (int)resource.Length);
+            }
+            rsaKeyInfo.Modulus = Modulus;
+
+            var rsa = RSA.Create();
+            rsa.ImportParameters(rsaKeyInfo);
+
+            // serialize and encrypt telemetry data
+            var telemetry = JsonConvert.SerializeObject(GetTelemetryProperties());
+            var payload = rsa.Encrypt(Encoding.UTF8.GetBytes(telemetry), RSAEncryptionPadding.Pkcs1);
+
+            // append to request
+            request.Telemetry = Convert.ToBase64String(payload);
+        }
+
+        internal static byte[] Modulus { get; private set; }
+
+        /// <summary>
+        /// Get all telemetry data
+        /// </summary>
+        /// <returns></returns>
+        private static Dictionary<string, string> GetTelemetryProperties()
+        {
+            return new Dictionary<string, string>
+            {
+                // the version of the operating system
+                { "OSVersion", RuntimeInformation.OSDescription },
+
+                // the version of GTAServer.core
+                { "Version", Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion },
+#if DEBUG
+                { "Configuration", "Debug" }
+#endif
+#if RELEASE
+                { "Configuration", "Release" }
+#endif
+            };
         }
     }
 
