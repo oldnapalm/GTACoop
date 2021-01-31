@@ -7,7 +7,7 @@ namespace GTAServer.ProtocolMessages
     class PlayerList
     {
         [ProtoMember(1)]
-        public List<PlayerListMember> Members { get; set; }
+        public List<PlayerListMember> Members { get; set; } = new List<PlayerListMember>();
     }
 
     [ProtoContract]
