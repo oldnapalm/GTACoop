@@ -21,12 +21,20 @@ namespace GTAServer
         private static GameServer _gameServer;
         private static ILogger _logger;
         private static readonly List<IPlugin> _plugins = new List<IPlugin>();
+
+#if !BUILD_WASM
         private static readonly string _location = System.AppContext.BaseDirectory;
+#endif
+#if BUILD_WASM
+        private static readonly string _location = "/home/web_user/gtaserver.core";
+#endif
 
         private static bool _debugMode = false;
         private static int _tickEvery = 10;
 
+#if !BUILD_WASM
         private static UserModule _userModule;
+#endif
 
         private static CancellationTokenSource _cancellationToken;
         private static AutoResetEvent _autoResetEvent = new AutoResetEvent(false);
@@ -78,6 +86,7 @@ namespace GTAServer
             _logger = Util.LoggerFactory.CreateLogger<ServerManager>();
             DoDebugWarning();
 
+#if !BUILD_WASM && !DEBUG
             // enable Sentry
             if(!_debugMode)
             {
@@ -112,6 +121,7 @@ namespace GTAServer
                     }
                 });
             }
+#endif
 
             if (_gameServerConfiguration.ServerVariables.Any(v => v.Key == "tickEvery"))
             {
@@ -159,6 +169,7 @@ namespace GTAServer
                 }
             }
 
+#if !BUILD_WASM
             // TODO future refactor
             if (_gameServerConfiguration.UseGroups)
             {
@@ -167,6 +178,7 @@ namespace GTAServer
 				
                 _gameServer.PermissionProvider = _userModule;
             }
+#endif
             _gameServer.Metrics = new PrometheusMetrics();
 
             RegisterCommands();
@@ -186,23 +198,26 @@ namespace GTAServer
                 _cancellationToken = new CancellationTokenSource();
                 var console = new ConsoleThread
                 {
-                    CancellationToken = _cancellationToken.Token,
-                    GameServer = _gameServer
+                    CancellationToken = _cancellationToken.Token
                 };
 
+#if !BUILD_WASM
                 Thread c = new Thread(new ThreadStart(console.ThreadProc)) { Name = "Server console thread" };
                 c.Start();
+#endif
 
             }
-
-            Console.CancelKeyPress += Console_CancelKeyPress;
 
             // ready
             Console.Write("\x1b]9;4;0;0\x07");
             _logger.LogInformation(LogEvent.Setup, "Starting server main loop, ready to accept connections.");
 
             _timer = new Timer(DoServerTick, _gameServer, 0, _tickEvery);
+
+#if !BUILD_WASM
+            Console.CancelKeyPress += Console_CancelKeyPress;
             _autoResetEvent.WaitOne();
+#endif
         }
 
         public static void DoServerTick(object serverObject)
@@ -222,7 +237,9 @@ namespace GTAServer
                 else
                 {
                     e.Data.Add("TickException", true);
+#if !BUILD_WASM
                     SentrySdk.CaptureException(e);
+#endif
                 }
             }
         }
@@ -232,7 +249,9 @@ namespace GTAServer
             _logger.LogInformation("SIGINT received - exiting");
             _cancellationToken?.Cancel();
 
+#if !BUILD_WASM
             _userModule?.Stop();
+#endif
 
             _timer.Dispose();
             _autoResetEvent.Set();
@@ -270,20 +289,45 @@ namespace GTAServer
             _gameServer.RegisterCommands<AdminCommands>();
             _gameServer.RegisterCommands<InfoCommands>();
         }
+
+        /// <summary>
+        /// Executes a command on the current <see cref="GameServer"/> instance,
+        /// Called by ConsoleThread on native and by JS in WebAssembly
+        /// </summary>
+        /// <param name="cmd"></param>
+        public static void ExecuteCommand(string cmd)
+        {
+            var sender = new ConsoleCommandSender
+            {
+                GameServer = _gameServer
+            };
+
+            var arguments = Util.SplitCommandString(cmd);
+
+            Dictionary<string, Action<CommandContext, List<string>>> commands;
+            lock (_gameServer)
+            {
+                commands = _gameServer.Commands;
+
+                // continue if the command exists
+                if (arguments.Count == 0 || !commands.ContainsKey(arguments[0])) return;
+
+                // invoke the command
+                commands[arguments[0]].Invoke(new CommandContext
+                {
+                    Sender = sender,
+                    GameServer = _gameServer
+                }, arguments.Skip(1).ToList());
+            }
+        }
     }
 
     internal class ConsoleThread
     {
         public CancellationToken CancellationToken { get; set; }
-        public GameServer GameServer { get; set; }
 
         public void ThreadProc()
         {
-            var sender = new ConsoleCommandSender
-            {
-                GameServer = GameServer
-            };
-
             // continue until we're told to stop
             while (!CancellationToken.IsCancellationRequested)
             {
@@ -292,24 +336,8 @@ namespace GTAServer
 
                 var input = Console.ReadLine();
                 if (input == null) continue;
-                // TODO this needs to take quotes into account
-                var arguments = Util.SplitCommandString(input);
 
-                Dictionary<string, Action<CommandContext, List<string>>> commands;
-                lock (GameServer)
-                {
-                    commands = GameServer.Commands;
-
-                    // continue if the command exists
-                    if (arguments.Count == 0 || !commands.ContainsKey(arguments[0])) continue;
-
-                    // invoke the command
-                    commands[arguments[0]].Invoke(new CommandContext
-                    {
-                        Sender = sender,
-                        GameServer = GameServer
-                    }, arguments.Skip(1).ToList());
-                }
+                ServerManager.ExecuteCommand(input);
             }
         }
     }

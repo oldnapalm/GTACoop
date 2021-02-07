@@ -99,7 +99,9 @@ namespace GTAServer
 
                 try
                 {
+#if !BUILD_WASM
                     pluginAssembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(assemblyName);
+#endif
                 }
                 catch (Exception)
                 {
@@ -240,8 +242,9 @@ namespace GTAServer
             TicksPerSecond = CurrentTick - _ticksLastSecond;
             _ticksLastSecond = CurrentTick;
 
+#if !BUILD_WASM
             Console.Title = "GTAServer - " + Name + " (" + Clients.Count + "/" + MaxPlayers + " players) - Port: " + Port + " - TPS: " + TicksPerSecond;
-
+#endif
         }
 
         public void Tick()

@@ -17,7 +17,7 @@ namespace GTAServer.Commands
         [Command("about")]
         public static void About(CommandContext ctx, List<string> args)
         {
-            string os = "";
+            string os = "Unknown";
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
@@ -31,8 +31,12 @@ namespace GTAServer.Commands
             {
                 os = "OSX";
             }
+            else if (RuntimeInformation.OSDescription == "web")
+            {
+                os = "MONO_WASM";
+            }
 
-            ctx.SendMessage($"This server runs GTAServer.core on {os} {RuntimeInformation.OSArchitecture}.\n" +
+            ctx.SendMessage($"This server runs GTAServer.core {Util.GetServerVersion()} on {os} {RuntimeInformation.OSArchitecture}.\n" +
                                $"More info about this build see gtacoop.com");
         }
 

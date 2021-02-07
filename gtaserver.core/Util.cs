@@ -115,7 +115,7 @@ namespace GTAServer
                 { "OSVersion", RuntimeInformation.OSDescription },
 
                 // the version of GTAServer.core
-                { "Version", Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion },
+                { "Version", GetServerVersion() },
 #if DEBUG
                 { "Configuration", "Debug" }
 #endif
@@ -123,6 +123,11 @@ namespace GTAServer
                 { "Configuration", "Release" }
 #endif
             };
+        }
+
+        public static string GetServerVersion()
+        {
+            return Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
         }
     }
 
