@@ -131,7 +131,7 @@ namespace DiscordBot
             else if (message.Content == "!help" && _settings.HelpMessage.Length > 0)
                 await message.Channel.SendMessageAsync(_settings.HelpMessage);
             else if (message.Channel == _channel && !message.Author.IsBot && message.Content.Length > 0)
-                _server.SendChatMessageToAll(message.Author.Username + " [Discord]: " + message.Content);
+                _server.SendChatMessageToAll(message.Author.Username + " [Discord]", message.Content);
         }
 
         public async Task WelcomeJoinedUser(SocketUser user)
