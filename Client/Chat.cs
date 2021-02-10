@@ -54,6 +54,8 @@ namespace GTACoOp
 
                 _isFocused = value;
 
+                if (value && _isHidden)
+                    _isHidden = false;
             }
         }
 
@@ -64,12 +66,21 @@ namespace GTACoOp
         private int _switch = 1;
         private Keys _lastKey;
         private bool _isFocused;
+        private DateTime _lastMessageTime = DateTime.UtcNow;
+        private bool _isHidden = false;
 
         public void Tick()
         {
             if (!Main.IsOnServer()) return;
 
-            _mainScaleform.Render2D();
+            if (_lastMessageTime.AddSeconds(15) < DateTime.UtcNow && !IsFocused && !_isHidden)
+            {
+                _mainScaleform.CallFunction("hide");
+                _isHidden = true;
+            }
+
+            if (!_isHidden)
+                _mainScaleform.Render2D();
 
 
             if (!IsFocused) return;
@@ -78,6 +89,13 @@ namespace GTACoOp
 
         public void AddMessage(string sender, string msg)
         {
+            _lastMessageTime = DateTime.UtcNow;
+            if (_isHidden)
+            {
+                _mainScaleform.CallFunction("showFeed");
+                _isHidden = false;
+            }
+
             if (string.IsNullOrEmpty(sender))
             {
                 _mainScaleform.CallFunction("ADD_MESSAGE", "", msg);
@@ -124,13 +142,10 @@ namespace GTACoOp
 
             if (keyChar[0] == (char)8)
             {
-                _mainScaleform.CallFunction("SET_FOCUS", 1, 2, "ALL");
-                _mainScaleform.CallFunction("SET_FOCUS", 2, 2, "ALL");
-
                 if (CurrentInput.Length > 0)
                 {
-                    CurrentInput = CurrentInput.Substring(0, CurrentInput.Length - 1);
-                    _mainScaleform.CallFunction("ADD_TEXT", CurrentInput);
+                    CurrentInput = CurrentInput.Remove(CurrentInput.Length - 1);
+                    _mainScaleform.CallFunction("DELETE_TEXT");
                 }
                 return;
             }
