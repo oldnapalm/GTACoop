@@ -298,7 +298,7 @@ namespace GTACoOp
                 UI.Notify("https://gtacoop.com");
             };
 
-            _mainMenu.AddItem(browserItem);
+            //_mainMenu.AddItem(browserItem);
             _mainMenu.AddItem(connectItem);
             _mainMenu.AddItem(listenItem);
             _mainMenu.AddItem(portItem);
@@ -306,7 +306,7 @@ namespace GTACoOp
             _mainMenu.AddItem(settItem);
             _mainMenu.AddItem(aboutItem);
 
-            _mainMenu.BindMenuToItem(_serverBrowserMenu, browserItem);
+            //_mainMenu.BindMenuToItem(_serverBrowserMenu, browserItem);
             _mainMenu.BindMenuToItem(_settingsMenu, settItem);
 
             var nameItem = new UIMenuItem("Display Name");
@@ -502,7 +502,7 @@ namespace GTACoOp
             DebugLogger = new Debug();
             DebugLogger.Enabled = PlayerSettings.ShowNetGraph;
 
-            UI.Notify("~g~GTA V Coop mod v" + ReadableScriptVersion() + " by Guad, Bluscream, TheIndra and wolfmitchell loaded successfully.~w~");
+            //UI.Notify("~g~GTA V Coop mod v" + ReadableScriptVersion() + " by Guad, Bluscream, TheIndra and wolfmitchell loaded successfully.~w~");
             if (PlayerSettings.AutoConnect && !String.IsNullOrWhiteSpace(PlayerSettings.LastIP) && PlayerSettings.LastPort != -1 && PlayerSettings.LastPort != 0) { 
                 ConnectToServer(PlayerSettings.LastIP.ToString(), PlayerSettings.LastPort);
             }
@@ -848,25 +848,25 @@ namespace GTACoOp
 
                 if (IsOnServer())
                 {
-                    if (!_mainMenu.MenuItems[1].Text.Equals("Disconnect"))
+                    if (!_mainMenu.MenuItems[0].Text.Equals("Disconnect"))
                     {
-                        _mainMenu.MenuItems[1].Text = "Disconnect";
+                        _mainMenu.MenuItems[0].Text = "Disconnect";
                     }
-                    if (_settingsMenu.MenuItems[0].Enabled)
+                    /*if (_settingsMenu.MenuItems[0].Enabled)
                     {
                         _settingsMenu.MenuItems[0].Enabled = false;
-                    }
+                    }*/
                 }
                 else
                 {
-                    if (_mainMenu.MenuItems[1].Text.Equals("Disconnect"))
+                    if (!_mainMenu.MenuItems[0].Text.Equals("Connect"))
                     {
-                        _mainMenu.MenuItems[1].Text = "Connect";
+                        _mainMenu.MenuItems[0].Text = "Connect";
                     }
-                    if (!_settingsMenu.MenuItems[0].Enabled)
+                    /*if (!_settingsMenu.MenuItems[0].Enabled)
                     {
                         _settingsMenu.MenuItems[0].Enabled = true;
-                    }
+                    }*/
                 }
 
                 if (_serverRunning)
