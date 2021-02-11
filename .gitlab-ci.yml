@@ -29,6 +29,7 @@ build_linux:
 
 build_linux_arm:
     stage: build
+    when: manual
     script:
         - dotnet publish -r linux-arm -c Release -o publish/arm-Release
     artifacts:

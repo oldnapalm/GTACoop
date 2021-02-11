@@ -55,7 +55,8 @@ namespace GTAServer.Commands
             {
                 ctx.SendMessage($"Online ({clients.Count}):\n" +
                     string.Join("\n", clients.Select(x => $"\t{x.DisplayName} {x.NetConnection.RemoteEndPoint.Address}" +
-                    $" {(int)TimeSpan.FromSeconds(x.Latency).TotalMilliseconds}")));
+                    $" {(int)TimeSpan.FromSeconds(x.Latency).TotalMilliseconds}")) +
+                    $"\nYour online players are also shown on gtacoop.com/servers");
             }
         }
     }
