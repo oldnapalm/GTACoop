@@ -53,7 +53,7 @@ namespace GTAServer
         public bool UPnP { get; set; }
         public string RconPassword { get; set; }
 
-        public readonly Dictionary<string, Action<CommandContext, List<string>>> Commands = new Dictionary<string, Action<CommandContext, List<string>>>();
+        public readonly Dictionary<Command, Action<CommandContext, List<string>>> Commands = new Dictionary<Command, Action<CommandContext, List<string>>>();
 
         public int TicksPerSecond { get; set; }
 
@@ -459,18 +459,11 @@ namespace GTAServer
             sender.GameServer = this;
 
             // invoke command
-            split = command.Split(' ');
-            if (!Commands.ContainsKey(split[0]))
+            var found = ServerManager.ExecuteCommand(command, this, sender);
+            if(!found)
             {
                 RespondRconMessage(msg.SenderEndPoint, "Command not found");
-                return;
             }
-
-            Commands[split[0]].Invoke(new CommandContext
-            {
-                Sender = sender,
-                GameServer = this
-            }, split.Skip(1).ToList());
         }
 
         internal void RespondRconMessage(IPEndPoint destination, string response)
@@ -689,9 +682,9 @@ namespace GTAServer
                             // Command handling
                             if (chatData.Message.StartsWith("/"))
                             {
-                                var cmdArgs = chatData.Message.Split(' ');
+                                var cmdArgs = Util.SplitCommandString(chatData.Message);
                                 var cmdName = cmdArgs[0].Remove(0, 1);
-                                if (Commands.ContainsKey(cmdName))
+                                if (Commands.Any(x => x.Key.Name == cmdName))
                                 {
                                     if (HasPermission(client, PermissionType.Command, cmdName))
                                     {
@@ -703,7 +696,8 @@ namespace GTAServer
                                             Sender = client
                                         };
 
-                                        Commands[cmdName](ctx, cmdArgs.Skip(1).ToList());
+                                        var command = Commands.First(x => x.Key.Name == cmdName);
+                                        command.Value.Invoke(ctx, cmdArgs.Skip(1).ToList());
                                     }
                                     else
                                     {
@@ -946,9 +940,16 @@ namespace GTAServer
         /// </summary>
         /// <param name="command">The name of the command</param>
         /// <param name="callback">The callback which will get triggered while executing the command</param>
-        public void RegisterCommand(string command, Action<CommandContext, List<string>> callback)
+        public void RegisterCommand(string name, Action<CommandContext, List<string>> callback)
         {
-            if(Commands.ContainsKey(command))
+            var command = new Command { Name = name };
+
+            RegisterCommand(command, callback);
+        }
+
+        public void RegisterCommand(Command command, Action<CommandContext, List<string>> callback)
+        {
+            if (Commands.ContainsKey(command))
                 throw new Exception("A command with this name has already been registered");
 
             Commands.Add(command, callback);
@@ -964,9 +965,15 @@ namespace GTAServer
 
             foreach (var method in commands)
             {
-                var name = method.GetCustomAttribute<CommandAttribute>(true).Name;
+                var attribute = method.GetCustomAttribute<CommandAttribute>(true);
+                var command = new Command
+                {
+                    Name = attribute.Name,
+                    Description = attribute.Description,
+                    Usage = attribute.Usage
+                };
 
-                RegisterCommand(name, (Action<CommandContext, List<string>>)Delegate.CreateDelegate(typeof(Action<CommandContext, List<string>>), method));
+                RegisterCommand(command, (Action<CommandContext, List<string>>)Delegate.CreateDelegate(typeof(Action<CommandContext, List<string>>), method));
             }
         }
 

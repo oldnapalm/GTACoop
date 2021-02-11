@@ -169,6 +169,8 @@ namespace GTAServer
                 }
             }
 
+            RegisterCommands();
+
 #if !BUILD_WASM
             // TODO future refactor
             if (_gameServerConfiguration.UseGroups)
@@ -180,8 +182,6 @@ namespace GTAServer
             }
 #endif
             _gameServer.Metrics = new PrometheusMetrics();
-
-            RegisterCommands();
 
             _logger.LogInformation(LogEvent.Setup, "Plugins loaded. Enabling plugins...");
             foreach (var plugin in _plugins)
@@ -295,29 +295,36 @@ namespace GTAServer
         /// Called by ConsoleThread on native and by JS in WebAssembly
         /// </summary>
         /// <param name="cmd"></param>
-        public static void ExecuteCommand(string cmd)
+        /// <returns>Whether the command existed</returns>
+        public static bool ExecuteCommand(string cmd, GameServer server = null, ICommandSender sender = null)
         {
-            var sender = new ConsoleCommandSender
+            server = server ?? _gameServer;
+
+            if (sender == null)
             {
-                GameServer = _gameServer
-            };
+                sender = new ConsoleCommandSender
+                {
+                    GameServer = server
+                };
+            }
 
             var arguments = Util.SplitCommandString(cmd);
 
-            Dictionary<string, Action<CommandContext, List<string>>> commands;
-            lock (_gameServer)
+            Dictionary<Command, Action<CommandContext, List<string>>> commands;
+            lock (server)
             {
-                commands = _gameServer.Commands;
+                commands = server.Commands;
 
-                // continue if the command exists
-                if (arguments.Count == 0 || !commands.ContainsKey(arguments[0])) return;
+                // check if the command exists
+                if (arguments.Count == 0 || !commands.Any(x => x.Key.Name == arguments[0])) return false;
 
                 // invoke the command
-                commands[arguments[0]].Invoke(new CommandContext
-                {
-                    Sender = sender,
-                    GameServer = _gameServer
-                }, arguments.Skip(1).ToList());
+                var command = commands.First(x => x.Key.Name == arguments[0]);
+                var context = new CommandContext { Sender = sender, GameServer = _gameServer };
+
+                command.Value.Invoke(context, arguments.Skip(1).ToList());
+
+                return true;
             }
         }
     }

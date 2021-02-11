@@ -10,6 +10,16 @@ namespace GTAServer.PluginAPI.Attributes
         /// </summary>
         public string Name { get; set; }
 
+        /// <summary>
+        /// Sets the description displayed about the command
+        /// </summary>
+        public string Description { get; set; }
+
+        /// <summary>
+        /// Sets the usage message of the command
+        /// </summary>
+        public string Usage { get; set; }
+
         public CommandAttribute(string name)
         {
             Name = name;
