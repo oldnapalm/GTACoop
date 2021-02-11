@@ -960,11 +960,11 @@ namespace GTAServer
         /// <typeparam name="T">The class to look for commands</typeparam>
         public void RegisterCommands<T>()
         {
-            var commands = typeof(T).GetMethods().Where(method => method.GetCustomAttributes(typeof(Command), false).Any());
+            var commands = typeof(T).GetMethods().Where(method => method.GetCustomAttributes(typeof(CommandAttribute), false).Any());
 
             foreach (var method in commands)
             {
-                var name = method.GetCustomAttribute<Command>(true).Name;
+                var name = method.GetCustomAttribute<CommandAttribute>(true).Name;
 
                 RegisterCommand(name, (Action<CommandContext, List<string>>)Delegate.CreateDelegate(typeof(Action<CommandContext, List<string>>), method));
             }
