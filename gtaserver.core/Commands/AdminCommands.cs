@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
 using GTAServer.PluginAPI.Attributes;
@@ -48,7 +49,7 @@ namespace GTAServer.Commands
                 return;
             }
 
-            var reason = args?[1];
+            var reason = args.ElementAtOrDefault(1);
             target.Kick(reason ?? ("Kicked by " + ctx.Sender.DisplayName), false);
         }
 

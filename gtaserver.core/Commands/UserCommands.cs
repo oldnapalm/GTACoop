@@ -21,9 +21,12 @@ namespace GTAServer.Commands
                 }
                 else
                 {
+                    var longest = ctx.GameServer.Commands.OrderByDescending(x => x.Key.Name.Length);
+                    var len = longest.First().Key.Name.Length + 1;
+
                     ctx.SendMessage("Commands:\n" +
-                        string.Join("\n", ctx.GameServer.Commands.Select(x => $"\t{x.Key.Name}: {x.Key.Description}")) +
-                        "\n\n\tUse 'help <command name>' to show more information about a command");
+                        string.Join("\n", ctx.GameServer.Commands.Select(x => $"{x.Key.Name}{new string(' ', (len - x.Key.Name.Length))}- {x.Key.Description}")) +
+                        "\n\nUse 'help <command name>' to show more information about a command");
                 }
 
                 return;
