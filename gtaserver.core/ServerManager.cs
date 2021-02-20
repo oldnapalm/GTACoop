@@ -67,7 +67,6 @@ namespace GTAServer
 
             // can't use logger here since the logger config depends on if debug mode is on or off
             Console.WriteLine("Reading server configuration...");
-            Console.Write("\x1b]9;4;3;0\x07");
 
             _gameServerConfiguration =
                 LoadServerConfiguration(Path.Combine(_location, "Configuration", "serverSettings.xml"));
@@ -209,7 +208,6 @@ namespace GTAServer
             }
 
             // ready
-            Console.Write("\x1b]9;4;0;0\x07");
             _logger.LogInformation(LogEvent.Setup, "Starting server main loop, ready to accept connections.");
 
             _timer = new Timer(DoServerTick, _gameServer, 0, _tickEvery);
