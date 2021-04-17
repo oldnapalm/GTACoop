@@ -35,12 +35,10 @@ namespace GTAServer.Users
         public void Start()
         {
             var filename = Path.Combine(System.AppContext.BaseDirectory, "users.db");
-            var create = false;
 
             if (!File.Exists(filename))
             {
                 SQLiteConnection.CreateFile(filename);
-                create = true;
             }
 
             var connectionString = new SQLiteConnectionStringBuilder()
@@ -52,17 +50,14 @@ namespace GTAServer.Users
             _connection = new SQLiteConnection(connectionString.ToString());
             _connection.Open();
 
-            if (create)
-            {
-                new SQLiteCommand(@"
-                    CREATE TABLE `users` (
-	                    `Id`	    INTEGER PRIMARY KEY AUTOINCREMENT,
-	                    `Username`  TEXT,
-	                    `Password`  TEXT,
-	                    `Group` 	TEXT
-                    );"
-                , _connection).ExecuteNonQuery();
-            }
+            new SQLiteCommand(@"
+                CREATE TABLE IF NOT EXISTS `users` (
+	                `Id`	    INTEGER PRIMARY KEY AUTOINCREMENT,
+	                `Username`  TEXT,
+	                `Password`  TEXT,
+	                `Group` 	TEXT
+                );"
+            , _connection).ExecuteNonQuery();
 
             LoadGroups();
 

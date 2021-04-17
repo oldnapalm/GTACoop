@@ -12,6 +12,7 @@ using GTAServer.PluginAPI.Entities;
 using GTAServer.Users;
 using System.Runtime.InteropServices;
 using GTAServer.Logging;
+using ProtoBuf;
 
 namespace GTAServer
 {
@@ -226,6 +227,7 @@ namespace GTAServer
             {
                 server.Tick();
             }
+            catch(ProtoException) { }
             catch (Exception e)
             {
                 _logger.LogError(LogEvent.Tick, e, "Exception while ticking");
