@@ -13,12 +13,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Race", "Race\Race.csproj", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "gtaserver.core", "gtaserver.core\gtaserver.core.csproj", "{6FD5243E-F355-4456-BD5A-A6F854103EA8}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Race", "Race2\Race.csproj", "{946F653E-62EB-421A-9F5B-65441EE78CD6}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Gamemodes", "Gamemodes", "{566C9B77-5952-483C-993C-2A661AC29E73}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Freeroam", "Freeroam\Freeroam.csproj", "{5BB59EB1-E68A-47E0-9FEB-D0A4DF37F8EF}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NativeUI", "NativeUI\NativeUI\NativeUI.csproj", "{F3E16ED9-DBF7-4E7B-B04B-9B24B11891D3}"
 EndProject
 Global
@@ -69,22 +63,6 @@ Global
 		{6FD5243E-F355-4456-BD5A-A6F854103EA8}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6FD5243E-F355-4456-BD5A-A6F854103EA8}.Release|x64.ActiveCfg = Release|Any CPU
 		{6FD5243E-F355-4456-BD5A-A6F854103EA8}.Release|x64.Build.0 = Release|Any CPU
-		{946F653E-62EB-421A-9F5B-65441EE78CD6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{946F653E-62EB-421A-9F5B-65441EE78CD6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{946F653E-62EB-421A-9F5B-65441EE78CD6}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{946F653E-62EB-421A-9F5B-65441EE78CD6}.Debug|x64.Build.0 = Debug|Any CPU
-		{946F653E-62EB-421A-9F5B-65441EE78CD6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{946F653E-62EB-421A-9F5B-65441EE78CD6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{946F653E-62EB-421A-9F5B-65441EE78CD6}.Release|x64.ActiveCfg = Release|Any CPU
-		{946F653E-62EB-421A-9F5B-65441EE78CD6}.Release|x64.Build.0 = Release|Any CPU
-		{5BB59EB1-E68A-47E0-9FEB-D0A4DF37F8EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5BB59EB1-E68A-47E0-9FEB-D0A4DF37F8EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5BB59EB1-E68A-47E0-9FEB-D0A4DF37F8EF}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{5BB59EB1-E68A-47E0-9FEB-D0A4DF37F8EF}.Debug|x64.Build.0 = Debug|Any CPU
-		{5BB59EB1-E68A-47E0-9FEB-D0A4DF37F8EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5BB59EB1-E68A-47E0-9FEB-D0A4DF37F8EF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5BB59EB1-E68A-47E0-9FEB-D0A4DF37F8EF}.Release|x64.ActiveCfg = Release|Any CPU
-		{5BB59EB1-E68A-47E0-9FEB-D0A4DF37F8EF}.Release|x64.Build.0 = Release|Any CPU
 		{F3E16ED9-DBF7-4E7B-B04B-9B24B11891D3}.Debug|Any CPU.ActiveCfg = Debug|x64
 		{F3E16ED9-DBF7-4E7B-B04B-9B24B11891D3}.Debug|x64.ActiveCfg = Debug|x64
 		{F3E16ED9-DBF7-4E7B-B04B-9B24B11891D3}.Debug|x64.Build.0 = Debug|x64
@@ -94,10 +72,6 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{946F653E-62EB-421A-9F5B-65441EE78CD6} = {566C9B77-5952-483C-993C-2A661AC29E73}
-		{5BB59EB1-E68A-47E0-9FEB-D0A4DF37F8EF} = {566C9B77-5952-483C-993C-2A661AC29E73}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1D64D057-8DEF-4B16-A3E8-E694B68EE315}

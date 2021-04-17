@@ -18,6 +18,8 @@ namespace GTAServer
 {
     public class ServerManager
     {
+        private const string SENTRY_DSN = "https://61668555fb9846bd8a2451366f50e5d3@sentry.io/1320932";
+
         private static ServerConfiguration _gameServerConfiguration;
         private static GameServer _gameServer;
         private static ILogger _logger;
@@ -73,6 +75,26 @@ namespace GTAServer
                 LoadServerConfiguration(Path.Combine(_location, "Configuration", "serverSettings.xml"));
             if (!_debugMode) _debugMode = _gameServerConfiguration.DebugMode;
 
+            // initialize error tracking
+            if (!_debugMode)
+            {
+                using var sentry = SentrySdk.Init(config => 
+                {
+                    config.Dsn = SENTRY_DSN;
+
+                    // write minidumps on Windows
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) config.AddExceptionProcessor(new MiniDump());
+                });
+
+                ConfigureErrorTracking();
+            }
+
+            // continue
+            Start();
+        }
+
+        public static void Start()
+        {
             Util.LoggerFactory = new LoggerFactory();
             if (_debugMode)
             {
@@ -84,44 +106,8 @@ namespace GTAServer
                 Util.LoggerFactory.AddProvider(new ConsoleLoggerProvider(LogLevel.Information));
             }
             _logger = Util.LoggerFactory.CreateLogger<ServerManager>();
+
             DoDebugWarning();
-
-#if !BUILD_WASM && !DEBUG
-            // enable Sentry
-            if(!_debugMode)
-            {
-                SentrySdk.Init(config =>
-                {
-                    config.Dsn = new Dsn("https://61668555fb9846bd8a2451366f50e5d3@sentry.io/1320932");
-
-                    // minidumps are only written on Windows as Linux has no such functionality
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                    {
-                        config.AddExceptionProcessor(new MiniDump());
-                    }
-                });
-
-                SentrySdk.ConfigureScope(scope =>
-                {
-                    // add configuration to crash reports
-                    scope.SetExtra("configuration", _gameServerConfiguration);
-
-                    // if server is ran on Windows we attempt to find a local discord client
-                    // we will then get the username of the current user and include this in the event
-                    // assuming developers need more information about a crash they can contact the user
-                    // (this can be disabled by settings 'AnonymousCrashes' to true in the server configuration)
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && !_gameServerConfiguration.AnonymousCrashes)
-                    {
-                        var user = Discord.GetDiscordUser();
-                        if (user != null)
-                        {
-                            scope.User.Id = user.Id;
-                            scope.User.Username = $"{user.Name}#{user.Discriminator}";
-                        }
-                    }
-                });
-            }
-#endif
 
             if (_gameServerConfiguration.ServerVariables.Any(v => v.Key == "tickEvery"))
             {
@@ -326,6 +312,17 @@ namespace GTAServer
 
                 return true;
             }
+
+        }
+
+        private static void ConfigureErrorTracking()
+        {
+            SentrySdk.ConfigureScope(scope =>
+            {
+                // add configuration to crash reports
+                scope.SetExtra("configuration", _gameServerConfiguration);
+                scope.SetExtra("path", AppContext.BaseDirectory);
+            });
         }
     }
 

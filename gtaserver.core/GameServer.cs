@@ -20,7 +20,9 @@ using GTAServer.PluginAPI.Events;
 using GTAServer.Users.Groups;
 using GTAServer.PluginAPI.Entities;
 using GTAServer.Logging;
-using Newtonsoft.Json;
+using System.Globalization;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace GTAServer
 {
@@ -173,19 +175,19 @@ namespace GTAServer
 
         internal sealed class MasterRequest
         {
-            [JsonProperty("port")]
+            [JsonPropertyName("port")]
             public int Port { get; set; }
 
-            [JsonProperty("version")]
+            [JsonPropertyName("version")]
             public int Version { get; set; }
 
-            [JsonProperty("max_players")]
+            [JsonPropertyName("max_players")]
             public int MaxPlayers { get; set; }
 
-            [JsonProperty("gamemode")]
+            [JsonPropertyName("gamemode")]
             public string GamemodeName { get; set; }
 
-            [JsonProperty("telemetry")]
+            [JsonPropertyName("telemetry")]
             public string Telemetry { get; set; }
         }
 
@@ -199,7 +201,7 @@ namespace GTAServer
 
             using (var client = new HttpClient())
             {
-                var content = new StringContent(Port.ToString());
+                var content = new StringContent(Port.ToString(CultureInfo.InvariantCulture));
 
                 for (var master = 0; master < MasterServers.Count; master++)
                 {
@@ -220,7 +222,7 @@ namespace GTAServer
                         try { Util.AppendTelemetry(ref request); } catch(Exception) { }
 
                         await client.PutAsync(MasterServers[master],
-                            new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json"));
+                            new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json"));
 
                     }
                     catch (InvalidOperationException)
@@ -507,7 +509,7 @@ namespace GTAServer
 
 
             logger.LogInformation(LogEvent.Handshake,
-                $"New connection request: {client.DisplayName}@{msg.SenderEndPoint.Address.ToString()} | Game version: {client.GameVersion.ToString()} | Script version: {client.RemoteScriptVersion.ToString()}");
+                $"New connection request: {client.DisplayName}@{msg.SenderEndPoint.Address} | Game version: {client.GameVersion} | Script version: {client.RemoteScriptVersion}");
 
             var latestScriptVersion = Enum.GetValues(typeof(ScriptVersion)).Cast<ScriptVersion>().Last();
             if (!AllowOutdatedClients &&
@@ -519,7 +521,7 @@ namespace GTAServer
                 latestReadableScriptVersion = Regex.Replace(latestReadableScriptVersion, "_", ".",
                     RegexOptions.IgnoreCase);
 
-                logger.LogInformation(LogEvent.Handshake, $"Client {client.DisplayName} tried to connect with an outdated script version {client.RemoteScriptVersion.ToString()} but the server requires {latestScriptVersion.ToString()}");
+                logger.LogInformation(LogEvent.Handshake, $"Client {client.DisplayName} tried to connect with an outdated script version {client.RemoteScriptVersion} but the server requires {latestScriptVersion}");
                 DenyConnect(client, $"Please update to version {latestReadableScriptVersion} from https://gtacoop.com", true, msg);
                 return;
             }
@@ -572,7 +574,7 @@ namespace GTAServer
             switch (newStatus)
             {
                 case NetConnectionStatus.Connected:
-                    logger.LogInformation(LogEvent.StatusChange, $"Connected: {client.DisplayName}@{msg.SenderEndPoint.Address.ToString()}");
+                    logger.LogInformation(LogEvent.StatusChange, $"Connected: {client.DisplayName}@{msg.SenderEndPoint.Address}");
                     SendNotificationToAll($"Player connected: {client.DisplayName}");
 
                     if (!string.IsNullOrEmpty(Motd)) 
@@ -613,13 +615,13 @@ namespace GTAServer
                             if (client.Kicked)
                             {
                                 logger.LogInformation(LogEvent.StatusChange,
-                                    $"Player kicked: {client.DisplayName}@{msg.SenderEndPoint.Address.ToString()}");
+                                    $"Player kicked: {client.DisplayName}@{msg.SenderEndPoint.Address}");
                                 LastKickedClient = client;
                                 LastKickedIP = client.NetConnection.RemoteEndPoint.ToString();
                             }
                             else
                             {
-                                logger.LogInformation(LogEvent.StatusChange, $"Player disconnected: {client.DisplayName}@{msg.SenderEndPoint.Address.ToString()}");
+                                logger.LogInformation(LogEvent.StatusChange, $"Player disconnected: {client.DisplayName}@{msg.SenderEndPoint.Address}");
                             }
 
                             Clients.Remove(client);
@@ -655,7 +657,7 @@ namespace GTAServer
             responsePkt.Write((int)PacketType.DiscoveryResponse);
             responsePkt.Write(serializedResponse.Length);
             responsePkt.Write(serializedResponse);
-            logger.LogInformation(LogEvent.Connection, $"Server status requested by {msg.SenderEndPoint.Address.ToString()}");
+            logger.LogInformation(LogEvent.Connection, $"Server status requested by {msg.SenderEndPoint.Address}");
             Server.SendDiscoveryResponse(responsePkt, msg.SenderEndPoint);
         }
 
