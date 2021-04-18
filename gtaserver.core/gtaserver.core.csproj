@@ -6,6 +6,7 @@
 	  <NoWarn>NU1605</NoWarn>
 	  <RootNamespace>GTAServer</RootNamespace>
 	  <PublishRepositoryUrl>true</PublishRepositoryUrl>
+	  <ApplicationIcon>gtaserver.core.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>

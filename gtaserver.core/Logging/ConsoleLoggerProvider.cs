@@ -19,7 +19,6 @@ namespace GTAServer.Logging
 
         public void Dispose()
         {
-            Dispose();
             GC.SuppressFinalize(this);
         }
     }
