@@ -236,7 +236,7 @@ namespace GTACoOp
 
                     float sizeOffset = Math.Max(1f - ((GameplayCamera.Position - Character.Position).Length() / 30f), 0.3f);
 
-                    new UIResText(Name, new Point(0, 0), 0.4f * sizeOffset, Color.WhiteSmoke, Font.ChaletLondon, UIResText.Alignment.Centered)
+                    new UIResText(Name ?? "<Nameless>", new Point(0, 0), 0.4f * sizeOffset, Color.WhiteSmoke, Font.ChaletLondon, UIResText.Alignment.Centered)
                     {
                         Outline = true,
                     }.Draw();
