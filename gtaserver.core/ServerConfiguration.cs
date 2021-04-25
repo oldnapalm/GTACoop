@@ -27,6 +27,7 @@ namespace GTAServer
         public string Motd { get; set; } = "Welcome to this GTA CooP server!";
         public bool UseGroups { get; set; } = true;
         public bool UPnP { get; set; } = true;
+        public bool DualStack { get; set; } = false;
         public bool NoConsole { get; set; } = false;
         public string RconPassword { get; set; } = "";
 

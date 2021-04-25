@@ -65,7 +65,7 @@ namespace GTAServer
         private int _ticksLastSecond;
 
         private readonly Timer _tpsTimer;
-        public GameServer(int port, string name, string gamemodeName, bool isDebug, bool upnp = false)
+        public GameServer(int port, string name, string gamemodeName, bool isDebug, ServerConfiguration config)
         {
             logger = Util.LoggerFactory.CreateLogger<GameServer>();
             logger.LogInformation(LogEvent.Setup, "Server ready to start");
@@ -74,9 +74,15 @@ namespace GTAServer
             GamemodeName = gamemodeName;
             Name = name;
             Port = port;
-            UPnP = upnp;
+            UPnP = config.UPnP;
 
             Config = new NetPeerConfiguration("GTAVOnlineRaces") { Port = port, EnableUPnP = UPnP };
+            if(config.DualStack)
+            {
+                Config.DualStack = true;
+                Config.LocalAddress = IPAddress.IPv6Any;
+            }
+
             Config.EnableMessageType(NetIncomingMessageType.ConnectionApproval);
             Config.EnableMessageType(NetIncomingMessageType.DiscoveryRequest);
             Config.EnableMessageType(NetIncomingMessageType.UnconnectedData);

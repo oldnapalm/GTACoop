@@ -129,7 +129,7 @@ namespace GTAServer
             _logger.LogInformation(LogEvent.Setup, "Server preparing to start...");
 
             _gameServer = new GameServer(_gameServerConfiguration.Port, _gameServerConfiguration.ServerName,
-                _gameServerConfiguration.GamemodeName, _debugMode, _gameServerConfiguration.UPnP)
+                _gameServerConfiguration.GamemodeName, _debugMode, _gameServerConfiguration)
             {
                 Password = _gameServerConfiguration.Password,
                 AnnounceSelf = _gameServerConfiguration.AnnounceSelf,
