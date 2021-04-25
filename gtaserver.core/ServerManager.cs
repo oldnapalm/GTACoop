@@ -96,6 +96,8 @@ namespace GTAServer
         public static void Start()
         {
             Util.LoggerFactory = new LoggerFactory();
+            Util.CreateHttpClient();
+
             if (_debugMode)
             {
 

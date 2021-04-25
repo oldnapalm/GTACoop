@@ -4,18 +4,23 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
 namespace GTAServer
 {
     public static class Util
     {
+        public static ILoggerFactory LoggerFactory;
+        internal static HttpClient HttpClient;
+
         public static T DeserializeBinary<T>(byte[] data)
         {
             using (var stream = new MemoryStream(data))
@@ -33,12 +38,41 @@ namespace GTAServer
             }
         }
 
-        public static ILoggerFactory LoggerFactory;
-
         public static string SanitizeString(string input)
         {
             input = Regex.Replace(input, "~.~", "", RegexOptions.IgnoreCase);
             return input;
+        }
+
+        internal static void CreateHttpClient()
+        {
+            var handler = new SocketsHttpHandler
+            {
+                ConnectCallback = async (context, cancellationToken) => 
+                {
+                    // based of src/libraries/System.Net.Http/src/System/Net/Http/SocketsHttpHandler/HttpConnectionPool.cs#L1338
+                    var socket = new Socket(SocketType.Stream, ProtocolType.Tcp) 
+                    {
+                        NoDelay = true 
+                    };
+
+                    socket.Bind(new IPEndPoint(IPAddress.Any, 0)); // IPv4 only please
+
+                    try
+                    {
+                        await socket.ConnectAsync(context.DnsEndPoint, cancellationToken).ConfigureAwait(false);
+                        return new NetworkStream(socket, true);
+                    }
+                    catch(Exception)
+                    {
+                        socket.Dispose();
+
+                        throw;
+                    }
+                }
+            };
+
+            HttpClient = new HttpClient(handler);
         }
 
         /// <summary>

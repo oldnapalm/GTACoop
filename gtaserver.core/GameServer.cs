@@ -199,44 +199,42 @@ namespace GTAServer
             logger.LogInformation(LogEvent.Announce, "Announcing to master server");
             _lastAnnounceDateTime = DateTime.Now;
 
-            using (var client = new HttpClient())
+            var client = Util.HttpClient;
+            var content = new StringContent(Port.ToString(CultureInfo.InvariantCulture));
+
+            for (var master = 0; master < MasterServers.Count; master++)
             {
-                var content = new StringContent(Port.ToString(CultureInfo.InvariantCulture));
-
-                for (var master = 0; master < MasterServers.Count; master++)
+                try
                 {
-                    try
+                    // old master announce
+                    await client.PostAsync(MasterServers[master], content);
+
+                    // updated announce
+                    var request = new MasterRequest
                     {
-                        // old master announce
-                        await client.PostAsync(MasterServers[master], content);
+                        Port = Port,
+                        MaxPlayers = MaxPlayers,
+                        GamemodeName = GamemodeName,
+                        Version = 0
+                    };
 
-                        // updated announce
-                        var request = new MasterRequest
-                        {
-                            Port = Port,
-                            MaxPlayers = MaxPlayers,
-                            GamemodeName = GamemodeName,
-                            Version = 0
-                        };
+                    try { Util.AppendTelemetry(ref request); } catch (Exception) { }
 
-                        try { Util.AppendTelemetry(ref request); } catch(Exception) { }
+                    await client.PutAsync(MasterServers[master],
+                        new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json"));
 
-                        await client.PutAsync(MasterServers[master],
-                            new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json"));
-
-                    }
-                    catch (InvalidOperationException)
-                    {
-                        logger.LogError(LogEvent.Announce, $"Failed to announce to master {master + 1}: URL is invalid");
-                    }
-                    catch (Exception e)
-                    {
-                        logger.LogWarning(LogEvent.Announce, $"Failed to announce to master {master + 1}: {e.Message}");
-                    }
                 }
-
-                content.Dispose();
+                catch (InvalidOperationException)
+                {
+                    logger.LogError(LogEvent.Announce, $"Failed to announce to master {master + 1}: URL is invalid");
+                }
+                catch (Exception e)
+                {
+                    logger.LogWarning(LogEvent.Announce, $"Failed to announce to master {master + 1}: {e.Message}");
+                }
             }
+
+            content.Dispose();
         }
 
         private void CalculateTicksPerSecond()
