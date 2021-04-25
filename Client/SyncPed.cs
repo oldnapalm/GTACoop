@@ -228,11 +228,15 @@ namespace GTACoOp
 
                 if (!Character.IsOccluded && Character.IsInRangeOf(Game.Player.Character.Position, 20f))
                 {
-                    var pos = Character.Position;
+                    Vector3 targetPos = Character.GetBoneCoord(Bone.IK_Head) + new Vector3(0, 0, 0.5f);
 
-                    Function.Call(Hash.SET_DRAW_ORIGIN, pos.X, pos.Y, pos.Z + 1.1, 0);
+                    targetPos += Character.Velocity / Game.FPS;
 
-                    new UIResText(Name == null ? "<nameless>" : Name, new Point(0, 0), 0.3f, Color.WhiteSmoke, Font.ChaletLondon, UIResText.Alignment.Centered)
+                    Function.Call(Hash.SET_DRAW_ORIGIN, targetPos.X, targetPos.Y, targetPos.Z, 0);
+
+                    float sizeOffset = Math.Max(1f - ((GameplayCamera.Position - Character.Position).Length() / 30f), 0.3f);
+
+                    new UIResText(Name, new Point(0, 0), 0.4f * sizeOffset, Color.WhiteSmoke, Font.ChaletLondon, UIResText.Alignment.Centered)
                     {
                         Outline = true,
                     }.Draw();
