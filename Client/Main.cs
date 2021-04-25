@@ -703,7 +703,7 @@ namespace GTACoOp
             else
             {
                 bool aiming = Game.IsControlPressed(0, GTA.Control.Aim);
-                bool shooting = Function.Call<bool>(Hash.IS_PED_SHOOTING, player.Handle);
+                bool shooting = player.IsShooting && player.Weapons.Current?.AmmoInClip != 0;
 
                 GTA.Math.Vector3 aimCoord = new GTA.Math.Vector3();
                 if (aiming || shooting)
@@ -776,7 +776,7 @@ namespace GTACoOp
             }
             else
             {
-                bool shooting = Function.Call<bool>(Hash.IS_PED_SHOOTING, ped.Handle);
+                bool shooting = ped.IsShooting && ped.Weapons.Current?.AmmoInClip != 0;
 
                 GTA.Math.Vector3 aimCoord = new GTA.Math.Vector3();
                 if (shooting)
@@ -1630,7 +1630,7 @@ namespace GTACoOp
                 else
                 {
                     bool aiming = Game.IsControlPressed(0, GTA.Control.Aim);
-                    bool shooting = Function.Call<bool>(Hash.IS_PED_SHOOTING, player.Handle);
+                    bool shooting = player.IsShooting && player.Weapons.Current?.AmmoInClip != 0;
 
                     GTA.Math.Vector3 aimCoord = new GTA.Math.Vector3();
                     if (aiming || shooting)
