@@ -270,9 +270,6 @@ namespace GTACoOp
                     Function.Call(Hash.CLEAR_DRAW_ORIGIN);
                 }
 
-                if (!_lastVehicle && IsInVehicle && MainVehicle != null)
-                    _lastVehicle = true;
-
                 if ((!_lastVehicle && IsInVehicle && VehicleHash != 0) || (_lastVehicle && IsInVehicle && (MainVehicle == null || !Character.IsInVehicle(MainVehicle) || MainVehicle.Model.Hash != VehicleHash || VehicleSeat != Util.GetPedSeat(Character))))
                 {
                     if (MainVehicle != null && Util.IsVehicleEmpty(MainVehicle))
