@@ -1534,7 +1534,7 @@ namespace GTACoOp
                     catch (Exception ex)
                     {
                         UI.Notify("GeoIP: "+ex.Message);
-                    _description = msg.SenderEndPoint.Address.ToString() + ":" + data.Port;
+                        _description = msg.SenderEndPoint.Address.ToString() + ":" + data.Port;
                     }
                     var item = new UIMenuItem(data.ServerName);
                     TextInfo _gamemode = new System.Globalization.CultureInfo("en-US", false).TextInfo;
@@ -1589,7 +1589,7 @@ namespace GTACoOp
             }
         }
 
-        #region debug stuff
+#region debug stuff
 
         private DateTime _artificialLagCounter = DateTime.MinValue;
         private bool _debugStarted;
@@ -1686,7 +1686,7 @@ namespace GTACoOp
 
         }
 
-        #endregion
+#endregion
 
         public void DecodeNativeCall(NativeData obj)
         {
