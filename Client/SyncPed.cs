@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -23,7 +23,8 @@ namespace GTACoOp
         public MaxMind.GeoIP2.Responses.CountryResponse geoIP;
         public Ped Character;
         public Vector3 Position;
-        public Quaternion Rotation;
+        public Vector3 Rotation;
+        public Vector3 VehicleVelocity;
         public bool IsInVehicle;
         public bool IsJumping;
         public int ModelHash;
@@ -40,7 +41,6 @@ namespace GTACoOp
 
         public int VehicleHealth;
         public int VehicleHash;
-        public Quaternion VehicleRotation;
         public int VehiclePrimaryColor;
         public int VehicleSecondaryColor;
         public string Name;
@@ -51,6 +51,7 @@ namespace GTACoOp
         public float WheelSpeed;
         public string Plate;
         public int RadioStation;
+        private DateTime _stopTime;
 
         public float Speed
         {
@@ -69,21 +70,25 @@ namespace GTACoOp
             get { return _latencyAverager.Average(); }
         }
 
-        public DateTime LastUpdateReceived
+        public int LastUpdateReceived
         {
             get { return _lastUpdateReceived; }
             set
             {
-                _secondToLastUpdateReceived = _lastUpdateReceived;
-                _lastUpdateReceived = value;
-
-                if (_secondToLastUpdateReceived != null && _lastUpdateReceived != null)
+                if (_lastUpdateReceived != 0)
                 {
-                    _latencyAverager.Enqueue(_lastUpdateReceived.Subtract(_secondToLastUpdateReceived).TotalMilliseconds);
+                    _latencyAverager.Enqueue(value - _lastUpdateReceived);
                     if (_latencyAverager.Count >= 10)
                         _latencyAverager.Dequeue();
                 }
+
+                _lastUpdateReceived = value;
             }
+        }
+
+        public int TicksSinceLastUpdate
+        {
+            get { return Environment.TickCount - LastUpdateReceived; }
         }
 
         public Dictionary<int, int> VehicleMods
@@ -106,6 +111,7 @@ namespace GTACoOp
             }
         }
 
+        private Vector3 _carPosOnUpdate;
         private Vector3 _lastVehiclePos;
         public Vector3 VehiclePosition
         {
@@ -114,6 +120,17 @@ namespace GTACoOp
             {
                 _lastVehiclePos = _vehiclePosition;
                 _vehiclePosition = value;
+            }
+        }
+
+        private Vector3? _lastVehicleRotation;
+        public Vector3 VehicleRotation
+        {
+            get { return _vehicleRotation; }
+            set
+            {
+                _lastVehicleRotation = _vehicleRotation;
+                _vehicleRotation = value;
             }
         }
 
@@ -130,6 +147,7 @@ namespace GTACoOp
         private int _relGroup;
         private DateTime _enterVehicleStarted;
         private Vector3 _vehiclePosition;
+        private Vector3 _vehicleRotation;
         private Dictionary<int, int> _vehicleMods;
         private Dictionary<int, int> _pedProps;
 
@@ -141,7 +159,7 @@ namespace GTACoOp
         private bool _lastHorn;
         private Prop _parachuteProp;
 
-        public SyncPed(int hash, Vector3 pos, Quaternion rot, bool blip = true)
+        public SyncPed(int hash, Vector3 pos, Vector3 rot, bool blip = true)
         {
             Position = pos;
             Rotation = rot;
@@ -153,6 +171,8 @@ namespace GTACoOp
             _relGroup = World.AddRelationshipGroup("SYNCPED");
             World.SetRelationshipBetweenGroups(Relationship.Neutral, _relGroup, Game.Player.Character.RelationshipGroup);
             World.SetRelationshipBetweenGroups(Relationship.Neutral, Game.Player.Character.RelationshipGroup, _relGroup);
+
+            StartInterpolation();
         }
 
         public void SetBlipName(Blip blip, string text)
@@ -164,13 +184,14 @@ namespace GTACoOp
 
         private int _modSwitch = 0;
         private int _clothSwitch = 0;
-        private DateTime _lastUpdateReceived;
+        private int _lastUpdateReceived;
         private float _speed;
 
         public void DisplayLocally()
         {
-            try {
-                const float hRange = 1500f;
+            try
+            {
+                const float hRange = 200f;
                 var gPos = IsInVehicle ? VehiclePosition : Position;
                 var inRange = Game.Player.Character.IsInRangeOf(gPos, hRange);
             
@@ -203,8 +224,8 @@ namespace GTACoOp
                     return;
                 }
 
-            
-                if (Character == null || !Character.Exists() || !Character.IsInRangeOf(gPos, hRange) || Character.Model.Hash != ModelHash || (Character.IsDead && PedHealth > 0))
+
+                if (Character == null || !Character.Exists() || (!Character.IsInRangeOf(gPos, hRange) && Environment.TickCount - LastUpdateReceived < 5000) || Character.Model.Hash != ModelHash || (Character.IsDead && PedHealth > 0))
                 {
                     if (Character != null) Character.Delete();
 
@@ -223,6 +244,11 @@ namespace GTACoOp
                         Character.CurrentBlip.Scale = 0.8f;
                         SetBlipName(Character.CurrentBlip, Name);
                     }
+
+                    if (PedProps != null)
+                        foreach (KeyValuePair<int, int> pedprop in PedProps)
+                            Function.Call(Hash.SET_PED_COMPONENT_VARIATION, Character.Handle, pedprop.Key, pedprop.Value, 0, 0);
+
                     return;
                 }
 
@@ -243,6 +269,9 @@ namespace GTACoOp
 
                     Function.Call(Hash.CLEAR_DRAW_ORIGIN);
                 }
+
+                if (!_lastVehicle && IsInVehicle && MainVehicle != null)
+                    _lastVehicle = true;
 
                 if ((!_lastVehicle && IsInVehicle && VehicleHash != 0) || (_lastVehicle && IsInVehicle && (MainVehicle == null || !Character.IsInVehicle(MainVehicle) || MainVehicle.Model.Hash != VehicleHash || VehicleSeat != Util.GetPedSeat(Character))))
                 {
@@ -275,7 +304,7 @@ namespace GTACoOp
                     {
                         MainVehicle.PrimaryColor = (VehicleColor)VehiclePrimaryColor;
                         MainVehicle.SecondaryColor = (VehicleColor)VehicleSecondaryColor;
-                        MainVehicle.Quaternion = VehicleRotation;
+                        MainVehicle.Quaternion = VehicleRotation.ToQuaternion();
                         MainVehicle.IsInvincible = true;
                         Character.Task.WarpIntoVehicle(MainVehicle, (VehicleSeat)VehicleSeat);
 
@@ -289,146 +318,176 @@ namespace GTACoOp
                     _justEnteredVeh = true;
                     _enterVehicleStarted = DateTime.Now;
                     return;
-            }
-           
-            if (_lastVehicle && _justEnteredVeh && IsInVehicle && !Character.IsInVehicle(MainVehicle) && DateTime.Now.Subtract(_enterVehicleStarted).TotalSeconds <= 4)
-            {
-                return;
-            }
-            _justEnteredVeh = false;
-
-            if (_lastVehicle && !IsInVehicle && MainVehicle != null)
-            {
-                if (Character != null) Character.Task.LeaveVehicle(MainVehicle, true);
-            }
-
-            Character.Health = PedHealth;
-
-            _switch++;
-            if (IsInVehicle)
-            {
-                if (VehicleSeat == (int) GTA.VehicleSeat.Driver ||
-                    MainVehicle.GetPedOnSeat(GTA.VehicleSeat.Driver) == null)
-                {
-                    MainVehicle.Health = VehicleHealth;
-                    if (MainVehicle.Health <= 0)
-                    {
-                        MainVehicle.IsInvincible = false;
-                        //_mainVehicle.Explode();
-                    }
-                    else
-                    {
-                        MainVehicle.IsInvincible = true;
-                        if (MainVehicle.IsDead)
-                            MainVehicle.Repair();
-                    }
-
-                    MainVehicle.PrimaryColor = (VehicleColor) VehiclePrimaryColor;
-                    MainVehicle.SecondaryColor = (VehicleColor) VehicleSecondaryColor;
-
-                    MainVehicle.EngineRunning = IsEngineRunning;
-
-                    if (Plate != null)
-                    {
-                        MainVehicle.NumberPlate = Plate;
-                    }
-
-                    var radioStations = Util.GetRadioStations();
-
-                    if (radioStations?.ElementAtOrDefault(RadioStation) != null)
-                    {
-                        Function.Call(Hash.SET_VEH_RADIO_STATION, radioStations[RadioStation]);
-                    }
-
-                    if (VehicleMods != null && _modSwitch%50 == 0 &&
-                        Game.Player.Character.IsInRangeOf(VehiclePosition, 30f))
-                    {
-                        var id = _modSwitch/50;
-
-                        if (VehicleMods.ContainsKey(id) && VehicleMods[id] != MainVehicle.GetMod((VehicleMod) id))
-                        {
-                            Function.Call(Hash.SET_VEHICLE_MOD_KIT, MainVehicle.Handle, 0);
-                            MainVehicle.SetMod((VehicleMod) id, VehicleMods[id], false);
-                            Function.Call(Hash.RELEASE_PRELOAD_MODS, id);
-                        }
-                    }
-                    _modSwitch++;
-
-                    if (_modSwitch >= 2500)
-                        _modSwitch = 0;
-
-                    if (IsHornPressed && !_lastHorn)
-                    {
-                        _lastHorn = true;
-                        MainVehicle.SoundHorn(99999);
-                    }
-
-                    if (!IsHornPressed && _lastHorn)
-                    {
-                        _lastHorn = false;
-                        MainVehicle.SoundHorn(1);
-                    }
-
-                    if (MainVehicle.SirenActive && !Siren)
-                        MainVehicle.SirenActive = Siren;
-                    else if (!MainVehicle.SirenActive && Siren)
-                        MainVehicle.SirenActive = Siren;
-
-                    MainVehicle.SteeringAngle = (float)(Math.PI / 180) * Steering;
-
-                    var dir = VehiclePosition - _lastVehiclePos;
-
-                    dir.Normalize();
-
-                    var range = Math.Max(20f, Speed*Math.Ceiling(DateTime.Now.Subtract(LastUpdateReceived).TotalSeconds));
-
-                    if (MainVehicle.IsInRangeOf(VehiclePosition, (float) range))
-                    {
-                        if (Speed > 1 && Character.IsOnBike && MainVehicle.ClassType == VehicleClass.Cycles)
-                        {
-                            var isPedaling = Function.Call<bool>(Hash.IS_ENTITY_PLAYING_ANIM, Character.Handle, "veh@bicycle@roadfront@base", "cruise_pedal_char", 3);
-                            var isFastPedaling = Function.Call<bool>(Hash.IS_ENTITY_PLAYING_ANIM, Character.Handle, "veh@bicycle@roadfront@base", "fast_pedal_char", 3);
-
-                            if (Speed < 11f && !isPedaling)
-                            {
-                                Character.Task.PlayAnimation("veh@bicycle@roadfront@base", "cruise_pedal_char");
-                            }
-
-                            if (Speed >= 11f && !isFastPedaling)
-                            {
-                                Character.Task.PlayAnimation("veh@bicycle@roadfront@base", "fast_pedal_char");
-                            }
-
-                            // vehicle anim
-                            /*var time = Function.Call<long>(Hash.GET_GAME_TIMER);
-                            if ((time - _lastPedallingTick) > 1000)
-                            {
-                                _lastPedallingTick = time;
-
-                                Function.Call(Hash.PLAY_ENTITY_ANIM, MainVehicle.Handle, "cruise_pedal_bike", "veh@bicycle@mountainfront@base", 1000f, false, 1, 0, 0, 0);
-                            }*/
-                        }
-                        
-                        var timeElapsed = (float) DateTime.Now.Subtract(LastUpdateReceived).TotalSeconds;
-                        var acceleration = Speed - _lastSpeed;
-                        MainVehicle.Position = _lastVehiclePos + dir*(Speed*timeElapsed) +
-                                               dir*(0.5f*acceleration*(float) Math.Pow(timeElapsed, 2));
-                    }
-                    else
-                    {
-                        MainVehicle.Position = VehiclePosition;
-                        _lastVehiclePos = VehiclePosition - (dir*0.5f);
-                    }
-                    #if DEBUG
-                    if (MainVehicle.Heading < 270)
-                        MainVehicle.Quaternion = Util.LerpQuaternion(MainVehicle.Quaternion, VehicleRotation, 0.1f);
-                    else if (MainVehicle.Heading >= 270)
-                        MainVehicle.Quaternion = Util.LerpQuaternion(VehicleRotation, MainVehicle.Quaternion, 0.1f);
-                    #else
-                    MainVehicle.Quaternion = VehicleRotation;
-                    #endif
                 }
-            }
+
+                if (_lastVehicle && _justEnteredVeh && IsInVehicle && !Character.IsInVehicle(MainVehicle) && DateTime.Now.Subtract(_enterVehicleStarted).TotalSeconds <= 4)
+                {
+                    return;
+                }
+                _justEnteredVeh = false;
+
+                if (_lastVehicle && !IsInVehicle && MainVehicle != null)
+                {
+                    if (Character != null) Character.Task.LeaveVehicle(MainVehicle, true);
+                }
+
+                Character.Health = PedHealth;
+
+                _switch++;
+
+                if (!inRange)
+                {
+                    if (Character != null && Environment.TickCount - LastUpdateReceived < 10000)
+                    {
+                        if (!IsInVehicle)
+                        {
+                            Character.PositionNoOffset = gPos;
+                        }
+                        else if (MainVehicle != null && GetResponsiblePed(MainVehicle).Handle == Character.Handle)
+                        {
+                            MainVehicle.Position = VehiclePosition;
+                            MainVehicle.Rotation = VehicleRotation;
+                        }
+                    }
+                    return;
+                }
+
+                if (IsInVehicle)
+                {
+                    if (GetResponsiblePed(MainVehicle).Handle == Character.Handle)
+                    {
+                        MainVehicle.Health = VehicleHealth;
+                        if (MainVehicle.Health <= 0)
+                        {
+                            MainVehicle.IsInvincible = false;
+                            //_mainVehicle.Explode();
+                        }
+                        else
+                        {
+                            MainVehicle.IsInvincible = true;
+                            if (MainVehicle.IsDead)
+                                MainVehicle.Repair();
+                        }
+
+                        MainVehicle.PrimaryColor = (VehicleColor) VehiclePrimaryColor;
+                        MainVehicle.SecondaryColor = (VehicleColor) VehicleSecondaryColor;
+
+                        MainVehicle.EngineRunning = IsEngineRunning;
+
+                        if (Plate != null)
+                        {
+                            MainVehicle.NumberPlate = Plate;
+                        }
+
+                        var radioStations = Util.GetRadioStations();
+
+                        if (radioStations?.ElementAtOrDefault(RadioStation) != null)
+                        {
+                            Function.Call(Hash.SET_VEH_RADIO_STATION, radioStations[RadioStation]);
+                        }
+
+                        if (VehicleMods != null && _modSwitch%50 == 0 &&
+                            Game.Player.Character.IsInRangeOf(VehiclePosition, 30f))
+                        {
+                            var id = _modSwitch/50;
+
+                            if (VehicleMods.ContainsKey(id) && VehicleMods[id] != MainVehicle.GetMod((VehicleMod) id))
+                            {
+                                Function.Call(Hash.SET_VEHICLE_MOD_KIT, MainVehicle.Handle, 0);
+                                MainVehicle.SetMod((VehicleMod) id, VehicleMods[id], false);
+                                Function.Call(Hash.RELEASE_PRELOAD_MODS, id);
+                            }
+                        }
+                        _modSwitch++;
+
+                        if (_modSwitch >= 2500)
+                            _modSwitch = 0;
+
+                        if (IsHornPressed && !_lastHorn)
+                        {
+                            _lastHorn = true;
+                            MainVehicle.SoundHorn(99999);
+                        }
+
+                        if (!IsHornPressed && _lastHorn)
+                        {
+                            _lastHorn = false;
+                            MainVehicle.SoundHorn(1);
+                        }
+
+                        if (MainVehicle.SirenActive && !Siren)
+                            MainVehicle.SirenActive = Siren;
+                        else if (!MainVehicle.SirenActive && Siren)
+                            MainVehicle.SirenActive = Siren;
+
+                        MainVehicle.SteeringAngle = (Steering > 5f || Steering < -5f) ? Steering : 0f;
+
+                        if (Character.IsOnBike && MainVehicle.ClassType == VehicleClass.Cycles)
+                        {
+                            var isPedaling = IsPedaling(false);
+                            var isFastPedaling = IsPedaling(true);
+                            if (Speed < 2f)
+                            {
+                                if (isPedaling)
+                                    StopPedalingAnim(false);
+                                else if (isFastPedaling)
+                                    StopPedalingAnim(true);
+                            }
+                            else if (Speed < 11f && !isPedaling)
+                                StartPedalingAnim(false);
+                            else if (Speed >= 11f && !isFastPedaling)
+                                StartPedalingAnim(true);
+                        }
+
+                        if (Speed > 0.2f)
+                        {
+                            int currentTime = Environment.TickCount;
+                            float alpha = Util.Unlerp(currentInterop.StartTime, currentTime, currentInterop.FinishTime);
+
+                            alpha = Util.Clamp(0f, alpha, 1.5f);
+
+                            float cAlpha = alpha - currentInterop.LastAlpha;
+                            currentInterop.LastAlpha = alpha;
+
+                            Vector3 comp = Util.Lerp(new Vector3(), cAlpha, currentInterop.vecError);
+
+                            if (alpha == 1.5f)
+                            {
+                                currentInterop.FinishTime = 0;
+                            }
+
+                            Vector3 newPos = VehiclePosition + comp;
+
+                            MainVehicle.Velocity = VehicleVelocity + (newPos - MainVehicle.Position);
+
+                            _stopTime = DateTime.Now;
+                            _carPosOnUpdate = MainVehicle.Position;
+                        }
+                        else if (DateTime.Now.Subtract(_stopTime).TotalMilliseconds <= 1000)
+                        {
+                            var dir = VehiclePosition - _lastVehiclePos;
+                            var posTarget = Util.LinearVectorLerp(_carPosOnUpdate, VehiclePosition + dir,
+                                (int)DateTime.Now.Subtract(_stopTime).TotalMilliseconds, 1000);
+                            Function.Call(Hash.SET_ENTITY_COORDS_NO_OFFSET, MainVehicle, posTarget.X, posTarget.Y,
+                                posTarget.Z, 0, 0, 0, 0);
+                        }
+                        else
+                        {
+                            MainVehicle.PositionNoOffset = VehiclePosition;
+                        }
+
+                        if (_lastVehicleRotation != null)
+                        {
+                            MainVehicle.Quaternion = Quaternion.Slerp(_lastVehicleRotation.Value.ToQuaternion(),
+                                _vehicleRotation.ToQuaternion(),
+                                Math.Min(1.5f, TicksSinceLastUpdate / (float)AverageLatency));
+                        }
+                        else
+                        {
+                            MainVehicle.Quaternion = _vehicleRotation.ToQuaternion();
+                        }
+                    }
+                }
                 else
                 {
                     if (PedProps != null && _clothSwitch%50 == 0 && Game.Player.Character.IsInRangeOf(Position, 30f))
@@ -468,7 +527,7 @@ namespace GTACoOp
                         }
                         Character.FreezePosition = true;
                         Character.Position = Position - new Vector3(0, 0, 1);
-                        Character.Quaternion = Rotation;
+                        Character.Quaternion = Rotation.ToQuaternion();
                         _parachuteProp.Position = Character.Position + new Vector3(0, 0, 3.7f);
                         _parachuteProp.Quaternion = Character.Quaternion;
 
@@ -524,7 +583,7 @@ namespace GTACoOp
                             if (!Character.IsInRangeOf(Position, 5f))
                             {
                                 Character.Position = dest - new Vector3(0, 0, 1f);
-                                Character.Quaternion = Rotation;
+                                Character.Quaternion = Rotation.ToQuaternion();
                             }
                         }
                     }
@@ -542,7 +601,87 @@ namespace GTACoOp
             }
         }
 
-    public void Clear()
+        struct Interpolation
+        {
+            public Vector3 vecTarget;
+            public Vector3 vecError;
+            public int StartTime;
+            public int FinishTime;
+            public float LastAlpha;
+        }
+
+        private Interpolation currentInterop;
+
+        public void StartInterpolation()
+        {
+            currentInterop = new Interpolation();
+
+            currentInterop.vecTarget = VehiclePosition;
+            currentInterop.vecError = VehiclePosition - _lastVehiclePos;
+            currentInterop.vecError *= Util.Lerp(0.25f, Util.Unlerp(100, 100, 400), 1f);
+            currentInterop.StartTime = Environment.TickCount;
+            currentInterop.FinishTime = Environment.TickCount + 100;
+            currentInterop.LastAlpha = 0f;
+        }
+
+        public static Ped GetResponsiblePed(Vehicle veh)
+        {
+            if (veh == null || veh.Handle == 0 || !veh.Exists()) return new Ped(0);
+
+            if (veh.GetPedOnSeat(GTA.VehicleSeat.Driver).Handle != 0) return veh.GetPedOnSeat(GTA.VehicleSeat.Driver);
+
+            for (int i = 0; i < veh.PassengerSeats; i++)
+            {
+                if (veh.GetPedOnSeat((VehicleSeat)i).Handle != 0) return veh.GetPedOnSeat((VehicleSeat)i);
+            }
+
+            return new Ped(0);
+        }
+
+        private string PedalingAnimDict()
+        {
+            var hash = (uint)MainVehicle.Model.Hash;
+            string anim;
+            switch (hash)
+            {
+                case 1131912276u:
+                    anim = "veh@bicycle@bmx@front@base";
+                    break;
+                case 448402357u:
+                    anim = "veh@bicycle@cruiserfront@base";
+                    break;
+                case 4108429845u:
+                    anim = "veh@bicycle@mountainfront@base";
+                    break;
+                default:
+                    anim = "veh@bicycle@roadfront@base";
+                    break;
+            }
+            return anim;
+        }
+
+        private bool IsPedaling(bool fast)
+        {
+            var animName = fast ? "fast_pedal_char" : "cruise_pedal_char";
+            var animDict = PedalingAnimDict();
+            return Function.Call<bool>(Hash.IS_ENTITY_PLAYING_ANIM, Character.Handle, animDict, animName, 3);
+        }
+
+        private void StartPedalingAnim(bool fast)
+        {
+            var animName = fast ? "fast_pedal_char" : "cruise_pedal_char";
+            var animDict = PedalingAnimDict();
+            Character.Task.PlayAnimation(animDict, animName, 8.0f, -8.0f, -1, AnimationFlags.Loop | AnimationFlags.AllowRotation, 5.0f);
+        }
+
+        private void StopPedalingAnim(bool fast)
+        {
+            var animName = fast ? "fast_pedal_char" : "cruise_pedal_char";
+            var animDict = PedalingAnimDict();
+            Character.Task.ClearAnimation(animDict, animName);
+        }
+
+        public void Clear()
         {
             try
             {

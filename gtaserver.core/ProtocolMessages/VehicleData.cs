@@ -22,7 +22,7 @@ namespace GTAServer.ProtocolMessages
         [ProtoMember(7)]
         public Vector3 Position { get; set; }
         [ProtoMember(8)]
-        public Quaternion Quaternion { get; set; }
+        public Vector3 Quaternion { get; set; }
         [ProtoMember(9)]
         public int VehicleSeat { get; set; }
         [ProtoMember(10)]
@@ -49,5 +49,9 @@ namespace GTAServer.ProtocolMessages
         public int RadioStation { get; set; }
         [ProtoMember(21)]
         public string Plate { get; set; }
+        [ProtoMember(22)]
+        public Vector3 Velocity { get; set; }
+        [ProtoMember(23)]
+        public Dictionary<int, int> PedProps { get; set; }
     }
 }
