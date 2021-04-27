@@ -1,9 +1,16 @@
-﻿using System.Collections.Generic;
-using System.Numerics;
+﻿using System;
+using System.Collections.Generic;
 using ProtoBuf;
 
 namespace GTAServer.ProtocolMessages
 {
+    [Flags]
+    public enum VehicleDataFlags
+    {
+        IsPressingHorn = 1 << 0,
+        IsSirenActive = 1 << 1,
+    }
+
     [ProtoContract]
     public class VehicleData
     {
@@ -34,24 +41,20 @@ namespace GTAServer.ProtocolMessages
         [ProtoMember(13)]
         public Dictionary<int, int> VehicleMods { get; set; }
         [ProtoMember(14)]
-        public bool IsPressingHorn { get; set; }
-        [ProtoMember(15)]
-        public bool IsSirenActive { get; set; }
-        [ProtoMember(16)]
         public float Speed { get; set; }
-        [ProtoMember(17)]
+        [ProtoMember(15)]
         public bool IsEngineRunning { get; set; }
-        [ProtoMember(18)]
+        [ProtoMember(16)]
         public float WheelSpeed { get; set; }
-        [ProtoMember(19)]
+        [ProtoMember(17)]
         public float Steering { get; set; }
-        [ProtoMember(20)]
+        [ProtoMember(18)]
         public int RadioStation { get; set; }
-        [ProtoMember(21)]
+        [ProtoMember(19)]
         public string Plate { get; set; }
-        [ProtoMember(22)]
+        [ProtoMember(20)]
         public Vector3 Velocity { get; set; }
-        [ProtoMember(23)]
+        [ProtoMember(21)]
         public Dictionary<int, int> PedProps { get; set; }
     }
 }
