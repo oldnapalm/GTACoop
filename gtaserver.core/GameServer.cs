@@ -40,7 +40,7 @@ namespace GTAServer
         public bool AnnounceSelf { get; set; }
         public bool AllowNicknames { get; set; }
         public bool AllowOutdatedClients { get; set; }
-        public readonly ScriptVersion ServerVersion = ScriptVersion.VERSION_0_9_3;
+        public readonly ScriptVersion ServerVersion = ScriptVersion.VERSION_0_9_4;
         public string LastKickedIP { get; set; }
         public Client LastKickedClient { get; set; }
         public bool DebugMode { get; set; }
@@ -490,17 +490,17 @@ namespace GTAServer
                     RegexOptions.IgnoreCase);
 
                 logger.LogInformation(LogEvent.Handshake, $"Client {client.DisplayName} tried to connect with an outdated script version {client.RemoteScriptVersion.ToString()} but the server requires {latestScriptVersion.ToString()}");
-                DenyConnect(client, $"Please update to version {latestReadableScriptVersion} from https://gtacoop.com", true, msg);
+                DenyConnect(client, $"Please update to version {latestReadableScriptVersion}", true, msg);
                 return;
             }
             else if (client.RemoteScriptVersion != latestScriptVersion)
             {
-                SendNotificationToPlayer(client, "You are currently on an outdated client. Please go to https://gtacoop.com and update.");
+                SendNotificationToPlayer(client, "You are currently on an outdated client. Please update.");
             }
             else if (client.RemoteScriptVersion == ScriptVersion.VERSION_UNKNOWN)
             {
                 logger.LogInformation(LogEvent.Handshake, $"Client {client.DisplayName} tried to connect with an unknown script version (client too old?)");
-                DenyConnect(client, $"Unknown version. Please re-download GTACoop from https://gtacoop.com", true, msg);
+                DenyConnect(client, $"Unknown version. Please re-download GTACoop.", true, msg);
                 return;
             }
             var numClients = 0;

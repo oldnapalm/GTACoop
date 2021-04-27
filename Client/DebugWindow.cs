@@ -38,6 +38,7 @@ namespace GTACoOp
             output += "IsInVehicle: " + player.Value.IsInVehicle + "\n";
             output += "Position: " + player.Value.Position + "\n";
             output += "VehiclePosition: " + player.Value.VehiclePosition + "\n";
+            output += "Steering: " + player.Value.Steering + "\n";
             output += "VehModel: " + player.Value.VehicleHash + "\n";
             output += "Last Updated: " + player.Value.LastUpdateReceived + "\n";
             output += "Latency: " + player.Value.Latency + "\n";

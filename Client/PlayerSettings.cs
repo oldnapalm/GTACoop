@@ -32,8 +32,8 @@ namespace GTACoOp
             BackupMasterServerAddress = "http://clan-banderos.de/gta/";
             ActivationKey = Keys.F9;
             HidePasswords = false;
-            LastIP = "so2.club";
-            LastPort = 4498;
+            LastIP = "gtaserver.spptuab8qchzq9yb.myfritz.net";
+            LastPort = 30122;
             LastPassword = "rideon";
             Logging = false;
             ChatLog = false;
