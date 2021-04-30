@@ -34,7 +34,6 @@ namespace GTACoOp
         public UIMenu _serverBrowserMenu;
         //private readonly UIMenu _playerMenu;
         private readonly UIMenu _settingsMenu;
-        private readonly UIMenu _serverMenu;
         private readonly MenuPool _menuPool;
 
         private string _clientIp;

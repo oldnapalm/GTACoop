@@ -99,9 +99,9 @@ namespace GTACoOp
         [ProtoMember(6)]
         public int SecondaryColor { get; set; }
         [ProtoMember(7)]
-        public Vector3 Position { get; set; }
+        public LVector3 Position { get; set; }
         [ProtoMember(8)]
-        public Vector3 Quaternion { get; set; }
+        public LVector3 Quaternion { get; set; }
         [ProtoMember(9)]
         public int VehicleSeat { get; set; }
         [ProtoMember(10)]
@@ -125,7 +125,7 @@ namespace GTACoOp
         [ProtoMember(19)]
         public string Plate { get; set; }
         [ProtoMember(20)]
-        public Vector3 Velocity { get; set; }
+        public LVector3 Velocity { get; set; }
         [ProtoMember(21)]
         public Dictionary<int, int> PedProps { get; set; }
         [ProtoMember(22)]
@@ -151,11 +151,11 @@ namespace GTACoOp
         [ProtoMember(3)]
         public int PedModelHash { get; set; }
         [ProtoMember(4)]
-        public Vector3 Position { get; set; }
+        public LVector3 Position { get; set; }
         [ProtoMember(5)]
-        public Quaternion Quaternion { get; set; }
+        public LVector3 Quaternion { get; set; }
         [ProtoMember(6)]
-        public Vector3 AimCoords { get; set; }
+        public LVector3 AimCoords { get; set; }
         [ProtoMember(7)]
         public int WeaponHash { get; set; }
         [ProtoMember(8)]
