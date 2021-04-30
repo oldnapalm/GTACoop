@@ -42,7 +42,7 @@ namespace GTAServer
         public bool AnnounceSelf { get; set; }
         public bool AllowNicknames { get; set; }
         public bool AllowOutdatedClients { get; set; }
-        public readonly ScriptVersion ServerVersion = ScriptVersion.VERSION_0_9_3;
+        public readonly ScriptVersion ServerVersion = ScriptVersion.VERSION_0_9_4;
         public string LastKickedIP { get; set; }
         public Client LastKickedClient { get; set; }
         public bool DebugMode { get; set; }
@@ -516,29 +516,37 @@ namespace GTAServer
                 $"New connection request: {client.DisplayName}@{msg.SenderEndPoint.Address} | Game version: {client.GameVersion} | Script version: {client.RemoteScriptVersion}");
 
             var latestScriptVersion = Enum.GetValues(typeof(ScriptVersion)).Cast<ScriptVersion>().Last();
-            if (!AllowOutdatedClients &&
-                (ScriptVersion)connReq.ScriptVersion != latestScriptVersion)
-            {
-                var latestReadableScriptVersion = latestScriptVersion.ToString();
-                latestReadableScriptVersion = Regex.Replace(latestReadableScriptVersion, "VERSION_", "",
-                    RegexOptions.IgnoreCase);
-                latestReadableScriptVersion = Regex.Replace(latestReadableScriptVersion, "_", ".",
-                    RegexOptions.IgnoreCase);
+            var latestReadableScriptVersion = latestScriptVersion.ToReadable();
 
-                logger.LogInformation(LogEvent.Handshake, $"Client {client.DisplayName} tried to connect with an outdated script version {client.RemoteScriptVersion} but the server requires {latestScriptVersion}");
-                DenyConnect(client, $"Please update to version {latestReadableScriptVersion} from https://gtacoop.com", true, msg);
-                return;
-            }
-            else if (client.RemoteScriptVersion != latestScriptVersion)
-            {
-                SendNotificationToPlayer(client, "You are currently on an outdated client. Please go to https://gtacoop.com and update.");
-            }
-            else if (client.RemoteScriptVersion == ScriptVersion.VERSION_UNKNOWN)
+            // check version
+            if (client.RemoteScriptVersion == ScriptVersion.VERSION_UNKNOWN)
             {
                 logger.LogInformation(LogEvent.Handshake, $"Client {client.DisplayName} tried to connect with an unknown script version (client too old?)");
-                DenyConnect(client, $"Unknown version. Please re-download GTACoop from https://gtacoop.com", true, msg);
+
+                DenyConnect(client, $"Unknown version. Please re-download GTA Coop from www.gtacoop.com", true, msg);
                 return;
             }
+            if (!AllowOutdatedClients && connReq.ScriptVersion < (byte)latestScriptVersion)
+            {
+                // client outdated
+                logger.LogInformation(LogEvent.Handshake, $"Client {client.DisplayName} tried to connect with an outdated script version {client.RemoteScriptVersion} but the server requires {latestScriptVersion}");
+
+                DenyConnect(client, $"Please update to version {latestReadableScriptVersion} from www.gtacoop.com", true, msg);
+                return;
+            }
+            else if (!AllowOutdatedClients && connReq.ScriptVersion > (byte)latestScriptVersion)
+            {
+                // server outdated?
+                logger.LogInformation(LogEvent.Handshake, $"Client {client.DisplayName} tried to connect with a newer client version {connReq.ScriptVersion}, please make sure the server is up-to-date (current: {latestScriptVersion}, {(byte)latestScriptVersion})");
+
+                DenyConnect(client, $"This server requires an older version ({latestReadableScriptVersion})", true, msg);
+                return;
+            }
+            else if(client.RemoteScriptVersion != latestScriptVersion)
+            {
+                SendNotificationToPlayer(client, "You are currently on an outdated client. Please go to www.gtacoop.com and update.");
+            }
+
             var numClients = 0;
             lock (Clients) numClients = Clients.Count;
             if (numClients >= MaxPlayers)

@@ -28,7 +28,7 @@ namespace GTACoOp
     public class Main : Script
     {
         public static PlayerSettings PlayerSettings;
-        public static ScriptVersion LocalScriptVersion = ScriptVersion.VERSION_0_9_3;
+        public static ScriptVersion LocalScriptVersion = ScriptVersion.VERSION_0_9_4;
 
         private readonly UIMenu _mainMenu;
         public UIMenu _serverBrowserMenu;
