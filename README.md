@@ -18,7 +18,7 @@ Downloads are available from the official [website](https://gtacoop.com/download
 
 * [TheIndra55](https://github.com/theindra55)
 * [oldnapalm](https://github.com/oldnapalm)
-* Zmileey/EntenKoeniq/Nick A.
+* [EntenKoeniq](https://github.com/EntenKoeniq)
 * [EightyVice](https://github.com/EightyVice)
 * BsCaBl — Testing, feedback, running alpha build for years
 
