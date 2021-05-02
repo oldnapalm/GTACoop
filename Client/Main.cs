@@ -202,9 +202,9 @@ namespace GTACoOp
             //_serverMenu = new UIMenu("Co-oP", "SERVER SETTINGS");
             //_playerMenu = new UIMenu("Co-oP", "PLAYER OPTIONS");
 
-            var browserItem = new UIMenuItem("Server Browser");
+            /*var browserItem = new UIMenuItem("Server Browser");
             browserItem.Activated += (sender, item) => RebuildServerBrowser();
-            _serverBrowserMenu.SetMenuWidthOffset(300);
+            _serverBrowserMenu.SetMenuWidthOffset(300);*/
 
             var listenItem = new UIMenuItem("Server IP");
             listenItem.SetRightLabel(PlayerSettings.LastIP);
@@ -326,7 +326,7 @@ namespace GTACoOp
             var inputDeviceItem = new UIMenuListItem("Input device", GetInputDevices(), 0);
 #endif
 
-            var masterItem = new UIMenuItem("Master Server");
+            /*var masterItem = new UIMenuItem("Master Server");
             masterItem.SetRightLabel(PlayerSettings.MasterServerAddress);
             masterItem.Activated += (menu, item) =>
             {
@@ -350,7 +350,7 @@ namespace GTACoOp
                     Util.SaveSettings(null);
                     backupMasterItem.SetRightLabel(PlayerSettings.BackupMasterServerAddress);
                 }
-            };
+            };*/
 
             var chatLogItem = new UIMenuCheckboxItem("Log Chats", PlayerSettings.ChatLog);
             chatLogItem.CheckboxEvent += (item, check) =>
@@ -367,7 +367,7 @@ namespace GTACoOp
                 Util.SaveSettings(null);
             };
 
-            var npcItem = new UIMenuCheckboxItem("Share NPC's With Players", PlayerSettings.SyncWorld);
+            /*var npcItem = new UIMenuCheckboxItem("Share NPC's With Players", PlayerSettings.SyncWorld);
             npcItem.CheckboxEvent += (item, check) =>
             {
                 if (!check && _client != null)
@@ -385,7 +385,7 @@ namespace GTACoOp
                 }
                 PlayerSettings.SyncWorld = check;
                 Util.SaveSettings(null);
-            };
+            };*/
 
             /*var trafficItem = new UIMenuCheckboxItem("Enable Traffic When Sharing", PlayerSettings.SyncTraffic, "May affect performance.");
             trafficItem.CheckboxEvent += (item, check) =>
@@ -394,12 +394,12 @@ namespace GTACoOp
                 Util.SaveSettings(null);
             };*/
 
-            var trafficItem = new UIMenuListItem("Share Traffic With Players", new List<dynamic>(Enum.GetNames(typeof(TrafficMode))), 0);
+            /*var trafficItem = new UIMenuListItem("Share Traffic With Players", new List<dynamic>(Enum.GetNames(typeof(TrafficMode))), 0);
             trafficItem.OnListChanged += (item, index) =>
             {
                 PlayerSettings.SyncTraffic = (TrafficMode) Enum.Parse(typeof(TrafficMode), item.Items[index].ToString());
                 Util.SaveSettings(null);
-            };
+            };*/
 
             var autoConnectItem = new UIMenuCheckboxItem("Auto Connect On Startup", PlayerSettings.AutoConnect);
             autoConnectItem.CheckboxEvent += (item, check) =>
@@ -441,7 +441,7 @@ namespace GTACoOp
                 }
             };
 
-            var autoRegisterItem = new UIMenuCheckboxItem("Auto Register", PlayerSettings.AutoRegister);
+            /*var autoRegisterItem = new UIMenuCheckboxItem("Auto Register", PlayerSettings.AutoRegister);
             autoRegisterItem.CheckboxEvent += (item, check) =>
             {
                 PlayerSettings.AutoRegister = check;
@@ -453,7 +453,7 @@ namespace GTACoOp
             {
                 LocalScriptVersion = (ScriptVersion) Enum.Parse(typeof(ScriptVersion), item.Items[index].ToString());
                 //_mainMenu.Clear();_mainMenu.RefreshIndex();
-            };
+            };*/
 
             var debugItem = new UIMenuCheckboxItem("Debug", false);
             debugItem.CheckboxEvent += (item, check) =>
@@ -471,8 +471,8 @@ namespace GTACoOp
             };
 
             _settingsMenu.AddItem(nameItem);
-            _settingsMenu.AddItem(npcItem);
-            _settingsMenu.AddItem(trafficItem);
+            //_settingsMenu.AddItem(npcItem);
+            //_settingsMenu.AddItem(trafficItem);
 #if VOICE
             _settingsMenu.AddItem(inputDeviceItem);
 #endif
@@ -481,9 +481,9 @@ namespace GTACoOp
             _settingsMenu.AddItem(autoConnectItem);
             _settingsMenu.AddItem(autoReconnectItem);
             _settingsMenu.AddItem(autoLoginItem);
-            _settingsMenu.AddItem(autoRegisterItem);
-            _settingsMenu.AddItem(masterItem);
-            _settingsMenu.AddItem(versionItem);
+            //_settingsMenu.AddItem(autoRegisterItem);
+            //_settingsMenu.AddItem(masterItem);
+            //_settingsMenu.AddItem(versionItem);
             _settingsMenu.AddItem(debugItem);
             _settingsMenu.AddItem(netGraphItem);
 
@@ -510,7 +510,7 @@ namespace GTACoOp
             _playerList = new PlayerList();
         }
 
-        private void RebuildServerBrowser()
+        /*private void RebuildServerBrowser()
         {
             _serverBrowserMenu.Clear();
             _serverBrowserMenu.RefreshIndex();
@@ -607,7 +607,7 @@ namespace GTACoOp
                 // add localhost to server browser if debug
                 _client.DiscoverKnownPeer("localhost", 44499);
             }
-        }
+        }*/
 
         public static Dictionary<int, int> CheckPlayerVehicleMods()
         {
@@ -917,7 +917,7 @@ namespace GTACoOp
                 if (time > 50 && _lastDead)
                     _lastDead = false;
 
-                if (!PlayerSettings.SyncWorld)
+                /*if (!PlayerSettings.SyncWorld)
                 {
                     Function.Call(Hash.SET_PED_DENSITY_MULTIPLIER_THIS_FRAME, 0f);
                     Function.Call(Hash.SET_SCENARIO_PED_DENSITY_MULTIPLIER_THIS_FRAME, 0f, 0f);
@@ -942,7 +942,7 @@ namespace GTACoOp
                 {
                     Function.Call((Hash)0x2F9A292AD0A3BD89);
                     Function.Call((Hash)0x5F3B7749C112D552);
-                }
+                }*/
                 Function.Call(Hash.SET_TIME_SCALE, 1f);
 
                 /*string stats = string.Format("{0}Kb (D)/{1}Kb (U), {2}Msg (D)/{3}Msg (U)", _bytesReceived / 1000,
@@ -1301,7 +1301,7 @@ namespace GTACoOp
                                             return;
                                         }
                                     }
-                                    if (data.Message.ToString().Equals("You can register an account using /register (password)"))
+                                    /*if (data.Message.ToString().Equals("You can register an account using /register (password)"))
                                     {
                                         if (!String.IsNullOrWhiteSpace(PlayerSettings.AutoLogin) && PlayerSettings.AutoRegister)
                                         {
@@ -1318,7 +1318,7 @@ namespace GTACoOp
                                             _client.SendMessage(Msg, NetDeliveryMethod.ReliableOrdered, 0);
                                             return;
                                         }
-                                    }
+                                    }*/
                                     _chat.AddMessage(sender, data.Message);
                                     /*lock (_threadJumping)
                                     {

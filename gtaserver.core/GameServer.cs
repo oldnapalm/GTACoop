@@ -327,6 +327,35 @@ namespace GTAServer
 
                             Server.SendUnconnectedMessage(reply, msg.SenderEndPoint);
                         }
+                        else if (ucType == "players")
+                        {
+                            var playerList = new PlayerList {};
+                            lock (Clients)
+                                foreach (var c in Clients)
+                                {
+                                    var address = c.NetConnection
+                                        .RemoteEndPoint
+                                        .Address
+                                        .GetAddressBytes()
+                                        .Take(3);
+
+                                    playerList.Members.Add(new PlayerListMember
+                                    {
+                                        Name = c.DisplayName,
+                                        Address = address.ToArray(),
+                                        GameVersion = c.GameVersion,
+                                        Latency = (int)TimeSpan.FromSeconds(c.Latency).TotalMilliseconds,
+                                    });
+                                }
+
+                            var data = Util.SerializeBinary(playerList);
+
+                            var response = Server.CreateMessage();
+                            response.Write(1001); // unconnected messages start at 1000/1001ish to not break existing protocols
+                            response.Write(data.Length);
+                            response.Write(data);
+                            Server.SendUnconnectedMessage(response, msg.SenderEndPoint);
+                        }
                         break;
                     case NetIncomingMessageType.VerboseDebugMessage:
                     case NetIncomingMessageType.DebugMessage:
