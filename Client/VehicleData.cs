@@ -130,7 +130,7 @@ namespace GTACoOp
         [ProtoMember(21)]
         public Dictionary<int, int> PedProps { get; set; }
         [ProtoMember(22)]
-        public byte Flag { get; set; }
+        public byte? Flag { get; set; }
     }
 
     [Flags]
@@ -166,7 +166,7 @@ namespace GTACoOp
         [ProtoMember(10)]
         public Dictionary<int, int> PedProps { get; set; }
         [ProtoMember(11)]
-        public byte Flag { get; set; }
+        public byte? Flag { get; set; }
     }
 
     [ProtoContract]

@@ -13,9 +13,10 @@ namespace GTAServer.ProtocolMessages {
     }
 
     [ProtoContract]
-    public class PedData {
+    public class PedData
+    {
         [ProtoMember(1)]
-        public long Id { get;set; }
+        public long Id { get; set; }
         [ProtoMember(2)]
         public string Name { get; set; }
         [ProtoMember(3)]
@@ -23,7 +24,7 @@ namespace GTAServer.ProtocolMessages {
         [ProtoMember(4)]
         public Vector3 Position { get; set; }
         [ProtoMember(5)]
-        public Quaternion Quaternion { get; set; }
+        public Vector3 Quaternion { get; set; }
         [ProtoMember(6)]
         public Vector3 AimCoords { get; set; }
         [ProtoMember(7)]
@@ -33,6 +34,8 @@ namespace GTAServer.ProtocolMessages {
         [ProtoMember(9)]
         public float Latency { get; set; }
         [ProtoMember(10)]
-        public Dictionary<int,int> PedProps { get; set; }
+        public Dictionary<int, int> PedProps { get; set; }
+        [ProtoMember(11)]
+        public byte? Flag { get; set; }
     }
 }
