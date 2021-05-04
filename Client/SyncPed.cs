@@ -559,16 +559,27 @@ namespace GTACoOp
 
                         if (!IsAiming && !IsShooting && !IsJumping)
                         {
-                            if (!Character.IsInRangeOf(Position, 0.5f))
-                            {
-                                Character.Task.RunTo(Position, true, 500);
-                                //var targetAngle = Rotation.Z/Math.Sqrt(1 - Rotation.W*Rotation.W);
-                                //Function.Call(Hash.TASK_GO_STRAIGHT_TO_COORD, Character.Handle, Position.X, Position.Y, Position.Z, 5f, 3000, targetAngle, 0);
-                            }
-                            if (!Character.IsInRangeOf(Position, 5f))
+                            float distance = Character.Position.DistanceTo(Position);
+                            if (distance <= 0.15f || distance > 7.0f) // Still or too far away
                             {
                                 Character.Position = dest - new Vector3(0, 0, 1f);
                                 Character.Quaternion = Rotation.ToQuaternion();
+                            }
+                            else if (distance <= 1.25f) // Walking
+                            {
+                                Function.Call(Hash.TASK_GO_STRAIGHT_TO_COORD, Character, Position.X, Position.Y, Position.Z, 1.0f, -1, Character.Heading, 0.0f);
+                                Function.Call(Hash.SET_PED_DESIRED_MOVE_BLEND_RATIO, Character, 1.0f);
+                            }
+                            else if (distance > 1.75f) // Sprinting
+                            {
+                                Function.Call(Hash.TASK_GO_STRAIGHT_TO_COORD, Character, Position.X, Position.Y, Position.Z, 3.0f, -1, Character.Heading, 2.0f);
+                                Function.Call(Hash.SET_RUN_SPRINT_MULTIPLIER_FOR_PLAYER, Character, 1.49f);
+                                Function.Call(Hash.SET_PED_DESIRED_MOVE_BLEND_RATIO, Character, 3.0f);
+                            }
+                            else // Running
+                            {
+                                Function.Call(Hash.TASK_GO_STRAIGHT_TO_COORD, Character, Position.X, Position.Y, Position.Z, 4.0f, -1, Character.Heading, 1.0f);
+                                Function.Call(Hash.SET_PED_DESIRED_MOVE_BLEND_RATIO, Character, 2.0f);
                             }
                         }
                     }

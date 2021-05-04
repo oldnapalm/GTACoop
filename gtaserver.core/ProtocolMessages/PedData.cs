@@ -13,7 +13,7 @@ namespace GTAServer.ProtocolMessages {
         [ProtoMember(4)]
         public Vector3 Position { get; set; }
         [ProtoMember(5)]
-        public Quaternion Quaternion { get; set; }
+        public Vector3 Quaternion { get; set; }
         [ProtoMember(6)]
         public bool IsJumping { get; set; }
         [ProtoMember(7)]
