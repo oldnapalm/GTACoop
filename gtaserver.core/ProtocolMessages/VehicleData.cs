@@ -56,5 +56,7 @@ namespace GTAServer.ProtocolMessages
         public Vector3 Velocity { get; set; }
         [ProtoMember(21)]
         public Dictionary<int, int> PedProps { get; set; }
+        [ProtoMember(22)]
+        public byte? Flag { get; set; }
     }
 }
