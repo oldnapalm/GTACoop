@@ -25,14 +25,14 @@ namespace GTACoOp
         public void Update(Dictionary<long, SyncPed> opponents)
         {
             _scaleform.CallFunction("SET_DATA_SLOT_EMPTY", 0);
-            _scaleform.CallFunction("SET_DATA_SLOT", 0, $"{TimeSpan.FromSeconds(Main.Latency).TotalMilliseconds}ms", Main.PlayerSettings.Username, 116, 0, "", "", "", 2, "", "", ' ');
+            _scaleform.CallFunction("SET_DATA_SLOT", 0, $"{Main.Latency * 1000:N0}ms", Main.PlayerSettings.Username, 116, 0, "", "", "", 2, "", "", ' ');
 
             int i = 1;
             foreach(var opponent in opponents)
             {
                 var player = opponent.Value;
 
-                _scaleform.CallFunction("SET_DATA_SLOT", i++, $"{TimeSpan.FromSeconds(player.Latency).TotalMilliseconds}ms", player.Name, 116, 0, "", "", "", 2, "", "", ' ');
+                _scaleform.CallFunction("SET_DATA_SLOT", i++, $"{player.Latency * 1000:N0}ms", player.Name, 116, 0, "", "", "", 2, "", "", ' ');
             }
 
             _scaleform.CallFunction("SET_TITLE", "GTA Coop", (Main.Opponents.Count + 1) + " players");
