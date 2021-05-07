@@ -648,17 +648,16 @@ namespace GTACoOp
 
         private string PedalingAnimDict()
         {
-            var hash = (uint)MainVehicle.Model.Hash;
             string anim;
-            switch (hash)
+            switch ((VehicleHash)MainVehicle.Model.Hash)
             {
-                case 1131912276u:
+                case GTA.Native.VehicleHash.Bmx:
                     anim = "veh@bicycle@bmx@front@base";
                     break;
-                case 448402357u:
+                case GTA.Native.VehicleHash.Cruiser:
                     anim = "veh@bicycle@cruiserfront@base";
                     break;
-                case 4108429845u:
+                case GTA.Native.VehicleHash.Scorcher:
                     anim = "veh@bicycle@mountainfront@base";
                     break;
                 default:
@@ -668,25 +667,24 @@ namespace GTACoOp
             return anim;
         }
 
+        private string PedalingAnimName(bool fast)
+        {
+            return fast ? "fast_pedal_char" : "cruise_pedal_char";
+        }
+
         private bool IsPedaling(bool fast)
         {
-            var animName = fast ? "fast_pedal_char" : "cruise_pedal_char";
-            var animDict = PedalingAnimDict();
-            return Function.Call<bool>(Hash.IS_ENTITY_PLAYING_ANIM, Character.Handle, animDict, animName, 3);
+            return Function.Call<bool>(Hash.IS_ENTITY_PLAYING_ANIM, Character.Handle, PedalingAnimDict(), PedalingAnimName(fast), 3);
         }
 
         private void StartPedalingAnim(bool fast)
         {
-            var animName = fast ? "fast_pedal_char" : "cruise_pedal_char";
-            var animDict = PedalingAnimDict();
-            Character.Task.PlayAnimation(animDict, animName, 8.0f, -8.0f, -1, AnimationFlags.Loop | AnimationFlags.AllowRotation, 5.0f);
+            Character.Task.PlayAnimation(PedalingAnimDict(), PedalingAnimName(fast), 8.0f, -8.0f, -1, AnimationFlags.Loop | AnimationFlags.AllowRotation, 5.0f);
         }
 
         private void StopPedalingAnim(bool fast)
         {
-            var animName = fast ? "fast_pedal_char" : "cruise_pedal_char";
-            var animDict = PedalingAnimDict();
-            Character.Task.ClearAnimation(animDict, animName);
+            Character.Task.ClearAnimation(PedalingAnimDict(), PedalingAnimName(fast));
         }
 
         public void Clear()
