@@ -49,7 +49,6 @@ namespace GTACoOp
         private string _password;
         private bool _lastDead;
         private bool _wasTyping;
-        private bool _serverRunning = false;
         private DebugWindow _debug;
 
         // STATS
@@ -65,6 +64,7 @@ namespace GTACoOp
         private bool debug;
 
         public static Debug DebugLogger;
+        private Logger _logger;
 
         private bool _isGoingToCar;
 
@@ -108,7 +108,7 @@ namespace GTACoOp
             ReturnsEntityNeedsModel2 = 4,
             ReturnsEntityNeedsModel3 = 5,
         }
-        public string ReadableScriptVersion()
+        public static string ReadableScriptVersion()
         {
              return Regex.Replace(Regex.Replace(LocalScriptVersion.ToString(), "VERSION_", "", RegexOptions.IgnoreCase), "_", ".", RegexOptions.IgnoreCase);
         }
@@ -199,7 +199,6 @@ namespace GTACoOp
             _mainMenu = new UIMenu("GTA CooP", "MAIN MENU");
             _settingsMenu = new UIMenu("GTA CooP", "CLIENT SETTINGS");
             _serverBrowserMenu = new UIMenu("GTA CooP", "SERVER BROWSER");
-            //_serverMenu = new UIMenu("Co-oP", "SERVER SETTINGS");
             //_playerMenu = new UIMenu("Co-oP", "PLAYER OPTIONS");
 
             var browserItem = new UIMenuItem("Server Browser");
@@ -291,12 +290,12 @@ namespace GTACoOp
 
             var settItem = new UIMenuItem("Client Settings");
 
-            var aboutItem = new UIMenuItem("~g~GTA V~w~ Coop mod v" + ReadableScriptVersion() + " by ~b~contributors~w~.");
+            var aboutItem = new UIMenuItem("~g~GTA V~w~ Coop mod v" + ReadableScriptVersion() + " by ~b~community~w~");
             aboutItem.Activated += (menu, item) =>
             {
-                UI.Notify("GTA V Coop mod by Guad, Bluscream, TheIndra and wolfmitchell.");
-                UI.Notify("Mod Version: " + ReadableScriptVersion());
-                UI.Notify("https://gtacoop.com");
+                UI.Notify("GTA V Coop mod version " + ReadableScriptVersion());
+                UI.Notify("Credits: Guad, Bluscream, wolfmitchell, TheIndra, oldnapalm, EntenKoeniq");
+                UI.Notify("Website: www.gtacoop.com");
             };
 
             _mainMenu.AddItem(browserItem);
@@ -456,12 +455,6 @@ namespace GTACoOp
                 //_mainMenu.Clear();_mainMenu.RefreshIndex();
             };
 
-            var debugItem = new UIMenuCheckboxItem("Debug", false);
-            debugItem.CheckboxEvent += (item, check) =>
-            {
-                debug = check;
-            };
-
             var netGraphItem = new UIMenuCheckboxItem("Show Network Info", PlayerSettings.ShowNetGraph);
             netGraphItem.CheckboxEvent += (item, check) =>
             {
@@ -469,6 +462,12 @@ namespace GTACoOp
                 DebugLogger.Enabled = check;
 
                 Util.SaveSettings(null);
+            };
+
+            var debugItem = new UIMenuCheckboxItem("Debug", false);
+            debugItem.CheckboxEvent += (item, check) =>
+            {
+                debug = check;
             };
 
             _settingsMenu.AddItem(nameItem);
@@ -499,11 +498,12 @@ namespace GTACoOp
 #endregion
 
             _debug = new DebugWindow();
+            _logger = new Logger();
 
             DebugLogger = new Debug();
             DebugLogger.Enabled = PlayerSettings.ShowNetGraph;
 
-            UI.Notify("~g~GTA V Coop mod v" + ReadableScriptVersion() + " by Guad, Bluscream, TheIndra and wolfmitchell loaded successfully.~w~");
+            UI.Notify("~g~GTA V Coop mod v" + ReadableScriptVersion() + " loaded successfully.~w~");
             if (PlayerSettings.AutoConnect && !String.IsNullOrWhiteSpace(PlayerSettings.LastIP) && PlayerSettings.LastPort != -1 && PlayerSettings.LastPort != 0) { 
                 ConnectToServer(PlayerSettings.LastIP.ToString(), PlayerSettings.LastPort);
             }
@@ -515,69 +515,69 @@ namespace GTACoOp
         {
             _serverBrowserMenu.Clear();
             _serverBrowserMenu.RefreshIndex();
-            if (string.IsNullOrEmpty(PlayerSettings.MasterServerAddress))
-                return;
 
-            string response = String.Empty;
+            if (string.IsNullOrEmpty(PlayerSettings.MasterServerAddress))
+            {
+                UI.Notify("No master server has been configured.");
+                return;
+            }
+
+            string body = null;
             try
             {
-                using (var wc = new WebClient())
+                // WebClient? what year is this?
+                using(var wc = new WebClient())
                 {
-                    response = wc.DownloadString(PlayerSettings.MasterServerAddress);
+                    wc.Headers.Add("User-Agent", "Mozilla/5.0 (GTA Coop " + ReadableScriptVersion() + ")");
+                    body = wc.DownloadString(PlayerSettings.MasterServerAddress);
                 }
             }
-            catch (Exception e)
+            catch(Exception e)
             {
-                UI.Notify("~r~~h~ERROR~h~~w~~n~Could not contact master server. Trying Fallback Server.");
-                if (Main.PlayerSettings.Logging)
-                {
-                    var logOutput = "===== EXCEPTION CONTACTING MASTER SERVER @ " + DateTime.UtcNow + " ======\n";
-                    logOutput += "Message: " + e.Message;
-                    logOutput += "\nData: " + e.Data;
-                    logOutput += "\nStack: " + e.StackTrace;
-                    logOutput += "\nSource: " + e.Source;
-                    logOutput += "\nTarget: " + e.TargetSite;
-                    if (e.InnerException != null)
-                        logOutput += "\nInnerException: " + e.InnerException.Message;
-                    logOutput += "\n";
-                    File.AppendAllText("scripts\\GTACOOP.log", logOutput);
-                }
+                UI.Notify("~r~Error: ~s~Failed to contact master server, please check your configured master server");
+                _logger.WriteException("Failed to connect to master " + PlayerSettings.MasterServerAddress, e);
+
+                // backup master server
                 try
                 {
                     using (var wc = new WebClient())
                     {
-                        response = wc.DownloadString(PlayerSettings.BackupMasterServerAddress);
+                        wc.Headers.Add("User-Agent", "Mozilla/5.0 (GTA Coop " + ReadableScriptVersion() + ")");
+                        body = wc.DownloadString(PlayerSettings.BackupMasterServerAddress);
+
+                        UI.Notify("Backup master server is online, using that one.");
                     }
                 }
-                catch (Exception ex)
+                catch(Exception ex)
                 {
-                    UI.Notify("~r~~h~ERROR~h~~w~~n~Could not contact backup master server. Please retry later...");
-                    if (Main.PlayerSettings.Logging)
-                    {
-                        var logOutput = "===== EXCEPTION CONTACTING BACKUP MASTER SERVER @ " + DateTime.UtcNow + " ======\n";
-                        logOutput += "Message: " + ex.Message;
-                        logOutput += "\nData: " + ex.Data;
-                        logOutput += "\nStack: " + ex.StackTrace;
-                        logOutput += "\nSource: " + ex.Source;
-                        logOutput += "\nTarget: " + ex.TargetSite;
-                        if (e.InnerException != null)
-                            logOutput += "\nInnerException: " + e.InnerException.Message;
-                        logOutput += "\n";
-                        File.AppendAllText("scripts\\GTACOOP.log", logOutput);
-                    }
+                    UI.Notify("~r~Error: ~s~Failed to contact backup master server.");
+                    _logger.WriteException("Failed to connect to master " + PlayerSettings.BackupMasterServerAddress, ex);
                 }
             }
-            if (string.IsNullOrWhiteSpace(response))
+
+            if (body == null)
                 return;
 
-            var dejson = JsonConvert.DeserializeObject<MasterServerList>(response) as MasterServerList;
+            // deserialize master server response
 
-            if (dejson == null) return;
+            MasterServerList response;
+            try
+            {
+                response = JsonConvert.DeserializeObject<MasterServerList>(body);
+            }
+            catch(JsonException e)
+            {
+                UI.Notify("~r~Error: ~s~Master server returned unusual response. Check error log for details.");
+                _logger.WriteException("Failed to parse master server response", e);
 
-            Console.WriteLine("Servers returned by master server: " + dejson.list.Count().ToString());
-            _serverBrowserMenu.Subtitle.Caption = "Servers listed: ~g~~h~" + dejson.list.Count().ToString();
-            var item = new UIMenuItem(dejson.list.Count().ToString() + " Servers listed.");
+                return;
+            }
+
+            Console.WriteLine("Servers returned by master server: " + response.List.Count);
+            _serverBrowserMenu.Subtitle.Caption = "Servers listed: ~g~~h~" + response.List.Count;
+            var item = new UIMenuItem(response.List.Count + " Servers listed.");
             item.SetLeftBadge(UIMenuItem.BadgeStyle.Star);
+
             if (_client == null)
             {
                 var port = GetOpenUdpPort();
@@ -593,21 +593,19 @@ namespace GTACoOp
                 DebugLogger.NetClient = _client;
             }
 
-            foreach (var server in dejson.list)
+            foreach (var server in response.List)
             {
                 var split = server.Split(':');
-                if (split.Length != 2) continue;
+
                 int port;
-                if (!int.TryParse(split[1], out port))
+                // take the last : since IPv6 addresses are like [::1]:4499
+                if (!int.TryParse(split[split.Length - 1], out port))
                     continue;
                 _client.DiscoverKnownPeer(split[0], port);
             }
 
-            if (debug)
-            {
-                // add localhost to server browser if debug
-                _client.DiscoverKnownPeer("localhost", 44499);
-            }
+            // add localhost to server browser
+            _client.DiscoverKnownPeer("localhost", 4499);
         }
 
         public static Dictionary<int, int> CheckPlayerVehicleMods()
@@ -862,8 +860,6 @@ namespace GTACoOp
                 _chat.Tick();
                 _playerList.Tick(!_menuPool.IsAnyMenuOpen());
 
-                if (_serverRunning) 
-
                 if (_isGoingToCar && Game.IsControlJustPressed(0, Control.PhoneCancel))
                 {
                     Game.Player.Character.Task.ClearAll();
@@ -893,17 +889,6 @@ namespace GTACoOp
                     }
                 }
 
-                if (_serverRunning)
-                {
-                    //Program.ServerInstance.Tick();
-                    //if(!_serverMenu.MenuItems[8].Text.Equals("Stop Server"))
-                        //_serverMenu.MenuItems[8].Text = "Stop Server";
-                }
-                else
-                {
-                    //if (!_serverMenu.MenuItems[8].Text.Equals("Start Server"))
-                        //_serverMenu.MenuItems[8].Text = "Start Server";
-                }
                 if (debug)
                 {
                     Debug();
@@ -988,8 +973,8 @@ namespace GTACoOp
                 Sentry.Capture(ex);
 
                 UI.Notify("<ERROR> Could not handle this tick: " + ex.ToString());
-                if(Main.PlayerSettings.Logging)
-                    File.AppendAllText("scripts\\GTACOOP.log", "[" + DateTime.UtcNow + "] <ERROR> Could not handle this tick: " + ex.Message+"\n");
+                if (Main.PlayerSettings.Logging)
+                    _logger.WriteException("Could not handle tick", ex);
             }
         }
 
@@ -2119,6 +2104,7 @@ namespace GTACoOp
 
     public class MasterServerList
     {
-        public List<string> list { get; set; }
+        [JsonProperty("list")]
+        public List<string> List { get; set; }
     }
 }
