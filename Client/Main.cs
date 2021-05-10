@@ -2133,7 +2133,7 @@ namespace GTACoOp
         {
             int i = 0;
             float groundHeight;
-            location.Z = 0;
+            location.Z = -50;
             do
             {
                 Wait(50);
