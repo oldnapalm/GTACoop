@@ -76,7 +76,7 @@ namespace GTACoOp
     }
 
     // very basic logger
-    public class Logger
+    public class Logger : IDisposable
     {
         private StreamWriter _handle;
 
@@ -97,6 +97,13 @@ namespace GTACoOp
 
             // yay
             WriteLine("GTA Coop version " + Main.ReadableScriptVersion());
+        }
+
+        public void Dispose()
+        {
+            _handle.Close();
+
+            GC.SuppressFinalize(this);
         }
 
         public void Write(string text)

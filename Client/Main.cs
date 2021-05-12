@@ -1441,9 +1441,13 @@ namespace GTACoOp
                     {
                         case NetConnectionStatus.InitiatedConnect:
                             UI.Notify("Connecting...");
+                            UpdateStatusText("Connecting to server");
+
                             break;
                         case NetConnectionStatus.Connected:
                             UI.Notify("Connection successful!");
+                            UpdateStatusText(null);
+
                             Util.DisplayHelpText("Press ~INPUT_MULTIPLAYER_INFO~ to view a list of online players");
 #if VOICE
                             _waveInput.StartRecording();
@@ -1461,6 +1465,7 @@ namespace GTACoOp
                         case NetConnectionStatus.Disconnected:
                             var reason = msg.ReadString();
                             UI.Notify("You have been disconnected" + (string.IsNullOrEmpty(reason) ? " from the server." : ": " + reason));
+                            UpdateStatusText(null);
 
                             lock (Opponents)
                             {
@@ -2100,6 +2105,17 @@ namespace GTACoOp
             return list;
         }
 #endif
+
+        public void UpdateStatusText(string text)
+        {
+            if(text == null)
+            {
+                Util.HideBusySpinner();
+                return;
+            }
+
+            Util.ShowBusySpinner(text);
+        }
     }
 
     public class MasterServerList

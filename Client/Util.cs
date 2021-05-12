@@ -270,5 +270,17 @@ namespace GTACoOp
             result.W = sinYawOver2 * cosPitchOver2 * cosRollOver2 - cosYawOver2 * sinPitchOver2 * sinRollOver2;
             return result;
         }
+
+        public static void ShowBusySpinner(string text)
+        {
+            Function.Call((Hash)0xABA17D7CE615ADBF /* BEGIN_TEXT_COMMAND_BUSYSPINNER_ON */, "STRING");
+            Function.Call((Hash)0x6C188BE134E074AA /* ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME */, text);
+            Function.Call((Hash)0xBD12F8228410D9B4 /* END_TEXT_COMMAND_BUSYSPINNER_ON */, 0);
+        }
+
+        public static void HideBusySpinner()
+        {
+            Function.Call((Hash)0x10D373323E5B9C0D /* BUSYSPINNER_OFF */);
+        }
     }
 }
