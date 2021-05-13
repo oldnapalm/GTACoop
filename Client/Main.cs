@@ -210,6 +210,10 @@ namespace GTACoOp
 
             var browserItem = new UIMenuItem("Server Browser");
             browserItem.Activated += (sender, item) => RebuildServerBrowser();
+
+            var lanItem = new UIMenuItem("LAN");
+            lanItem.Activated += (sender, item) => DiscoverLan();
+
             _serverBrowserMenu.SetMenuWidthOffset(300);
 
             var listenItem = new UIMenuItem("Server IP");
@@ -306,6 +310,7 @@ namespace GTACoOp
             };
 
             _mainMenu.AddItem(browserItem);
+            _mainMenu.AddItem(lanItem);
             _mainMenu.AddItem(connectItem);
             _mainMenu.AddItem(listenItem);
             _mainMenu.AddItem(portItem);
@@ -314,6 +319,8 @@ namespace GTACoOp
             _mainMenu.AddItem(aboutItem);
 
             _mainMenu.BindMenuToItem(_serverBrowserMenu, browserItem);
+            _mainMenu.BindMenuToItem(_serverBrowserMenu, lanItem);
+
             _mainMenu.BindMenuToItem(_settingsMenu, settItem);
 
             var nameItem = new UIMenuItem("Display Name");
@@ -615,6 +622,30 @@ namespace GTACoOp
             _client.DiscoverKnownPeer("127.0.0.1", 4499);
         }
 
+        private void DiscoverLan()
+        {
+            _serverBrowserMenu.Clear();
+            _serverBrowserMenu.RefreshIndex();
+
+            if (_client == null)
+            {
+                var port = GetOpenUdpPort();
+                if (port == 0)
+                {
+                    UI.Notify("No available UDP port was found.");
+                    return;
+                }
+                _config.Port = port;
+                _client = new NetClient(_config);
+                _client.Start();
+
+                DebugLogger.NetClient = _client;
+            }
+
+            _client.DiscoverLocalPeers(4499);
+            _serverBrowserMenu.Subtitle.Caption = "Servers on LAN";
+        }
+
         public static Dictionary<int, int> CheckPlayerVehicleMods()
         {
             if (!Game.Player.Character.IsInVehicle()) return null;
@@ -875,9 +906,9 @@ namespace GTACoOp
 
                 if (IsOnServer())
                 {
-                    if (!_mainMenu.MenuItems[1].Text.Equals("Disconnect"))
+                    if (!_mainMenu.MenuItems[2].Text.Equals("Disconnect"))
                     {
-                        _mainMenu.MenuItems[1].Text = "Disconnect";
+                        _mainMenu.MenuItems[2].Text = "Disconnect";
                     }
                     if (_settingsMenu.MenuItems[0].Enabled)
                     {
@@ -886,9 +917,9 @@ namespace GTACoOp
                 }
                 else
                 {
-                    if (_mainMenu.MenuItems[1].Text.Equals("Disconnect"))
+                    if (_mainMenu.MenuItems[2].Text.Equals("Disconnect"))
                     {
-                        _mainMenu.MenuItems[1].Text = "Connect";
+                        _mainMenu.MenuItems[2].Text = "Connect";
                     }
                     if (!_settingsMenu.MenuItems[0].Enabled)
                     {
@@ -978,8 +1009,7 @@ namespace GTACoOp
             }catch(Exception ex)
             {
                 UI.Notify("<ERROR> Could not handle this tick: " + ex.ToString());
-                if (Main.PlayerSettings.Logging)
-                    _logger.WriteException("Could not handle tick", ex);
+                _logger.WriteException("Could not handle tick", ex);
             }
         }
 
