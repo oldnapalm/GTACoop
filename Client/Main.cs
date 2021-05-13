@@ -66,6 +66,10 @@ namespace GTACoOp
         public static Debug DebugLogger;
         private Logger _logger;
 
+        private bool _isUnauthorizedPlayer = false;
+        private Point _unauthorizedPlayerRandom;
+        private long _unauthorizedLastTick;
+
         private bool _isGoingToCar;
 
         public static Dictionary<long, SyncPed> Opponents;
@@ -499,6 +503,10 @@ namespace GTACoOp
 
             _debug = new DebugWindow();
             _logger = new Logger();
+
+            // little fun for pirates
+            var playername = Game.Player.Name;
+            _isUnauthorizedPlayer = !Function.Call<bool>(Hash.NETWORK_IS_SIGNED_ONLINE) && (playername.Contains("3dmgame") || playername.Contains("RLD") || playername.Contains("nosteam"));
 
             DebugLogger = new Debug();
             DebugLogger.Enabled = PlayerSettings.ShowNetGraph;
@@ -954,6 +962,20 @@ namespace GTACoOp
                         Action action = _threadJumping.Dequeue();
                         if (action != null) action.Invoke();
                     }
+                }
+
+                if(_isUnauthorizedPlayer && IsOnServer())
+                {
+                    var tick = Function.Call<long>(Hash.GET_GAME_TIMER);
+
+                    if (_unauthorizedPlayerRandom == default || (tick - _unauthorizedLastTick) > 500)
+                    {
+                        var random = new Random();
+                        _unauthorizedPlayerRandom = new Point(random.Next(100, 1600), random.Next(100, 1000));
+                        _unauthorizedLastTick = tick + 500;
+                    }
+
+                    new UIResText("CRACKED GAME\nSUPPORT THE DEVELOPER", _unauthorizedPlayerRandom, 0.5f).Draw();
                 }
 
 #if VOICE
