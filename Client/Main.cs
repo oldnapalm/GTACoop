@@ -17,7 +17,7 @@ using Control = GTA.Control;
 using System.Text.RegularExpressions;
 using System.Globalization;
 using MaxMind.GeoIP2;
-using SharpRaven;
+using MaxMind.GeoIP2.Exceptions;
 
 #if VOICE
 using NAudio.Wave;
@@ -64,7 +64,7 @@ namespace GTACoOp
         private bool debug;
 
         public static Debug DebugLogger;
-        private Logger _logger;
+        private static Logger _logger;
 
         private bool _isGoingToCar;
 
@@ -108,6 +108,15 @@ namespace GTACoOp
             ReturnsEntityNeedsModel2 = 4,
             ReturnsEntityNeedsModel3 = 5,
         }
+
+        public static Logger Logger
+        {
+            get
+            {
+                return _logger;
+            }
+        }
+
         public static string ReadableScriptVersion()
         {
              return Regex.Replace(Regex.Replace(LocalScriptVersion.ToString(), "VERSION_", "", RegexOptions.IgnoreCase), "_", ".", RegexOptions.IgnoreCase);
@@ -140,8 +149,6 @@ namespace GTACoOp
             _waveOutput.Init(_playBuffer);
             _waveOutput.Play();
 #endif
-            Sentry.Raven = new RavenClient("https://71a61960693c46f5a78fadf72b96874c@sentry.io/1485502");
-
             PlayerSettings = Util.ReadSettings(Program.Location + Path.DirectorySeparatorChar + "ClientSettings.xml");
             _threadJumping = new Queue<Action>();
 
@@ -605,7 +612,7 @@ namespace GTACoOp
             }
 
             // add localhost to server browser
-            _client.DiscoverKnownPeer("localhost", 4499);
+            _client.DiscoverKnownPeer("127.0.0.1", 4499);
         }
 
         public static Dictionary<int, int> CheckPlayerVehicleMods()
@@ -970,8 +977,6 @@ namespace GTACoOp
                 for (int i = 0; i < tickNatives.Count; i++) DecodeNativeCall(tickNatives.ElementAt(i).Value);
             }catch(Exception ex)
             {
-                Sentry.Capture(ex);
-
                 UI.Notify("<ERROR> Could not handle this tick: " + ex.ToString());
                 if (Main.PlayerSettings.Logging)
                     _logger.WriteException("Could not handle tick", ex);
@@ -1522,29 +1527,38 @@ namespace GTACoOp
                     var len = msg.ReadInt32();
                     var bin = msg.ReadBytes(len);
                     var data = DeserializeBinary<DiscoveryResponse>(bin) as DiscoveryResponse;
+
                     if (data == null) return;
-                    MaxMind.GeoIP2.Responses.CountryResponse geoIP; string _description;
+
+                    var database = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "geoip.mmdb");
+                    string description = msg.SenderEndPoint.Address.ToString() + ":" + data.Port;
+
                     try
                     {
-                        using (var reader = new DatabaseReader(Program.Location + Path.DirectorySeparatorChar + "geoip.mmdb"))
+                        using (var reader = new DatabaseReader(database))
                         {
-                            geoIP = reader.Country(msg.SenderEndPoint.Address.ToString());
-                            data.ServerName = "["+geoIP.Continent.Code+"/"+geoIP.Country.IsoCode+"] "+data.ServerName;
-                            _description = "[" + geoIP.Continent.Name + "/" + geoIP.Country.Name + "] " + msg.SenderEndPoint.Address.ToString() + ":" + data.Port;
+                            var country = reader.Country(msg.SenderEndPoint.Address.ToString());
+                            description = $"[{country.Continent.Code}/{country.Country.IsoCode}] " + description;
                         }
                     }
-                    catch (Exception ex)
+                    catch(AddressNotFoundException)
                     {
-                        UI.Notify("GeoIP: "+ex.Message);
-                        _description = msg.SenderEndPoint.Address.ToString() + ":" + data.Port;
                     }
+                    catch (Exception e)
+                    {
+                        UI.Notify("GeoIP2 failed, check error log for details.");
+                        _logger.WriteException("Failed GeoIP2", e);
+                    }
+
                     var item = new UIMenuItem(data.ServerName);
-                    TextInfo _gamemode = new System.Globalization.CultureInfo("en-US", false).TextInfo;
-                    string __gamemode = _gamemode.ToTitleCase(data.Gamemode.ToString());
-                    var gamemode = data.Gamemode == null ? "Unknown" : __gamemode;
+
+                    TextInfo textinfo = new CultureInfo("en-US", false).TextInfo;
+                    string title = textinfo.ToTitleCase(data.Gamemode.ToString());
+
+                    var gamemode = data.Gamemode == null ? "Unknown" : title;
 
                     item.SetRightLabel(gamemode + " | " + data.PlayerCount + "/" + data.MaxPlayers);
-                    item.Description = _description;
+                    item.Description = description;
 
                     if (data.PasswordProtected)
                         item.SetLeftBadge(UIMenuItem.BadgeStyle.Lock);
