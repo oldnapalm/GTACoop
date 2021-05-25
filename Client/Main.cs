@@ -1033,7 +1033,7 @@ namespace GTACoOp
                 _waveInput.Dispose();
             }
 
-            if (_waveInput != null)
+            if (_waveWriter != null)
             {
                 _waveWriter.Dispose();
             }
