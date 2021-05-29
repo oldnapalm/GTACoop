@@ -502,7 +502,6 @@ namespace GTAServer
             client.GameVersion = connReq.GameVersion;
             client.RemoteScriptVersion = (ScriptVersion)connReq.ScriptVersion;
 
-
             // If nicknames are disabled on the server, set the nickname to the player's social club name.
             if (!AllowNicknames)
             {
@@ -675,7 +674,11 @@ namespace GTAServer
 
         private void HandleClientIncomingData(Client client, NetIncomingMessage msg)
         {
-            if (msg.LengthBits == 0) return;
+            if (msg.LengthBytes < 8)
+            {
+                logger.LogWarning(LogEvent.Incoming, "Received invalid packet from " + client.DisplayName);
+                return;
+            }
 
             var packetType = (PacketType)msg.ReadInt32();
 
@@ -780,7 +783,7 @@ namespace GTAServer
 
                             client.Health = vehicleData.PlayerHealth;
                             client.LastKnownPosition = vehicleData.Position;
-                            client.IsInVehicle = false;
+                            client.IsInVehicle = true;
 
                             SendToAll(vehicleData, PacketType.VehiclePositionData, false, client);
                         }

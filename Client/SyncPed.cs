@@ -46,12 +46,16 @@ namespace GTACoOp
         public string Name;
         public bool Siren;
         public bool IsEngineRunning;
+        public bool IsInBurnout;
+        public bool HighBeamsOn;
+        public bool LightsOn;
 
         public float Steering;
         public float WheelSpeed;
         public string Plate;
         public int RadioStation;
         private DateTime _stopTime;
+        private bool _lastBurnout;
 
         public float Speed
         {
@@ -412,11 +416,29 @@ namespace GTACoOp
                             MainVehicle.SoundHorn(1);
                         }
 
+                        if (IsInBurnout && !_lastBurnout)
+                        {
+                            Function.Call(Hash.SET_VEHICLE_BURNOUT, MainVehicle, true);
+                            Function.Call(Hash.TASK_VEHICLE_TEMP_ACTION, Character, MainVehicle, 23, 120000); // 30 - burnout
+                        }
+                        else if (!IsInBurnout && _lastBurnout)
+                        {
+                            Function.Call(Hash.SET_VEHICLE_BURNOUT, MainVehicle, false);
+                            Character.Task.ClearAll();
+                        }
+
+                        _lastBurnout = IsInBurnout;
+
+                        Function.Call(Hash.SET_VEHICLE_BRAKE_LIGHTS, MainVehicle, Speed > 0.2 && _lastSpeed > Speed);
+
                         if (MainVehicle.SirenActive && !Siren)
                             MainVehicle.SirenActive = Siren;
                         else if (!MainVehicle.SirenActive && Siren)
                             MainVehicle.SirenActive = Siren;
 
+                        MainVehicle.LightsOn = LightsOn;
+                        MainVehicle.HighBeamsOn = HighBeamsOn;
+                        MainVehicle.SirenActive = Siren;
                         MainVehicle.SteeringAngle = (Steering > 5f || Steering < -5f) ? Steering : 0f;
 
                         if (Character.IsOnBike && MainVehicle.ClassType == VehicleClass.Cycles)
@@ -436,7 +458,7 @@ namespace GTACoOp
                                 StartPedalingAnim(true);
                         }
 
-                        if (Speed > 0.2f)
+                        if (Speed > 0.2f || IsInBurnout)
                         {
                             int currentTime = Environment.TickCount;
                             float alpha = Util.Unlerp(currentInterop.StartTime, currentTime, currentInterop.FinishTime);

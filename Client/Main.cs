@@ -723,7 +723,6 @@ namespace GTACoOp
                 obj.VehicleHealth = veh.Health;
                 obj.VehicleSeat = Util.GetPedSeat(player);
                 obj.VehicleMods = CheckPlayerVehicleMods();
-                obj.IsEngineRunning = veh.EngineRunning;
                 obj.WheelSpeed = veh.WheelSpeed;
                 obj.Steering = veh.SteeringAngle;
                 obj.Speed = veh.Speed;
@@ -734,9 +733,19 @@ namespace GTACoOp
                 obj.PedProps = CheckPlayerProps();
 
                 if (Game.Player.IsPressingHorn)
-                    obj.Flag |= (byte)VehicleDataFlags.IsPressingHorn;
+                    obj.Flag |= (byte)VehicleDataFlags.PressingHorn;
+
                 if (veh.SirenActive)
-                    obj.Flag |= (byte)VehicleDataFlags.IsSirenActive;
+                    obj.Flag |= (byte)VehicleDataFlags.SirenActive;
+
+                if (veh.HighBeamsOn)
+                    obj.Flag |= (byte)VehicleDataFlags.HighBeamsOn;
+
+                if (veh.LightsOn)
+                    obj.Flag |= (byte)VehicleDataFlags.LightsOn;
+
+                if (veh.EngineRunning)
+                    obj.Flag |= (byte)VehicleDataFlags.IsEngineRunning;
 
                 var bin = SerializeBinary(obj);
 
@@ -815,10 +824,21 @@ namespace GTACoOp
                 obj.Speed = veh.Speed;
                 obj.WheelSpeed = veh.WheelSpeed;
                 obj.Steering = veh.SteeringAngle;
-                obj.IsEngineRunning = veh.EngineRunning;
+
+                if (Game.Player.IsPressingHorn)
+                    obj.Flag |= (byte)VehicleDataFlags.PressingHorn;
 
                 if (veh.SirenActive)
-                    obj.Flag |= (byte)VehicleDataFlags.IsSirenActive;
+                    obj.Flag |= (byte)VehicleDataFlags.SirenActive;
+
+                if (veh.HighBeamsOn)
+                    obj.Flag |= (byte)VehicleDataFlags.HighBeamsOn;
+
+                if (veh.LightsOn)
+                    obj.Flag |= (byte)VehicleDataFlags.LightsOn;
+
+                if (veh.EngineRunning)
+                    obj.Flag |= (byte)VehicleDataFlags.IsEngineRunning;
 
                 var bin = SerializeBinary(obj);
 
@@ -1211,11 +1231,16 @@ namespace GTACoOp
                                     Opponents[data.Id].Latency = data.Latency;
 
                                     Opponents[data.Id].VehicleMods = data.VehicleMods;
-                                    Opponents[data.Id].IsHornPressed = (data.Flag & (byte)VehicleDataFlags.IsPressingHorn) > 0;
-                                    Opponents[data.Id].Speed = data.Speed;
-                                    Opponents[data.Id].Siren = (data.Flag & (byte)VehicleDataFlags.IsSirenActive) > 0;
 
-                                    Opponents[data.Id].IsEngineRunning = data.IsEngineRunning;
+                                    Opponents[data.Id].IsHornPressed = (data.Flag & (byte)VehicleDataFlags.PressingHorn) > 0;
+                                    Opponents[data.Id].Siren = (data.Flag & (byte)VehicleDataFlags.SirenActive) > 0;
+                                    Opponents[data.Id].IsInBurnout = (data.Flag & (short)VehicleDataFlags.IsInBurnout) > 0;
+                                    Opponents[data.Id].HighBeamsOn = (data.Flag & (short)VehicleDataFlags.HighBeamsOn) > 0;
+                                    Opponents[data.Id].LightsOn = (data.Flag & (short)VehicleDataFlags.LightsOn) > 0;
+                                    Opponents[data.Id].IsEngineRunning = (data.Flag & (short)VehicleDataFlags.IsEngineRunning) > 0;
+
+                                    Opponents[data.Id].Speed = data.Speed;
+
                                     Opponents[data.Id].WheelSpeed = data.WheelSpeed;
                                     Opponents[data.Id].Steering = data.Steering;
 
@@ -1297,10 +1322,14 @@ namespace GTACoOp
                                     Npcs[data.Name].IsInVehicle = true;
 
                                     Npcs[data.Name].Steering = data.Steering;
-
-                                    Npcs[data.Name].IsHornPressed = (data.Flag & (byte)VehicleDataFlags.IsPressingHorn) > 0;
                                     Npcs[data.Name].Speed = data.Speed;
-                                    Npcs[data.Name].Siren = (data.Flag & (byte)VehicleDataFlags.IsSirenActive) > 0;
+
+                                    Npcs[data.Name].IsHornPressed = (data.Flag & (byte)VehicleDataFlags.PressingHorn) > 0;
+                                    Npcs[data.Name].Siren = (data.Flag & (byte)VehicleDataFlags.SirenActive) > 0;
+                                    Npcs[data.Name].IsInBurnout = (data.Flag & (short)VehicleDataFlags.IsInBurnout) > 0;
+                                    Npcs[data.Name].HighBeamsOn = (data.Flag & (short)VehicleDataFlags.HighBeamsOn) > 0;
+                                    Npcs[data.Name].LightsOn = (data.Flag & (short)VehicleDataFlags.LightsOn) > 0;
+                                    Npcs[data.Name].IsEngineRunning = (data.Flag & (short)VehicleDataFlags.IsEngineRunning) > 0;
                                 }
                             }
                             break;
