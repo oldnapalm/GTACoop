@@ -241,7 +241,12 @@ namespace GTAServer.Users
             {
                 client.SendMessage("You can register an account using /register (password)");
             }
+            
+            var seconds = DateTime.Now.Ticks / TimeSpan.TicksPerSecond;
+            TimeSpan GameSeconds = TimeSpan.FromSeconds((seconds * 30) % 86400);
 
+            client.SendNativeCall(0xC8CA9670B9D83B3B, GameSeconds.Hours, GameSeconds.Minutes, GameSeconds.Seconds); // ADVANCE_CLOCK_TIME_TO
+            
             reader.Close();
         }
 

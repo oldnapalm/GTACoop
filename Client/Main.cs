@@ -135,7 +135,7 @@ namespace GTACoOp
 			_waveInput.DeviceNumber = 0;
             _waveInput.DataAvailable += SendVoiceData;
             _waveInput.WaveFormat = new WaveFormat(44200, 2);
-            _waveInput.RecordingStopped += (object sender, EventArgs e) =>
+            _waveInput.RecordingStopped += (object sender, StoppedEventArgs e) =>
             {
                 _waveInput.Dispose();
                 _waveInput = null;
@@ -185,6 +185,7 @@ namespace GTACoOp
             };
 
             Tick += OnTick;
+            Aborted += OnShutdown;
             KeyDown += OnKeyDown;
 
             KeyUp += (sender, args) =>
@@ -337,7 +338,7 @@ namespace GTACoOp
             };
 
 #if VOICE
-            var inputDeviceItem = new UIMenuListItem("Input device", GetInputDevices(), 0);
+            var inputDeviceItem = WaveIn.DeviceCount > 0 ? new UIMenuListItem("Input device", GetInputDevices(), 0) : null;
 #endif
 
             var masterItem = new UIMenuItem("Master Server");
@@ -488,7 +489,8 @@ namespace GTACoOp
             _settingsMenu.AddItem(npcItem);
             _settingsMenu.AddItem(trafficItem);
 #if VOICE
-            _settingsMenu.AddItem(inputDeviceItem);
+            if (inputDeviceItem != null)
+                _settingsMenu.AddItem(inputDeviceItem);
 #endif
             _settingsMenu.AddItem(chatLogItem);
             _settingsMenu.AddItem(hidePasswordsItem);
@@ -1012,6 +1014,31 @@ namespace GTACoOp
                 _logger.WriteException("Could not handle tick", ex);
             }
         }
+		
+        private void OnShutdown(object sender, EventArgs e)
+        {
+            if (IsOnServer())
+                _client.Disconnect("Connection closed by peer.");
+
+#if VOICE
+            if (_waveOutput != null)
+            {
+                _waveOutput.Stop();
+                _waveOutput.Dispose();
+            }
+
+            if (_waveInput != null)
+            {
+                _waveInput.StopRecording();
+                _waveInput.Dispose();
+            }
+
+            if (_waveWriter != null)
+            {
+                _waveWriter.Dispose();
+            }
+#endif
+        }
 
         public static bool IsOnServer()
         {
@@ -1501,6 +1528,10 @@ namespace GTACoOp
                             var reason = msg.ReadString();
                             UI.Notify("You have been disconnected" + (string.IsNullOrEmpty(reason) ? " from the server." : ": " + reason));
                             UpdateStatusText(null);
+
+#if VOICE
+                            _waveInput.StopRecording();
+#endif
 
                             lock (Opponents)
                             {
