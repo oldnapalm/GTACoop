@@ -11,8 +11,8 @@ namespace GTAServer.ProtocolMessages
         SirenActive = 1 << 1,
         LightsOn = 1 << 2,
         HighBeamsOn = 1 << 3,
-        IsInBurnout = 1 << 4,
-        IsEngineRunning = 1 << 5
+        InBurnout = 1 << 4,
+        EngineRunning = 1 << 5
     }
 
     [ProtoContract]
@@ -60,5 +60,9 @@ namespace GTAServer.ProtocolMessages
         public Dictionary<int, int> PedProps { get; set; }
         [ProtoMember(21)]
         public byte? Flag { get; set; }
+        [ProtoMember(22)]
+        public int LandingGearState { get; set; }
+        [ProtoMember(23)]
+        public int Livery { get; set; }
     }
 }

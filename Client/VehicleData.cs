@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using GTA;
 using GTA.Math;
 using NativeUI;
 using ProtoBuf;
@@ -84,8 +85,8 @@ namespace GTACoOp
         SirenActive = 1 << 1,
         LightsOn = 1 << 2,
         HighBeamsOn = 1 << 3,
-        IsInBurnout = 1 << 4,
-        IsEngineRunning = 1 << 5
+        InBurnout = 1 << 4,
+        EngineRunning = 1 << 5
     }
 
     [ProtoContract]
@@ -133,6 +134,10 @@ namespace GTACoOp
         public Dictionary<int, int> PedProps { get; set; }
         [ProtoMember(21)]
         public byte? Flag { get; set; } = 0;
+        [ProtoMember(22)]
+        public VehicleLandingGear LandingGearState { get; set; }
+        [ProtoMember(23)]
+        public int Livery { get; set; }
     }
 
     [Flags]

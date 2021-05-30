@@ -463,13 +463,6 @@ namespace GTACoOp
                 Util.SaveSettings(null);
             };
 
-            var versionItem = new UIMenuListItem("Version", new List<dynamic>(Enum.GetNames(typeof(ScriptVersion))), 0);
-            versionItem.OnListChanged += (item, index) =>
-            {
-                LocalScriptVersion = (ScriptVersion) Enum.Parse(typeof(ScriptVersion), item.Items[index].ToString());
-                //_mainMenu.Clear();_mainMenu.RefreshIndex();
-            };
-
             var netGraphItem = new UIMenuCheckboxItem("Show Network Info", PlayerSettings.ShowNetGraph);
             netGraphItem.CheckboxEvent += (item, check) =>
             {
@@ -499,7 +492,6 @@ namespace GTACoOp
             _settingsMenu.AddItem(autoLoginItem);
             _settingsMenu.AddItem(autoRegisterItem);
             _settingsMenu.AddItem(masterItem);
-            _settingsMenu.AddItem(versionItem);
             _settingsMenu.AddItem(debugItem);
             _settingsMenu.AddItem(netGraphItem);
 
@@ -726,11 +718,14 @@ namespace GTACoOp
                 obj.WheelSpeed = veh.WheelSpeed;
                 obj.Steering = veh.SteeringAngle;
                 obj.Speed = veh.Speed;
-
-                obj.RadioStation = (int)Game.RadioStation;
                 obj.Plate = veh.NumberPlate;
+                obj.Livery = Function.Call<int>(Hash.GET_VEHICLE_LIVERY, veh);
 
                 obj.PedProps = CheckPlayerProps();
+                obj.RadioStation = (int)Game.RadioStation;
+
+                if (veh.Model.IsPlane)
+                    obj.LandingGearState = veh.LandingGear;
 
                 if (Game.Player.IsPressingHorn)
                     obj.Flag |= (byte)VehicleDataFlags.PressingHorn;
@@ -745,7 +740,10 @@ namespace GTACoOp
                     obj.Flag |= (byte)VehicleDataFlags.LightsOn;
 
                 if (veh.EngineRunning)
-                    obj.Flag |= (byte)VehicleDataFlags.IsEngineRunning;
+                    obj.Flag |= (byte)VehicleDataFlags.EngineRunning;
+
+                if (veh.IsInBurnout())
+                    obj.Flag |= (byte)VehicleDataFlags.InBurnout;
 
                 var bin = SerializeBinary(obj);
 
@@ -824,9 +822,11 @@ namespace GTACoOp
                 obj.Speed = veh.Speed;
                 obj.WheelSpeed = veh.WheelSpeed;
                 obj.Steering = veh.SteeringAngle;
+                obj.Plate = veh.NumberPlate;
+                obj.Livery = Function.Call<int>(Hash.GET_VEHICLE_LIVERY, veh);
 
-                if (Game.Player.IsPressingHorn)
-                    obj.Flag |= (byte)VehicleDataFlags.PressingHorn;
+                if (veh.Model.IsPlane)
+                    obj.LandingGearState = veh.LandingGear;
 
                 if (veh.SirenActive)
                     obj.Flag |= (byte)VehicleDataFlags.SirenActive;
@@ -838,7 +838,10 @@ namespace GTACoOp
                     obj.Flag |= (byte)VehicleDataFlags.LightsOn;
 
                 if (veh.EngineRunning)
-                    obj.Flag |= (byte)VehicleDataFlags.IsEngineRunning;
+                    obj.Flag |= (byte)VehicleDataFlags.EngineRunning;
+
+                if (veh.IsInBurnout())
+                    obj.Flag |= (byte)VehicleDataFlags.InBurnout;
 
                 var bin = SerializeBinary(obj);
 
@@ -1229,23 +1232,22 @@ namespace GTACoOp
                                     Opponents[data.Id].VehicleSeat = data.VehicleSeat;
                                     Opponents[data.Id].IsInVehicle = true;
                                     Opponents[data.Id].Latency = data.Latency;
-
                                     Opponents[data.Id].VehicleMods = data.VehicleMods;
 
                                     Opponents[data.Id].IsHornPressed = (data.Flag & (byte)VehicleDataFlags.PressingHorn) > 0;
                                     Opponents[data.Id].Siren = (data.Flag & (byte)VehicleDataFlags.SirenActive) > 0;
-                                    Opponents[data.Id].IsInBurnout = (data.Flag & (short)VehicleDataFlags.IsInBurnout) > 0;
+                                    Opponents[data.Id].IsInBurnout = (data.Flag & (short)VehicleDataFlags.InBurnout) > 0;
                                     Opponents[data.Id].HighBeamsOn = (data.Flag & (short)VehicleDataFlags.HighBeamsOn) > 0;
                                     Opponents[data.Id].LightsOn = (data.Flag & (short)VehicleDataFlags.LightsOn) > 0;
-                                    Opponents[data.Id].IsEngineRunning = (data.Flag & (short)VehicleDataFlags.IsEngineRunning) > 0;
+                                    Opponents[data.Id].IsEngineRunning = (data.Flag & (short)VehicleDataFlags.EngineRunning) > 0;
 
                                     Opponents[data.Id].Speed = data.Speed;
-
                                     Opponents[data.Id].WheelSpeed = data.WheelSpeed;
                                     Opponents[data.Id].Steering = data.Steering;
-
                                     Opponents[data.Id].RadioStation = data.RadioStation;
                                     Opponents[data.Id].Plate = data.Plate;
+                                    Opponents[data.Id].LandingGear = data.LandingGearState;
+                                    Opponents[data.Id].Livery = data.Livery;
                                     Opponents[data.Id].PedProps = data.PedProps;
                                 }
                             }
@@ -1321,15 +1323,21 @@ namespace GTACoOp
                                     Npcs[data.Name].VehicleSeat = data.VehicleSeat;
                                     Npcs[data.Name].IsInVehicle = true;
 
-                                    Npcs[data.Name].Steering = data.Steering;
-                                    Npcs[data.Name].Speed = data.Speed;
-
                                     Npcs[data.Name].IsHornPressed = (data.Flag & (byte)VehicleDataFlags.PressingHorn) > 0;
                                     Npcs[data.Name].Siren = (data.Flag & (byte)VehicleDataFlags.SirenActive) > 0;
-                                    Npcs[data.Name].IsInBurnout = (data.Flag & (short)VehicleDataFlags.IsInBurnout) > 0;
+                                    Npcs[data.Name].IsInBurnout = (data.Flag & (short)VehicleDataFlags.InBurnout) > 0;
                                     Npcs[data.Name].HighBeamsOn = (data.Flag & (short)VehicleDataFlags.HighBeamsOn) > 0;
                                     Npcs[data.Name].LightsOn = (data.Flag & (short)VehicleDataFlags.LightsOn) > 0;
-                                    Npcs[data.Name].IsEngineRunning = (data.Flag & (short)VehicleDataFlags.IsEngineRunning) > 0;
+                                    Npcs[data.Name].IsEngineRunning = (data.Flag & (short)VehicleDataFlags.EngineRunning) > 0;
+
+                                    Npcs[data.Name].Speed = data.Speed;
+                                    Npcs[data.Name].WheelSpeed = data.WheelSpeed;
+                                    Npcs[data.Name].Steering = data.Steering;
+                                    Npcs[data.Name].RadioStation = data.RadioStation;
+                                    Npcs[data.Name].Plate = data.Plate;
+                                    Npcs[data.Name].LandingGear = data.LandingGearState;
+                                    Npcs[data.Name].Livery = data.Livery;
+                                    Npcs[data.Name].PedProps = data.PedProps;
                                 }
                             }
                             break;
@@ -1703,21 +1711,12 @@ namespace GTACoOp
 
         private void Debug()
         {
-            var player = Game.Player.Character;
-
-            var debugText = "";
-
-            if (player.IsInVehicle())
-            {
-                debugText += "\n\n\n\n\nRPM: " + Game.Player.Character.CurrentVehicle.EngineRunning.ToString();
-            }
-
-            new UIResText(debugText, new Point(10, 10), 0.5f).Draw();
 
             _debug.Visible = true;
             _debug.Draw();
 
-            // ignore
+#if DEBUGSYNCPED
+            var player = Game.Player.Character;
             if (_debugSyncPed == null)
             {
                 _debugSyncPed = new SyncPed(player.Model.Hash, player.Position, player.Rotation, false);
@@ -1789,7 +1788,7 @@ namespace GTACoOp
                 Function.Call(Hash.SET_ENTITY_NO_COLLISION_ENTITY, _debugSyncPed.MainVehicle.Handle, player.CurrentVehicle.Handle, false);
                 Function.Call(Hash.SET_ENTITY_NO_COLLISION_ENTITY, player.CurrentVehicle.Handle, _debugSyncPed.MainVehicle.Handle, false);
             }
-
+#endif
         }
 
 #endregion

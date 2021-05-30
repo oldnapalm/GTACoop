@@ -134,7 +134,7 @@ namespace GTAServer
                 Password = _gameServerConfiguration.Password,
                 AnnounceSelf = _gameServerConfiguration.AnnounceSelf,
                 AllowNicknames = _gameServerConfiguration.AllowNicknames,
-                AllowOutdatedClients = _gameServerConfiguration.AllowOutdatedClients,
+                AllowOutdatedClients = false, //_gameServerConfiguration.AllowOutdatedClients,
                 MaxPlayers = _gameServerConfiguration.MaxClients,
                 Motd = _gameServerConfiguration.Motd,
                 RconPassword = _gameServerConfiguration.RconPassword

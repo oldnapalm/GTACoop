@@ -49,6 +49,8 @@ namespace GTACoOp
         public bool IsInBurnout;
         public bool HighBeamsOn;
         public bool LightsOn;
+        public VehicleLandingGear LandingGear;
+        public int Livery;
 
         public float Steering;
         public float WheelSpeed;
@@ -195,10 +197,12 @@ namespace GTACoOp
         {
             try
             {
-                const float hRange = 200f;
+                var isPlane = Function.Call<bool>(Hash.IS_THIS_MODEL_A_PLANE, VehicleHash);
+                float hRange = isPlane ? 1200f : 400f;
+
                 var gPos = IsInVehicle ? VehiclePosition : Position;
-                var inRange = Game.Player.Character.IsInRangeOf(gPos, hRange);
-            
+                var inRange = isPlane ? true : Game.Player.Character.IsInRangeOf(gPos, hRange);
+
                 if (inRange && !_isStreamedIn)
                 {
                     _isStreamedIn = true;
@@ -303,8 +307,9 @@ namespace GTACoOp
 
                     if (MainVehicle != null)
                     {
-                        MainVehicle.PrimaryColor = (VehicleColor)VehiclePrimaryColor;
-                        MainVehicle.SecondaryColor = (VehicleColor)VehicleSecondaryColor;
+                        Function.Call(Hash.SET_VEHICLE_COLOURS, MainVehicle, VehiclePrimaryColor, VehicleSecondaryColor);
+                        MainVehicle.Livery = Livery;
+
                         MainVehicle.Quaternion = VehicleRotation.ToQuaternion();
                         MainVehicle.IsInvincible = true;
                         Character.Task.WarpIntoVehicle(MainVehicle, (VehicleSeat)VehicleSeat);
@@ -369,9 +374,6 @@ namespace GTACoOp
                             if (MainVehicle.IsDead)
                                 MainVehicle.Repair();
                         }
-
-                        MainVehicle.PrimaryColor = (VehicleColor) VehiclePrimaryColor;
-                        MainVehicle.SecondaryColor = (VehicleColor) VehicleSecondaryColor;
 
                         MainVehicle.EngineRunning = IsEngineRunning;
 
@@ -440,6 +442,14 @@ namespace GTACoOp
                         MainVehicle.HighBeamsOn = HighBeamsOn;
                         MainVehicle.SirenActive = Siren;
                         MainVehicle.SteeringAngle = (Steering > 5f || Steering < -5f) ? Steering : 0f;
+                        Function.Call(Hash.SET_VEHICLE_LIVERY, MainVehicle, Livery);
+
+                        Function.Call(Hash.SET_VEHICLE_COLOURS, MainVehicle, VehiclePrimaryColor, VehicleSecondaryColor);
+
+                        if (MainVehicle.Model.IsPlane && LandingGear != MainVehicle.LandingGear)
+                        {
+                            MainVehicle.LandingGear = LandingGear;
+                        }
 
                         if (Character.IsOnBike && MainVehicle.ClassType == VehicleClass.Cycles)
                         {
