@@ -57,6 +57,8 @@ namespace GTACoOp
         public int Port { get; set; }
         [ProtoMember(6)]
         public string Gamemode { get; set; }
+        [ProtoMember(7)]
+        public ScriptVersion Version { get; set; }
     }
 
     [ProtoContract]

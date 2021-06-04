@@ -653,6 +653,8 @@ namespace GTAServer
         }
         private void HandleClientDiscoveryRequest(Client client, NetIncomingMessage msg)
         {
+            var latestScriptVersion = Enum.GetValues(typeof(ScriptVersion)).Cast<ScriptVersion>().Last();
+
             var responsePkt = Server.CreateMessage();
             var discoveryResponse = new DiscoveryResponse
             {
@@ -661,6 +663,7 @@ namespace GTAServer
                 PasswordProtected = PasswordProtected,
                 Gamemode = GamemodeName,
                 Port = Port,
+                Version = (byte)latestScriptVersion
             };
             lock (Clients) discoveryResponse.PlayerCount = Clients.Count;
 
@@ -778,7 +781,7 @@ namespace GTAServer
                             vehicleData = vehiclePluginResult.Data;
 
                             vehicleData.Id = client.NetConnection.RemoteUniqueIdentifier;
-                            vehicleData.Name = client.Name;
+                            vehicleData.Name = client.DisplayName;
                             vehicleData.Latency = client.Latency;
 
                             client.Health = vehicleData.PlayerHealth;

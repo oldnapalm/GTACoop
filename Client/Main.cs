@@ -611,9 +611,6 @@ namespace GTACoOp
                     continue;
                 _client.DiscoverKnownPeer(split[0], port);
             }
-
-            // add localhost to server browser
-            _client.DiscoverKnownPeer("127.0.0.1", 4499);
         }
 
         private void DiscoverLan()
