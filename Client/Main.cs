@@ -179,6 +179,7 @@ namespace GTACoOp
 
             Tick += OnTick;
             KeyDown += OnKeyDown;
+            Aborted += OnAbort;
 
             KeyUp += (sender, args) =>
             {
@@ -532,6 +533,8 @@ namespace GTACoOp
             }
 
             _playerList = new PlayerList();
+
+            Util.NativeMemory();
         }
 
         /*private void RebuildServerBrowser()
@@ -1008,6 +1011,23 @@ namespace GTACoOp
                 UI.Notify("<ERROR> Could not handle this tick: " + ex.ToString());
                 if(Main.PlayerSettings.Logging)
                     File.AppendAllText("scripts\\GTACOOP.log", "[" + DateTime.UtcNow + "] <ERROR> Could not handle this tick: " + ex.Message+"\n");
+            }
+        }
+
+        private void OnAbort(object sender, EventArgs e)
+        {
+            Tick -= OnTick;
+
+            if (Opponents != null)
+            {
+                Opponents.ToList().ForEach(pair => pair.Value.Clear());
+                Opponents.Clear();
+            }
+
+            if (Npcs != null)
+            {
+                Npcs.ToList().ForEach(pair => pair.Value.Clear());
+                Npcs.Clear();
             }
         }
 

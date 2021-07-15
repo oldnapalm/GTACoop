@@ -420,7 +420,10 @@ namespace GTACoOp
                         else if (!MainVehicle.SirenActive && Siren)
                             MainVehicle.SirenActive = Siren;
 
-                        MainVehicle.SteeringAngle = (Steering > 5f || Steering < -5f) ? Steering : 0f;
+                        if (Steering != MainVehicle.SteeringAngle)
+                        {
+                            Util.CustomSteeringAngle(MainVehicle.Handle, (float)(Math.PI / 180) * Steering);
+                        }
 
                         if (Character.IsOnBike && MainVehicle.ClassType == VehicleClass.Cycles)
                         {
