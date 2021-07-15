@@ -348,5 +348,19 @@ namespace GTACoOp
 
             WriteFloat(address + SteeringAngleOffset, value);
         }
+
+        public static unsafe void DisableSlowMotion()
+        {
+            var address = FindPattern("\x32\xc0\xf3\x0f\x11\x09", "xxxxxx");
+            if (address == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < 6; i++)
+            {
+                *(byte*)((IntPtr)address + i).ToPointer() = 0x90;
+            }
+        }
     }
 }

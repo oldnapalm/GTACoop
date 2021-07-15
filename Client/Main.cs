@@ -535,6 +535,7 @@ namespace GTACoOp
             _playerList = new PlayerList();
 
             Util.NativeMemory();
+            Util.DisableSlowMotion();
         }
 
         /*private void RebuildServerBrowser()
