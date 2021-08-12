@@ -18,7 +18,7 @@ namespace Race
         public string GamemodeName => "Race";
         public string Name => "Race gamemode";
         public string Description => "The original race gamemode rewritten for new GTAServer.core";
-        public string Author => "TheIndra";
+        public string Author => "TheIndra, oldnapalm";
 
         public static GameServer GameServer;
         public static Session Session;

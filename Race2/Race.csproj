@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="COPY &quot;$(TargetPath)&quot; &quot;../gtaserver.core/bin/Release/net5.0/Gamemodes&quot;" />
+    <Exec Command="MKDIR &quot;../gtaserver.core/bin/Debug/net5.0/Gamemodes&quot;&#xD;&#xA;COPY &quot;$(TargetPath)&quot; &quot;../gtaserver.core/bin/Debug/net5.0/Gamemodes&quot;&#xD;&#xA;MKDIR &quot;../gtaserver.core/bin/Debug/net5.0/Gamemodes/Maps&quot;&#xD;&#xA;XCOPY /S /Y Maps &quot;../gtaserver.core/bin/Debug/net5.0/Gamemodes/Maps&quot;" />
   </Target>
 
 </Project>
