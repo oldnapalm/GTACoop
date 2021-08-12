@@ -15,7 +15,7 @@ build_windows:
     tags:
         - shared-windows
         - windows
-        - windows-2004
+        - windows-1809
     script:
         # windows 7 is EOL, win10 includes win81
         #- dotnet publish -r win10-x64 -c Release -o publish/windows-Release
