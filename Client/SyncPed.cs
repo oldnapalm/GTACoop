@@ -290,15 +290,15 @@ namespace GTACoOp
                     }).ToList();
 
 
-                    if (vehs.Any() && vehs[0].Model.Hash == VehicleHash && vehs[0].IsInRangeOf(gPos, 3f))
+                    if (vehs.Any() && vehs[0].Model.Hash == VehicleHash && vehs[0].IsInRangeOf(gPos, 3f) && !Game.Player.Character.IsInVehicle(MainVehicle))
                     {
                         MainVehicle = vehs[0];
-                        if (Game.Player.Character.IsInVehicle(MainVehicle) &&
+                        /*if (Game.Player.Character.IsInVehicle(MainVehicle) &&
                             VehicleSeat == Util.GetPedSeat(Game.Player.Character))
                         {
                             Game.Player.Character.Task.WarpOutOfVehicle(MainVehicle);
                             UI.Notify("~r~Car jacked!");
-                        }
+                        }*/
                     }
                     else
                     {
@@ -441,7 +441,8 @@ namespace GTACoOp
                         MainVehicle.LightsOn = LightsOn;
                         MainVehicle.HighBeamsOn = HighBeamsOn;
                         MainVehicle.SirenActive = Siren;
-                        MainVehicle.SteeringAngle = (Steering > 5f || Steering < -5f) ? Steering : 0f;
+                        if (Steering != MainVehicle.SteeringAngle)
+                            Util.CustomSteeringAngle(MainVehicle.Handle, (float)(Math.PI / 180) * Steering);
                         Function.Call(Hash.SET_VEHICLE_LIVERY, MainVehicle, Livery);
 
                         Function.Call(Hash.SET_VEHICLE_COLOURS, MainVehicle, VehiclePrimaryColor, VehicleSecondaryColor);

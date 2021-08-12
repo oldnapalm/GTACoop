@@ -517,6 +517,8 @@ namespace GTACoOp
             }
 
             _playerList = new PlayerList();
+
+            Util.NativeMemory();
         }
 
         private void RebuildServerBrowser()
