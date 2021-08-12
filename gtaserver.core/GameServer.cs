@@ -1160,6 +1160,83 @@ namespace GTAServer
             player.NetConnection.SendMessage(msg, NetDeliveryMethod.ReliableOrdered, GetChannelForClient(player));
         }
 
+        public void SetNativeCallOnTickForPlayer(Client player, string identifier, ulong hash, params object[] arguments)
+        {
+            var obj = new NativeData
+            {
+                Hash = hash,
+                Arguments = ParseNativeArguments(arguments)
+            };
+
+
+            var wrapper = new NativeTickCall();
+            wrapper.Id = identifier;
+            wrapper.Native = obj;
+
+            var bin = Util.SerializeBinary(wrapper);
+
+            var msg = Server.CreateMessage();
+
+            msg.Write((int)PacketType.NativeTick);
+            msg.Write(bin.Length);
+            msg.Write(bin);
+
+            player.NetConnection.SendMessage(msg, NetDeliveryMethod.ReliableOrdered, GetChannelForClient(player));
+        }
+
+        public void RecallNativeCallOnTickForPlayer(Client player, string identifier)
+        {
+            var wrapper = new NativeTickCall { Id = identifier };
+
+            var bin = Util.SerializeBinary(wrapper);
+
+            var msg = Server.CreateMessage();
+            msg.Write((int)PacketType.NativeTickRecall);
+            msg.Write(bin.Length);
+            msg.Write(bin);
+
+            player.NetConnection.SendMessage(msg, NetDeliveryMethod.ReliableOrdered, GetChannelForClient(player));
+        }
+
+        public void SetNativeCallOnTickForAll(string identifier, ulong hash, params object[] arguments)
+        {
+            var obj = new NativeData
+            {
+                Hash = hash,
+                Arguments = ParseNativeArguments(arguments)
+            };
+
+
+            var wrapper = new NativeTickCall
+            {
+                Id = identifier,
+                Native = obj
+            };
+
+            var bin = Util.SerializeBinary(wrapper);
+
+            var msg = Server.CreateMessage();
+
+            msg.Write((int)PacketType.NativeTick);
+            msg.Write(bin.Length);
+            msg.Write(bin);
+
+            Server.SendToAll(msg, NetDeliveryMethod.ReliableOrdered);
+        }
+
+        public void RecallNativeCallOnTickForAll(string identifier)
+        {
+            var wrapper = new NativeTickCall { Id = identifier };
+
+            var bin = Util.SerializeBinary(wrapper);
+
+            var msg = Server.CreateMessage();
+            msg.Write((int)PacketType.NativeTickRecall);
+            msg.Write(bin.Length);
+            msg.Write(bin);
+
+            Server.SendToAll(msg, NetDeliveryMethod.ReliableOrdered);
+        }
 
 
         // Stuff for scripting
