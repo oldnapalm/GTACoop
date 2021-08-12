@@ -21,14 +21,14 @@ namespace GTAServer
         public string BackupMasterServer { get; set; } = "http://clan-banderos.de/gta/";
         public bool AnnounceSelf { get; set; } = true;
         public bool AllowNicknames { get; set; } = true;
-        public bool AllowOutdatedClients { get; set; } = false;
+        //public bool AllowOutdatedClients { get; set; } = false;
         public bool DebugMode { get; set; } = false;
 
         public string Motd { get; set; } = "Welcome to this GTA CooP server!";
         public bool UseGroups { get; set; } = true;
         public bool UPnP { get; set; } = true;
+        public bool DualStack { get; set; } = false;
         public bool NoConsole { get; set; } = false;
-        public bool AnonymousCrashes { get; set; } = false;
         public string RconPassword { get; set; } = "";
 
         public List<string> ServerPlugins { get; set; } = new List<string>() {};

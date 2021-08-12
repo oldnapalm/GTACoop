@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Race.Objects
+﻿namespace Race.Objects
 {
     public enum State
     {

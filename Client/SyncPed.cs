@@ -20,7 +20,7 @@ namespace GTACoOp
     public class SyncPed
     {
         public long Host;
-        //public MaxMind.GeoIP2.Responses.CountryResponse geoIP;
+        public MaxMind.GeoIP2.Responses.CountryResponse geoIP;
         public Ped Character;
         public Vector3 Position;
         public Vector3 Rotation;
@@ -46,12 +46,18 @@ namespace GTACoOp
         public string Name;
         public bool Siren;
         public bool IsEngineRunning;
+        public bool IsInBurnout;
+        public bool HighBeamsOn;
+        public bool LightsOn;
+        public VehicleLandingGear LandingGear;
+        public int Livery;
 
         public float Steering;
         public float WheelSpeed;
         public string Plate;
         public int RadioStation;
         private DateTime _stopTime;
+        private bool _lastBurnout;
 
         public float Speed
         {
@@ -191,10 +197,12 @@ namespace GTACoOp
         {
             try
             {
-                const float hRange = 200f;
+                var isPlane = Function.Call<bool>(Hash.IS_THIS_MODEL_A_PLANE, VehicleHash);
+                float hRange = isPlane ? 1200f : 400f;
+
                 var gPos = IsInVehicle ? VehiclePosition : Position;
-                var inRange = Game.Player.Character.IsInRangeOf(gPos, hRange);
-            
+                var inRange = isPlane ? true : Game.Player.Character.IsInRangeOf(gPos, hRange);
+
                 if (inRange && !_isStreamedIn)
                 {
                     _isStreamedIn = true;
@@ -234,7 +242,6 @@ namespace GTACoOp
 
                     Character.BlockPermanentEvents = true;
                     Character.IsInvincible = true;
-                    Character.CanBeDraggedOutOfVehicle = false;
                     Character.CanRagdoll = false;
                     Character.RelationshipGroup = _relGroup;
                     if (_blip)
@@ -271,9 +278,6 @@ namespace GTACoOp
                     Function.Call(Hash.CLEAR_DRAW_ORIGIN);
                 }
 
-                if (!_lastVehicle && IsInVehicle && MainVehicle != null && Character.IsInVehicle(MainVehicle))
-                    _lastVehicle = true;
-
                 if ((!_lastVehicle && IsInVehicle && VehicleHash != 0) || (_lastVehicle && IsInVehicle && (MainVehicle == null || !Character.IsInVehicle(MainVehicle) || MainVehicle.Model.Hash != VehicleHash || VehicleSeat != Util.GetPedSeat(Character))))
                 {
                     if (MainVehicle != null && Util.IsVehicleEmpty(MainVehicle))
@@ -285,15 +289,16 @@ namespace GTACoOp
                         return (v.Position - Character.Position).Length();
                     }).ToList();
 
-                    if (vehs.Any() && vehs[0].Model.Hash == VehicleHash && vehs[0].IsInRangeOf(gPos, 3f) && !Game.Player.Character.IsInVehicle(vehs[0]))
+
+                    if (vehs.Any() && vehs[0].Model.Hash == VehicleHash && vehs[0].IsInRangeOf(gPos, 3f))
                     {
                         MainVehicle = vehs[0];
-                        /*if (Game.Player.Character.IsInVehicle(MainVehicle) &&
+                        if (Game.Player.Character.IsInVehicle(MainVehicle) &&
                             VehicleSeat == Util.GetPedSeat(Game.Player.Character))
                         {
                             Game.Player.Character.Task.WarpOutOfVehicle(MainVehicle);
                             UI.Notify("~r~Car jacked!");
-                        }*/
+                        }
                     }
                     else
                     {
@@ -302,8 +307,9 @@ namespace GTACoOp
 
                     if (MainVehicle != null)
                     {
-                        MainVehicle.PrimaryColor = (VehicleColor)VehiclePrimaryColor;
-                        MainVehicle.SecondaryColor = (VehicleColor)VehicleSecondaryColor;
+                        Function.Call(Hash.SET_VEHICLE_COLOURS, MainVehicle, VehiclePrimaryColor, VehicleSecondaryColor);
+                        MainVehicle.Livery = Livery;
+
                         MainVehicle.Quaternion = VehicleRotation.ToQuaternion();
                         MainVehicle.IsInvincible = true;
                         Character.Task.WarpIntoVehicle(MainVehicle, (VehicleSeat)VehicleSeat);
@@ -369,9 +375,6 @@ namespace GTACoOp
                                 MainVehicle.Repair();
                         }
 
-                        MainVehicle.PrimaryColor = (VehicleColor) VehiclePrimaryColor;
-                        MainVehicle.SecondaryColor = (VehicleColor) VehicleSecondaryColor;
-
                         MainVehicle.EngineRunning = IsEngineRunning;
 
                         if (Plate != null)
@@ -415,14 +418,37 @@ namespace GTACoOp
                             MainVehicle.SoundHorn(1);
                         }
 
+                        if (IsInBurnout && !_lastBurnout)
+                        {
+                            Function.Call(Hash.SET_VEHICLE_BURNOUT, MainVehicle, true);
+                            Function.Call(Hash.TASK_VEHICLE_TEMP_ACTION, Character, MainVehicle, 23, 120000); // 30 - burnout
+                        }
+                        else if (!IsInBurnout && _lastBurnout)
+                        {
+                            Function.Call(Hash.SET_VEHICLE_BURNOUT, MainVehicle, false);
+                            Character.Task.ClearAll();
+                        }
+
+                        _lastBurnout = IsInBurnout;
+
+                        Function.Call(Hash.SET_VEHICLE_BRAKE_LIGHTS, MainVehicle, Speed > 0.2 && _lastSpeed > Speed);
+
                         if (MainVehicle.SirenActive && !Siren)
                             MainVehicle.SirenActive = Siren;
                         else if (!MainVehicle.SirenActive && Siren)
                             MainVehicle.SirenActive = Siren;
 
-                        if (Steering != MainVehicle.SteeringAngle)
+                        MainVehicle.LightsOn = LightsOn;
+                        MainVehicle.HighBeamsOn = HighBeamsOn;
+                        MainVehicle.SirenActive = Siren;
+                        MainVehicle.SteeringAngle = (Steering > 5f || Steering < -5f) ? Steering : 0f;
+                        Function.Call(Hash.SET_VEHICLE_LIVERY, MainVehicle, Livery);
+
+                        Function.Call(Hash.SET_VEHICLE_COLOURS, MainVehicle, VehiclePrimaryColor, VehicleSecondaryColor);
+
+                        if (MainVehicle.Model.IsPlane && LandingGear != MainVehicle.LandingGear)
                         {
-                            Util.CustomSteeringAngle(MainVehicle.Handle, (float)(Math.PI / 180) * Steering);
+                            MainVehicle.LandingGear = LandingGear;
                         }
 
                         if (Character.IsOnBike && MainVehicle.ClassType == VehicleClass.Cycles)
@@ -442,7 +468,7 @@ namespace GTACoOp
                                 StartPedalingAnim(true);
                         }
 
-                        if (Speed > 0.2f)
+                        if (Speed > 0.2f || IsInBurnout)
                         {
                             int currentTime = Environment.TickCount;
                             float alpha = Util.Unlerp(currentInterop.StartTime, currentTime, currentInterop.FinishTime);
@@ -493,6 +519,21 @@ namespace GTACoOp
                 }
                 else
                 {
+                    if (PedProps != null && _clothSwitch%50 == 0 && Game.Player.Character.IsInRangeOf(Position, 30f))
+                    {
+                        var id = _clothSwitch/50;
+
+                        if (PedProps.ContainsKey(id) &&
+                            PedProps[id] != Function.Call<int>(Hash.GET_PED_DRAWABLE_VARIATION, Character.Handle, id))
+                        {
+                            Function.Call(Hash.SET_PED_COMPONENT_VARIATION, Character.Handle, id, PedProps[id], 0, 0);
+                        }
+                    }
+
+                    _clothSwitch++;
+                    if (_clothSwitch >= 750)
+                        _clothSwitch = 0;
+
                     if (Character.Weapons.Current.Hash != (WeaponHash) CurrentWeapon)
                     {
                         var wep = Character.Weapons.Give((WeaponHash) CurrentWeapon, 9999, true, true);
@@ -563,7 +604,7 @@ namespace GTACoOp
                         if (!IsAiming && !IsShooting && !IsJumping)
                         {
                             float distance = Character.Position.DistanceTo(Position);
-                            if (distance <= 0.15f || distance > 7.0f) // Still or too far away
+                            if (distance <= 0.15f || distance > 7.0f) // Still or to far away
                             {
                                 Character.Position = dest - new Vector3(0, 0, 1f);
                                 Character.Quaternion = Rotation.ToQuaternion();
@@ -591,25 +632,11 @@ namespace GTACoOp
                     _lastAiming = IsAiming;
                 }
                 _lastVehicle = IsInVehicle;
-
-                if (PedProps != null && _clothSwitch % 50 == 0 && Game.Player.Character.IsInRangeOf(gPos, 30f))
-                {
-                    var id = _clothSwitch / 50;
-
-                    if (PedProps.ContainsKey(id) &&
-                        PedProps[id] != Function.Call<int>(Hash.GET_PED_DRAWABLE_VARIATION, Character.Handle, id))
-                    {
-                        Function.Call(Hash.SET_PED_COMPONENT_VARIATION, Character.Handle, id, PedProps[id], 0, 0);
-                    }
-                }
-
-                _clothSwitch++;
-                if (_clothSwitch >= 750)
-                    _clothSwitch = 0;
             }
             catch (Exception ex)
             {
-                UI.Notify("Sync error: "+ex.Message);
+                UI.Notify("Sync error: " + ex.Message);
+                Main.Logger.WriteException("Exception in SyncPed code", ex);
             }
         }
 

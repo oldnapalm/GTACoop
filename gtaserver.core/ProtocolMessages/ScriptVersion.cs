@@ -11,6 +11,6 @@
         VERSION_0_9_1 = 6,
         VERSION_0_9_2 = 7,
         VERSION_0_9_3 = 8,
-        VERSION_0_9_4 = 9
+        VERSION_0_9_4 = 9 // should be compatible with GTBikeV build
     }
 }

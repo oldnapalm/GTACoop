@@ -1,18 +1,27 @@
-# GTA CooP
-GTA CooP is a multiplayer modification for Grand Theft Auto Five, that utilizes none of the online code from Rockstar.
+# GTA Coop
+GTA Coop is a multiplayer modification for Grand Theft Auto Five, that utilizes none of the online code from Rockstar.
 
-This version is updated to work with [GTBikeV](https://www.gtbikev.com/).
+## Downloads
+Downloads are available from the official [website](https://gtacoop.com/downloads) and from GitLab [Pipelines](https://gitlab.com/cgmp/gta/-/pipelines) page, you can also build from source.
 
-# Downloads
-Downloads are available [here](https://github.com/oldnapalm/GTACoOp/releases/latest).
+## Project
 
-# Information
-If you have any questions feel free to join our [Discord](https://discord.gg/kw4dAUQUx4).
+* `AdminTools/` Source of the old admintools plugin for orginal gtaserver
+* `Client/` Source of the mod and client 
+* `DiscordBot/` Plugin for gtaserver.core to create a bridge between discord and gtaserver.core with chat from both sides. Written by [oldnapalm](https://github.com/oldnapalm)
+* `Race/` Source of the race gamemode
+* `Server/` Source of the old server
+* `gtamasterserver` Small python web application to run a masterserver
+* `gtaserver.core` Source of the current server.
+
+## Contributors
+
+* [TheIndra55](https://github.com/theindra55)
+* [oldnapalm](https://github.com/oldnapalm)
+* [EntenKoeniq](https://github.com/EntenKoeniq)
+* [EightyVice](https://github.com/EightyVice)
+* BsCaBl — Testing, feedback, running alpha build for years
 
 Original code © 2016 [Guad](https://github.com/Guad)
 
 Modifications © 2016 [Bluscream](https://github.com/Bluscream), [wolfmitchell](https://github.com/soccermitchy)
-
-Modifications © 2018 [TheIndra](https://github.com/TheIndra55)
-
-Modifications © 2021 [oldnapalm](https://github.com/oldnapalm)

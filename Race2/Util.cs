@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
-using Race.Objects;
 
 namespace Race
 {
@@ -17,7 +14,7 @@ namespace Race
                 Directory.CreateDirectory(folder);
             }
 
-            return Directory.GetFiles(folder, "*.json");
+            return Directory.GetFiles(folder, "*.xml");
         }
 
         public static string GetRandomMap()

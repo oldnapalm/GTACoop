@@ -1,14 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using GTAServer.ProtocolMessages;
+﻿using GTAServer.ProtocolMessages;
 
 namespace Race.Objects
 {
     public class Map
     {
-        public string Name { get; set; }
+        public Vector3[] Checkpoints;
+        public SpawnPoint[] SpawnPoints;
+        public VehicleHash[] AvailableVehicles;
+        public string Name;
 
-        public List<Vector3> Checkpoints { get; set; }
+        public Map() { }
+    }
+
+    public class SpawnPoint
+    {
+        public Vector3 Position;
+        public float Heading;
     }
 }

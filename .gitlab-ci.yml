@@ -1,4 +1,4 @@
-image: mcr.microsoft.com/dotnet/sdk:5.0
+image: mcr.microsoft.com/dotnet/sdk:5.0.102-ca-patch-buster-slim
 
 stages:
     - build
@@ -11,10 +11,15 @@ before_script:
     
 build_windows:
     stage: build
+    # run in Windows since on crossbuilding on Linux apphost customization doesn't work
+    tags:
+        - shared-windows
+        - windows
+        - windows-2004
     script:
         # windows 7 is EOL, win10 includes win81
         #- dotnet publish -r win10-x64 -c Release -o publish/windows-Release
-        - dotnet publish -r win10-x64 -c Release -o publish/windows-Release -p:PublishTrimmed=true -p:PublishSingleFile=true -p:TargetFramework=net5.0
+        - dotnet publish -r win10-x64 -c Release -o publish/windows-Release -p:PublishSingleFile=true
     artifacts:
         paths:
             - "gtaserver.core/publish/windows-Release"
@@ -29,6 +34,7 @@ build_linux:
 
 build_linux_arm:
     stage: build
+    when: manual
     script:
         - dotnet publish -r linux-arm -c Release -o publish/arm-Release
     artifacts:

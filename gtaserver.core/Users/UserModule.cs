@@ -35,12 +35,10 @@ namespace GTAServer.Users
         public void Start()
         {
             var filename = Path.Combine(System.AppContext.BaseDirectory, "users.db");
-            var create = false;
 
             if (!File.Exists(filename))
             {
                 SQLiteConnection.CreateFile(filename);
-                create = true;
             }
 
             var connectionString = new SQLiteConnectionStringBuilder()
@@ -52,27 +50,34 @@ namespace GTAServer.Users
             _connection = new SQLiteConnection(connectionString.ToString());
             _connection.Open();
 
-            if (create)
-            {
-                new SQLiteCommand(@"
-                    CREATE TABLE `users` (
-	                    `Id`	    INTEGER PRIMARY KEY AUTOINCREMENT,
-	                    `Username`  TEXT,
-	                    `Password`  TEXT,
-	                    `Group` 	TEXT
-                    );"
-                , _connection).ExecuteNonQuery();
-            }
+            new SQLiteCommand(@"
+                CREATE TABLE IF NOT EXISTS `users` (
+	                `Id`	    INTEGER PRIMARY KEY AUTOINCREMENT,
+	                `Username`  TEXT,
+	                `Password`  TEXT,
+	                `Group` 	TEXT
+                );"
+            , _connection).ExecuteNonQuery();
 
             LoadGroups();
 
             ConnectionEvents.OnJoin.Add(OnJoin);
             ConnectionEvents.OnDisconnect.Add(OnLeave);
 
-            _gameServer.RegisterCommand("register", OnRegister);
-            _gameServer.RegisterCommand("login", OnLogin);
+            _gameServer.RegisterCommand(new Command { 
+                Name = "register",
+                Description = "Register a new account with the current username",
+                Usage = "Usage: register <password>" }, OnRegister);
 
-            _gameServer.RegisterCommand("setgroup", OnSetGroup);
+            _gameServer.RegisterCommand(new Command { 
+                Name = "login",
+                Description = "Login to the account of the current username",
+                Usage = "Usage: login <password>" }, OnLogin);
+
+            _gameServer.RegisterCommand(new Command { 
+                Name = "setgroup",
+                Description = "Set a player in a group",
+                Usage = "Usage: setgroup <player> <group>" }, OnSetGroup);
         }
 
         public void Stop()
@@ -236,8 +241,12 @@ namespace GTAServer.Users
             {
                 client.SendMessage("You can register an account using /register (password)");
             }
-
             reader.Close();
+
+            var seconds = DateTime.Now.Ticks / TimeSpan.TicksPerSecond;
+            TimeSpan GameSeconds = TimeSpan.FromSeconds((seconds * 30) % 86400);
+
+            client.SendNativeCall(0xC8CA9670B9D83B3B, GameSeconds.Hours, GameSeconds.Minutes, GameSeconds.Seconds); // ADVANCE_CLOCK_TIME_TO
         }
 
         private void OnLeave(Client client)
@@ -252,7 +261,11 @@ namespace GTAServer.Users
 
         private void OnSetGroup(CommandContext ctx, List<string> args)
         {
-            if (args.Count < 2) return;
+            if (args.Count < 2)
+            {
+                ctx.SendMessage("Usage: setgroup <player> <group>");
+                return;
+            }
 
             var user = Users.Find(x => x.Username == args[0]);
             if (user == null)
@@ -287,7 +300,7 @@ namespace GTAServer.Users
 
             if (args.Count == 0)
             {
-                ctx.SendMessage("Usage /register (password)");
+                ctx.SendMessage("Usage /register <password>");
                 return;
             }
 
@@ -323,7 +336,7 @@ namespace GTAServer.Users
 
             if (args.Count == 0)
             {
-                ctx.SendMessage("Usage /login (password)");
+                ctx.SendMessage("Usage /login <password>");
                 return;
             }
 

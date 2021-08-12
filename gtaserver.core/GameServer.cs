@@ -20,7 +20,9 @@ using GTAServer.PluginAPI.Events;
 using GTAServer.Users.Groups;
 using GTAServer.PluginAPI.Entities;
 using GTAServer.Logging;
-using Newtonsoft.Json;
+using System.Globalization;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace GTAServer
 {
@@ -53,7 +55,7 @@ namespace GTAServer
         public bool UPnP { get; set; }
         public string RconPassword { get; set; }
 
-        public readonly Dictionary<string, Action<CommandContext, List<string>>> Commands = new Dictionary<string, Action<CommandContext, List<string>>>();
+        public readonly Dictionary<Command, Action<CommandContext, List<string>>> Commands = new Dictionary<Command, Action<CommandContext, List<string>>>();
 
         public int TicksPerSecond { get; set; }
 
@@ -63,7 +65,7 @@ namespace GTAServer
         private int _ticksLastSecond;
 
         private readonly Timer _tpsTimer;
-        public GameServer(int port, string name, string gamemodeName, bool isDebug, bool upnp = false)
+        public GameServer(int port, string name, string gamemodeName, bool isDebug, ServerConfiguration config)
         {
             logger = Util.LoggerFactory.CreateLogger<GameServer>();
             logger.LogInformation(LogEvent.Setup, "Server ready to start");
@@ -72,9 +74,15 @@ namespace GTAServer
             GamemodeName = gamemodeName;
             Name = name;
             Port = port;
-            UPnP = upnp;
+            UPnP = config.UPnP;
 
             Config = new NetPeerConfiguration("GTAVOnlineRaces") { Port = port, EnableUPnP = UPnP };
+            if(config.DualStack)
+            {
+                Config.DualStack = true;
+                Config.LocalAddress = IPAddress.IPv6Any;
+            }
+
             Config.EnableMessageType(NetIncomingMessageType.ConnectionApproval);
             Config.EnableMessageType(NetIncomingMessageType.DiscoveryRequest);
             Config.EnableMessageType(NetIncomingMessageType.UnconnectedData);
@@ -99,7 +107,9 @@ namespace GTAServer
 
                 try
                 {
+#if !BUILD_WASM
                     pluginAssembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(assemblyName);
+#endif
                 }
                 catch (Exception)
                 {
@@ -171,17 +181,20 @@ namespace GTAServer
 
         internal sealed class MasterRequest
         {
-            [JsonProperty("port")]
+            [JsonPropertyName("port")]
             public int Port { get; set; }
 
-            [JsonProperty("version")]
+            [JsonPropertyName("version")]
             public int Version { get; set; }
 
-            [JsonProperty("max_players")]
+            [JsonPropertyName("max_players")]
             public int MaxPlayers { get; set; }
 
-            [JsonProperty("gamemode")]
+            [JsonPropertyName("gamemode")]
             public string GamemodeName { get; set; }
+
+            [JsonPropertyName("telemetry")]
+            public string Telemetry { get; set; }
         }
 
         private async void AnnounceToMaster()
@@ -192,42 +205,42 @@ namespace GTAServer
             logger.LogInformation(LogEvent.Announce, "Announcing to master server");
             _lastAnnounceDateTime = DateTime.Now;
 
-            using (var client = new HttpClient())
+            var client = Util.HttpClient;
+            var content = new StringContent(Port.ToString(CultureInfo.InvariantCulture));
+
+            for (var master = 0; master < MasterServers.Count; master++)
             {
-                var content = new StringContent(Port.ToString());
-
-                for (var master = 0; master < MasterServers.Count; master++)
+                try
                 {
-                    try
-                    {
-                        // old master announce
-                        await client.PostAsync(MasterServers[master], content);
+                    // old master announce
+                    await client.PostAsync(MasterServers[master], content);
 
-                        // updated announce
-                        var request = new MasterRequest
-                        {
-                            Port = Port,
-                            MaxPlayers = MaxPlayers,
-                            GamemodeName = GamemodeName,
-                            Version = 0
-                        };
-
-                        await client.PutAsync(MasterServers[master],
-                            new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json"));
-
-                    }
-                    catch (InvalidOperationException)
+                    // updated announce
+                    var request = new MasterRequest
                     {
-                        logger.LogError(LogEvent.Announce, $"Failed to announce to master {master + 1}: URL is invalid");
-                    }
-                    catch (Exception e)
-                    {
-                        logger.LogWarning(LogEvent.Announce, $"Failed to announce to master {master + 1}: {e.Message}");
-                    }
+                        Port = Port,
+                        MaxPlayers = MaxPlayers,
+                        GamemodeName = GamemodeName,
+                        Version = 0
+                    };
+
+                    try { Util.AppendTelemetry(ref request); } catch (Exception) { }
+
+                    await client.PutAsync(MasterServers[master],
+                        new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json"));
+
                 }
-
-                content.Dispose();
+                catch (InvalidOperationException)
+                {
+                    logger.LogError(LogEvent.Announce, $"Failed to announce to master {master + 1}: URL is invalid");
+                }
+                catch (Exception e)
+                {
+                    logger.LogWarning(LogEvent.Announce, $"Failed to announce to master {master + 1}: {e.Message}");
+                }
             }
+
+            content.Dispose();
         }
 
         private void CalculateTicksPerSecond()
@@ -235,8 +248,9 @@ namespace GTAServer
             TicksPerSecond = CurrentTick - _ticksLastSecond;
             _ticksLastSecond = CurrentTick;
 
+#if !BUILD_WASM
             Console.Title = "GTAServer - " + Name + " (" + Clients.Count + "/" + MaxPlayers + " players) - Port: " + Port + " - TPS: " + TicksPerSecond;
-
+#endif
         }
 
         public void Tick()
@@ -327,11 +341,11 @@ namespace GTAServer
 
                             Server.SendUnconnectedMessage(reply, msg.SenderEndPoint);
                         }
-                        else if (ucType == "players")
+                        else if(ucType == "players")
                         {
-                            var playerList = new PlayerList {};
+                            var playerList = new PlayerList { };
                             lock (Clients)
-                                foreach (var c in Clients)
+                                foreach(var c in Clients)
                                 {
                                     var address = c.NetConnection
                                         .RemoteEndPoint
@@ -451,18 +465,11 @@ namespace GTAServer
             sender.GameServer = this;
 
             // invoke command
-            split = command.Split(' ');
-            if (!Commands.ContainsKey(split[0]))
+            var found = ServerManager.ExecuteCommand(command, this, sender);
+            if(!found)
             {
                 RespondRconMessage(msg.SenderEndPoint, "Command not found");
-                return;
             }
-
-            Commands[split[0]].Invoke(new CommandContext
-            {
-                Sender = sender,
-                GameServer = this
-            }, split.Skip(1).ToList());
         }
 
         internal void RespondRconMessage(IPEndPoint destination, string response)
@@ -495,7 +502,6 @@ namespace GTAServer
             client.GameVersion = connReq.GameVersion;
             client.RemoteScriptVersion = (ScriptVersion)connReq.ScriptVersion;
 
-
             // If nicknames are disabled on the server, set the nickname to the player's social club name.
             if (!AllowNicknames)
             {
@@ -506,32 +512,40 @@ namespace GTAServer
 
 
             logger.LogInformation(LogEvent.Handshake,
-                $"New connection request: {client.DisplayName}@{msg.SenderEndPoint.Address.ToString()} | Game version: {client.GameVersion.ToString()} | Script version: {client.RemoteScriptVersion.ToString()}");
+                $"New connection request: {client.DisplayName}@{msg.SenderEndPoint.Address} | Game version: {client.GameVersion} | Script version: {client.RemoteScriptVersion}");
 
             var latestScriptVersion = Enum.GetValues(typeof(ScriptVersion)).Cast<ScriptVersion>().Last();
-            if (!AllowOutdatedClients &&
-                (ScriptVersion)connReq.ScriptVersion != latestScriptVersion)
-            {
-                var latestReadableScriptVersion = latestScriptVersion.ToString();
-                latestReadableScriptVersion = Regex.Replace(latestReadableScriptVersion, "VERSION_", "",
-                    RegexOptions.IgnoreCase);
-                latestReadableScriptVersion = Regex.Replace(latestReadableScriptVersion, "_", ".",
-                    RegexOptions.IgnoreCase);
+            var latestReadableScriptVersion = latestScriptVersion.ToReadable();
 
-                logger.LogInformation(LogEvent.Handshake, $"Client {client.DisplayName} tried to connect with an outdated script version {client.RemoteScriptVersion.ToString()} but the server requires {latestScriptVersion.ToString()}");
-                DenyConnect(client, $"Please update to version {latestReadableScriptVersion}", true, msg);
-                return;
-            }
-            else if (client.RemoteScriptVersion != latestScriptVersion)
-            {
-                SendNotificationToPlayer(client, "You are currently on an outdated client. Please update.");
-            }
-            else if (client.RemoteScriptVersion == ScriptVersion.VERSION_UNKNOWN)
+            // check version
+            if (client.RemoteScriptVersion == ScriptVersion.VERSION_UNKNOWN)
             {
                 logger.LogInformation(LogEvent.Handshake, $"Client {client.DisplayName} tried to connect with an unknown script version (client too old?)");
-                DenyConnect(client, $"Unknown version. Please re-download GTACoop.", true, msg);
+
+                DenyConnect(client, $"Unknown version. Please re-download GTA Coop from www.gtacoop.com", true, msg);
                 return;
             }
+            if (!AllowOutdatedClients && connReq.ScriptVersion < (byte)latestScriptVersion)
+            {
+                // client outdated
+                logger.LogInformation(LogEvent.Handshake, $"Client {client.DisplayName} tried to connect with an outdated script version {client.RemoteScriptVersion} but the server requires {latestScriptVersion}");
+
+                DenyConnect(client, $"Please update to version {latestReadableScriptVersion} from www.gtacoop.com", true, msg);
+                return;
+            }
+            else if (!AllowOutdatedClients && connReq.ScriptVersion > (byte)latestScriptVersion)
+            {
+                // server outdated?
+                logger.LogInformation(LogEvent.Handshake, $"Client {client.DisplayName} tried to connect with a newer client version {connReq.ScriptVersion}, please make sure the server is up-to-date (current: {latestScriptVersion}, {(byte)latestScriptVersion})");
+
+                DenyConnect(client, $"This server requires an older version ({latestReadableScriptVersion})", true, msg);
+                return;
+            }
+            else if(client.RemoteScriptVersion != latestScriptVersion)
+            {
+                SendNotificationToPlayer(client, "You are currently on an outdated client. Please go to www.gtacoop.com and update.");
+            }
+
             var numClients = 0;
             lock (Clients) numClients = Clients.Count;
             if (numClients >= MaxPlayers)
@@ -571,7 +585,7 @@ namespace GTAServer
             switch (newStatus)
             {
                 case NetConnectionStatus.Connected:
-                    logger.LogInformation(LogEvent.StatusChange, $"Connected: {client.DisplayName}@{msg.SenderEndPoint.Address.ToString()}");
+                    logger.LogInformation(LogEvent.StatusChange, $"Connected: {client.DisplayName}@{msg.SenderEndPoint.Address}");
                     SendNotificationToAll($"Player connected: {client.DisplayName}");
 
                     if (!string.IsNullOrEmpty(Motd)) 
@@ -612,13 +626,13 @@ namespace GTAServer
                             if (client.Kicked)
                             {
                                 logger.LogInformation(LogEvent.StatusChange,
-                                    $"Player kicked: {client.DisplayName}@{msg.SenderEndPoint.Address.ToString()}");
+                                    $"Player kicked: {client.DisplayName}@{msg.SenderEndPoint.Address}");
                                 LastKickedClient = client;
                                 LastKickedIP = client.NetConnection.RemoteEndPoint.ToString();
                             }
                             else
                             {
-                                logger.LogInformation(LogEvent.StatusChange, $"Player disconnected: {client.DisplayName}@{msg.SenderEndPoint.Address.ToString()}");
+                                logger.LogInformation(LogEvent.StatusChange, $"Player disconnected: {client.DisplayName}@{msg.SenderEndPoint.Address}");
                             }
 
                             Clients.Remove(client);
@@ -639,6 +653,8 @@ namespace GTAServer
         }
         private void HandleClientDiscoveryRequest(Client client, NetIncomingMessage msg)
         {
+            var latestScriptVersion = Enum.GetValues(typeof(ScriptVersion)).Cast<ScriptVersion>().Last();
+
             var responsePkt = Server.CreateMessage();
             var discoveryResponse = new DiscoveryResponse
             {
@@ -647,6 +663,7 @@ namespace GTAServer
                 PasswordProtected = PasswordProtected,
                 Gamemode = GamemodeName,
                 Port = Port,
+                Version = (byte)latestScriptVersion
             };
             lock (Clients) discoveryResponse.PlayerCount = Clients.Count;
 
@@ -654,13 +671,17 @@ namespace GTAServer
             responsePkt.Write((int)PacketType.DiscoveryResponse);
             responsePkt.Write(serializedResponse.Length);
             responsePkt.Write(serializedResponse);
-            logger.LogInformation(LogEvent.Connection, $"Server status requested by {msg.SenderEndPoint.Address.ToString()}");
+            logger.LogInformation(LogEvent.Connection, $"Server status requested by {msg.SenderEndPoint.Address}");
             Server.SendDiscoveryResponse(responsePkt, msg.SenderEndPoint);
         }
 
         private void HandleClientIncomingData(Client client, NetIncomingMessage msg)
         {
-            if (msg.LengthBits == 0) return;
+            if (msg.LengthBytes < 8)
+            {
+                logger.LogWarning(LogEvent.Incoming, "Received invalid packet from " + client.DisplayName);
+                return;
+            }
 
             var packetType = (PacketType)msg.ReadInt32();
 
@@ -681,9 +702,9 @@ namespace GTAServer
                             // Command handling
                             if (chatData.Message.StartsWith("/"))
                             {
-                                var cmdArgs = chatData.Message.Split(' ');
+                                var cmdArgs = Util.SplitCommandString(chatData.Message);
                                 var cmdName = cmdArgs[0].Remove(0, 1);
-                                if (Commands.ContainsKey(cmdName))
+                                if (Commands.Any(x => x.Key.Name == cmdName))
                                 {
                                     if (HasPermission(client, PermissionType.Command, cmdName))
                                     {
@@ -695,7 +716,8 @@ namespace GTAServer
                                             Sender = client
                                         };
 
-                                        Commands[cmdName](ctx, cmdArgs.Skip(1).ToList());
+                                        var command = Commands.First(x => x.Key.Name == cmdName);
+                                        command.Value.Invoke(ctx, cmdArgs.Skip(1).ToList());
                                     }
                                     else
                                     {
@@ -759,12 +781,12 @@ namespace GTAServer
                             vehicleData = vehiclePluginResult.Data;
 
                             vehicleData.Id = client.NetConnection.RemoteUniqueIdentifier;
-                            vehicleData.Name = client.Name;
+                            vehicleData.Name = client.DisplayName;
                             vehicleData.Latency = client.Latency;
 
                             client.Health = vehicleData.PlayerHealth;
                             client.LastKnownPosition = vehicleData.Position;
-                            client.IsInVehicle = false;
+                            client.IsInVehicle = true;
 
                             SendToAll(vehicleData, PacketType.VehiclePositionData, false, client);
                         }
@@ -938,9 +960,16 @@ namespace GTAServer
         /// </summary>
         /// <param name="command">The name of the command</param>
         /// <param name="callback">The callback which will get triggered while executing the command</param>
-        public void RegisterCommand(string command, Action<CommandContext, List<string>> callback)
+        public void RegisterCommand(string name, Action<CommandContext, List<string>> callback)
         {
-            if(Commands.ContainsKey(command))
+            var command = new Command { Name = name };
+
+            RegisterCommand(command, callback);
+        }
+
+        public void RegisterCommand(Command command, Action<CommandContext, List<string>> callback)
+        {
+            if (Commands.ContainsKey(command))
                 throw new Exception("A command with this name has already been registered");
 
             Commands.Add(command, callback);
@@ -952,13 +981,19 @@ namespace GTAServer
         /// <typeparam name="T">The class to look for commands</typeparam>
         public void RegisterCommands<T>()
         {
-            var commands = typeof(T).GetMethods().Where(method => method.GetCustomAttributes(typeof(Command), false).Any());
+            var commands = typeof(T).GetMethods().Where(method => method.GetCustomAttributes(typeof(CommandAttribute), false).Any());
 
             foreach (var method in commands)
             {
-                var name = method.GetCustomAttribute<Command>(true).Name;
+                var attribute = method.GetCustomAttribute<CommandAttribute>(true);
+                var command = new Command
+                {
+                    Name = attribute.Name,
+                    Description = attribute.Description,
+                    Usage = attribute.Usage
+                };
 
-                RegisterCommand(name, (Action<CommandContext, List<string>>)Delegate.CreateDelegate(typeof(Action<CommandContext, List<string>>), method));
+                RegisterCommand(command, (Action<CommandContext, List<string>>)Delegate.CreateDelegate(typeof(Action<CommandContext, List<string>>), method));
             }
         }
 
@@ -1125,6 +1160,83 @@ namespace GTAServer
             player.NetConnection.SendMessage(msg, NetDeliveryMethod.ReliableOrdered, GetChannelForClient(player));
         }
 
+        public void SetNativeCallOnTickForPlayer(Client player, string identifier, ulong hash, params object[] arguments)
+        {
+            var obj = new NativeData
+            {
+                Hash = hash,
+                Arguments = ParseNativeArguments(arguments)
+            };
+
+
+            var wrapper = new NativeTickCall();
+            wrapper.Id = identifier;
+            wrapper.Native = obj;
+
+            var bin = Util.SerializeBinary(wrapper);
+
+            var msg = Server.CreateMessage();
+
+            msg.Write((int)PacketType.NativeTick);
+            msg.Write(bin.Length);
+            msg.Write(bin);
+
+            player.NetConnection.SendMessage(msg, NetDeliveryMethod.ReliableOrdered, GetChannelForClient(player));
+        }
+
+        public void RecallNativeCallOnTickForPlayer(Client player, string identifier)
+        {
+            var wrapper = new NativeTickCall { Id = identifier };
+
+            var bin = Util.SerializeBinary(wrapper);
+
+            var msg = Server.CreateMessage();
+            msg.Write((int)PacketType.NativeTickRecall);
+            msg.Write(bin.Length);
+            msg.Write(bin);
+
+            player.NetConnection.SendMessage(msg, NetDeliveryMethod.ReliableOrdered, GetChannelForClient(player));
+        }
+
+        public void SetNativeCallOnTickForAll(string identifier, ulong hash, params object[] arguments)
+        {
+            var obj = new NativeData
+            {
+                Hash = hash,
+                Arguments = ParseNativeArguments(arguments)
+            };
+
+
+            var wrapper = new NativeTickCall
+            {
+                Id = identifier,
+                Native = obj
+            };
+
+            var bin = Util.SerializeBinary(wrapper);
+
+            var msg = Server.CreateMessage();
+
+            msg.Write((int)PacketType.NativeTick);
+            msg.Write(bin.Length);
+            msg.Write(bin);
+
+            Server.SendToAll(msg, NetDeliveryMethod.ReliableOrdered);
+        }
+
+        public void RecallNativeCallOnTickForAll(string identifier)
+        {
+            var wrapper = new NativeTickCall { Id = identifier };
+
+            var bin = Util.SerializeBinary(wrapper);
+
+            var msg = Server.CreateMessage();
+            msg.Write((int)PacketType.NativeTickRecall);
+            msg.Write(bin.Length);
+            msg.Write(bin);
+
+            Server.SendToAll(msg, NetDeliveryMethod.ReliableOrdered);
+        }
 
 
         // Stuff for scripting

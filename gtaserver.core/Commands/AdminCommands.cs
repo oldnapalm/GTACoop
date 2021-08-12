@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
 using GTAServer.PluginAPI.Attributes;
@@ -10,7 +11,7 @@ namespace GTAServer.Commands
 {
     class AdminCommands
     {
-        [Command("tp")]
+        [Command("tp", Description = "Teleport to an online player", Usage = "Usage: tp <target player>")]
         public static void Teleport(CommandContext ctx, List<string> args)
         {
             if(ctx.Sender is ConsoleCommandSender)
@@ -31,21 +32,28 @@ namespace GTAServer.Commands
             ctx.SendMessage("Teleported to " + target.DisplayName);
         }
 
-        [Command(("kick"))]
+        [Command("kick", Description = "Kick a player from the server", Usage = "Usage: kick <target> [<reason>]")]
         public static void Kick(CommandContext ctx, List<string> args)
         {
+            if(args.Count == 0)
+            {
+                ctx.SendMessage("Usage: kick <target> [<reason>]");
+                return;
+            }
+
             var target = ctx.GameServer.Clients.Find(x =>
-                string.Equals(x.DisplayName.ToLower(), string.Join(" ", args).ToLower(), StringComparison.Ordinal));
+                string.Equals(x.DisplayName.ToLower(), args[0], StringComparison.Ordinal));
             if (target == null)
             {
                 ctx.SendMessage("Player not found");
                 return;
             }
 
-            target.Kick("Kicked by " + ctx.Sender.DisplayName, false);
+            var reason = args.ElementAtOrDefault(1);
+            target.Kick(reason ?? ("Kicked by " + ctx.Sender.DisplayName), false);
         }
 
-        [Command("status")]
+        [Command("status", Description = "Shows info about the current server status")]
         public static void Status(CommandContext ctx, List<string> args)
         {
             if(ctx.Sender is Client)

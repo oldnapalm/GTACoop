@@ -18,7 +18,7 @@ namespace GTACoOp
         {
             if (!Main.IsOnServer()) return;
 
-            //const int npcThreshold = 5000; // 5 second timeout
+            const int npcThreshold = 5000; // 5 second timeout
             const int playerThreshold = 60000; // 60 second timeout
 
             Dictionary<long, SyncPed> localOpps = null;
@@ -33,7 +33,7 @@ namespace GTACoOp
                 }
             }
 
-            /*Dictionary<string, SyncPed> localNpcs = null;
+            Dictionary<string, SyncPed> localNpcs = null;
             lock (Main.Npcs) localNpcs = new Dictionary<string, SyncPed>(Main.Npcs);
             for (int i = localNpcs.Count - 1; i >= 0; i--)
             {
@@ -43,15 +43,15 @@ namespace GTACoOp
                     localNpcs[key].Clear();
                     localNpcs.Remove(key);
                 }
-            }*/
+            }
 
             lock (Main.Opponents) foreach (KeyValuePair<long, SyncPed> opp in new Dictionary<long, SyncPed>(Main.Opponents)) if (!localOpps.ContainsKey(opp.Key)) Main.Opponents.Remove(opp.Key);
 
-            //lock (Main.Npcs) foreach (KeyValuePair<string, SyncPed> npc in new Dictionary<string, SyncPed>(Main.Npcs)) if (!localNpcs.ContainsKey(npc.Key)) Main.Npcs.Remove(npc.Key);
+            lock (Main.Npcs) foreach (KeyValuePair<string, SyncPed> npc in new Dictionary<string, SyncPed>(Main.Npcs)) if (!localNpcs.ContainsKey(npc.Key)) Main.Npcs.Remove(npc.Key);
 
             for (int i = 0; i < localOpps.Count; i++) localOpps.ElementAt(i).Value.DisplayLocally();
 
-            /*for (int i = 0; i < localNpcs.Count; i++) localNpcs.ElementAt(i).Value.DisplayLocally();
+            for (int i = 0; i < localNpcs.Count; i++) localNpcs.ElementAt(i).Value.DisplayLocally();
 
             if (Main.PlayerSettings.SyncWorld)
             {
@@ -68,7 +68,7 @@ namespace GTACoOp
                         Main.SendPedData(ped);
                     }
                 }
-            }*/
+            }
 
             Main.SendPlayerData();
         }

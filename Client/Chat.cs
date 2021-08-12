@@ -43,9 +43,6 @@ namespace GTACoOp
             get { return _isFocused; }
             set
             {
-                if (value)
-                    IsHidden = false;
-
                 if (value && !_isFocused)
                 {
                     _mainScaleform.CallFunction("SET_FOCUS", 2, 2, "ALL");
@@ -56,6 +53,9 @@ namespace GTACoOp
                 }
 
                 _isFocused = value;
+
+                if (value && _isHidden)
+                    _isHidden = false;
             }
         }
 
@@ -66,35 +66,22 @@ namespace GTACoOp
         private int _switch = 1;
         private Keys _lastKey;
         private bool _isFocused;
-        private int _lastMessageTime;
-        private bool _isHidden;
-        private bool IsHidden
-        {
-            get { return _isHidden; }
-            set
-            {
-                if (value && !_isHidden)
-                {
-                    _mainScaleform.CallFunction("hide");
-                }
-                else if (!value && _isHidden)
-                {
-                    _mainScaleform.CallFunction("showFeed");
-                }
-
-                _isHidden = value;
-            }
-        }
+        private DateTime _lastMessageTime = DateTime.UtcNow;
+        private bool _isHidden = false;
 
         public void Tick()
         {
             if (!Main.IsOnServer()) return;
 
-            if (Environment.TickCount >= _lastMessageTime + 15000 && !IsFocused && !IsHidden)
-                IsHidden = true;
+            if (_lastMessageTime.AddSeconds(15) < DateTime.UtcNow && !IsFocused && !_isHidden)
+            {
+                _mainScaleform.CallFunction("hide");
+                _isHidden = true;
+            }
 
-            if (!IsHidden)
+            if (!_isHidden)
                 _mainScaleform.Render2D();
+
 
             if (!IsFocused) return;
             Function.Call(Hash.DISABLE_ALL_CONTROL_ACTIONS, 0);
@@ -102,8 +89,12 @@ namespace GTACoOp
 
         public void AddMessage(string sender, string msg)
         {
-            _lastMessageTime = Environment.TickCount;
-            IsHidden = false;
+            _lastMessageTime = DateTime.UtcNow;
+            if (_isHidden)
+            {
+                _mainScaleform.CallFunction("showFeed");
+                _isHidden = false;
+            }
 
             if (string.IsNullOrEmpty(sender))
             {

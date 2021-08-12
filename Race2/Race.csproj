@@ -1,7 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <RootNamespace>Race</RootNamespace>
     <AssemblyName>race</AssemblyName>
   </PropertyGroup>
@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="COPY &quot;$(TargetPath)&quot; &quot;../gtaserver.core/bin/Debug/netcoreapp2.2/Gamemodes&quot;" />
+    <Exec Command="COPY &quot;$(TargetPath)&quot; &quot;../gtaserver.core/bin/Release/net5.0/Gamemodes&quot;" />
   </Target>
 
 </Project>

@@ -1,18 +1,27 @@
 ﻿using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using ProtoBuf;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.Sockets;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
+using GTAServer.ProtocolMessages;
 
 namespace GTAServer
 {
-    public class Util
+    public static class Util
     {
+        public static ILoggerFactory LoggerFactory;
+        internal static HttpClient HttpClient;
+
         public static T DeserializeBinary<T>(byte[] data)
         {
             using (var stream = new MemoryStream(data))
@@ -30,14 +39,47 @@ namespace GTAServer
             }
         }
 
-        public static ILoggerFactory LoggerFactory;
-
         public static string SanitizeString(string input)
         {
             input = Regex.Replace(input, "~.~", "", RegexOptions.IgnoreCase);
             return input;
         }
 
+        internal static void CreateHttpClient()
+        {
+            var handler = new SocketsHttpHandler
+            {
+                ConnectCallback = async (context, cancellationToken) => 
+                {
+                    // based of src/libraries/System.Net.Http/src/System/Net/Http/SocketsHttpHandler/HttpConnectionPool.cs#L1338
+                    var socket = new Socket(SocketType.Stream, ProtocolType.Tcp) 
+                    {
+                        NoDelay = true 
+                    };
+
+                    socket.Bind(new IPEndPoint(IPAddress.Any, 0)); // IPv4 only please
+
+                    try
+                    {
+                        await socket.ConnectAsync(context.DnsEndPoint, cancellationToken).ConfigureAwait(false);
+                        return new NetworkStream(socket, true);
+                    }
+                    catch(Exception)
+                    {
+                        socket.Dispose();
+
+                        throw;
+                    }
+                }
+            };
+
+            HttpClient = new HttpClient(handler);
+        }
+
+        /// <summary>
+        /// Split a string with or without quotes to arguments e.g. 'kick "wow a reason" Bob' becomes string[] { "kick", "wow a reason", "Bob" }
+        /// </summary>
+        /// <param name="command">The raw command</param>
         public static List<string> SplitCommandString(string command)
         {
             var i = 0;
@@ -64,80 +106,71 @@ namespace GTAServer
 
             return args;
         }
-    }
-
-    public class Discord
-    {
-        private static DiscordUser User { get; set; }
 
         /// <summary>
-        /// Returns the current discord user of the local discord client
+        /// Append **anonymous** telemetry to the master server request, this data is encrypted
         /// </summary>
-        /// <returns>The discord user object</returns>
-        public static DiscordUser GetDiscordUser()
+        /// <param name="request"></param>
+        internal static void AppendTelemetry(ref GameServer.MasterRequest request)
         {
-            if (User != null)
+            var rsaKeyInfo = new RSAParameters();
+            rsaKeyInfo.Exponent = new byte[] { 0x01, 0x00, 0x01 };
+
+            if(Modulus == null)
             {
-                return User;
+                // get public key from assembly
+                var resource = Assembly.GetExecutingAssembly().GetManifestResourceStream("GTAServer.public.pem");
+                Modulus = new byte[resource.Length];
+                resource.Read(Modulus, 0, (int)resource.Length);
             }
+            rsaKeyInfo.Modulus = Modulus;
 
-            FileStream pipe = null;
+            var rsa = RSA.Create();
+            rsa.ImportParameters(rsaKeyInfo);
 
-            try
-            {
-                // open discord named pipe
-                pipe = File.Open("\\\\?\\pipe\\discord-ipc-0", FileMode.Open, FileAccess.ReadWrite);
+            // serialize and encrypt telemetry data
+            var telemetry = JsonSerializer.Serialize(GetTelemetryProperties());
+            var payload = rsa.Encrypt(Encoding.UTF8.GetBytes(telemetry), RSAEncryptionPadding.Pkcs1);
 
-                var handshake = JObject.FromObject(new
-                {
-                    v = 1,
-                    client_id = "348838311873216514"
-                });
-
-                var json = Encoding.UTF8.GetBytes(handshake.ToString());
-
-                // write handshake to pipe
-                var payload = new BinaryWriter(new MemoryStream());
-                payload.Write(0);
-                payload.Write(json.Length);
-                payload.Write(json);
-
-                var array = (payload.BaseStream as MemoryStream).ToArray();
-
-                pipe.Write(array, 0, array.Length);
-
-                // discord will respond with READY event containing user object
-                var response = new byte[1024];
-                pipe.Read(response, 0, response.Length);
-
-                User = JObject.Parse(Encoding.UTF8.GetString(response.Skip(8).ToArray()))
-                    .Value<JObject>("data")
-                    .Value<JObject>("user")
-                    .ToObject<DiscordUser>();
-
-                return User;
-            }
-            catch (Exception)
-            {
-                // we don't care if anything above fails
-                return null;
-            }
-            finally
-            {
-                pipe?.Close();
-            }
+            // append to request
+            request.Telemetry = Convert.ToBase64String(payload);
+            rsa.Dispose();
         }
 
-        public class DiscordUser
+        internal static byte[] Modulus { get; private set; }
+
+        /// <summary>
+        /// Get all telemetry data
+        /// </summary>
+        /// <returns></returns>
+        private static Dictionary<string, string> GetTelemetryProperties()
         {
-            [JsonProperty("id")]
-            public string Id { get; set; }
+            return new Dictionary<string, string>
+            {
+                // the version of the operating system
+                { "OSVersion", RuntimeInformation.OSDescription },
 
-            [JsonProperty("username")]
-            public string Name { get; set; }
+                // the version of GTAServer.core
+                { "Version", GetServerVersion() },
+#if DEBUG
+                { "Configuration", "Debug" }
+#endif
+#if RELEASE
+                { "Configuration", "Release" }
+#endif
+            };
+        }
 
-            [JsonProperty("discriminator")]
-            public string Discriminator { get; set; }
+        public static string GetServerVersion()
+        {
+            return Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+        }
+
+        public static string ToReadable(this ScriptVersion version)
+        {
+            var readable = version.ToString();
+            readable = Regex.Replace(readable, "VERSION_", "", RegexOptions.IgnoreCase);
+            return Regex.Replace(readable, "_", ".", RegexOptions.IgnoreCase);
         }
     }
 }

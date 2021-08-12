@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -11,13 +11,13 @@ using GTA.Math;
 using GTA.Native;
 using Lidgren.Network;
 using NativeUI;
-//using Newtonsoft.Json;
+using Newtonsoft.Json;
 using ProtoBuf;
 using Control = GTA.Control;
 using System.Text.RegularExpressions;
 using System.Globalization;
-using System.Net.Sockets;
-//using MaxMind.GeoIP2;
+using MaxMind.GeoIP2;
+using MaxMind.GeoIP2.Exceptions;
 
 #if VOICE
 using NAudio.Wave;
@@ -34,7 +34,6 @@ namespace GTACoOp
         public UIMenu _serverBrowserMenu;
         //private readonly UIMenu _playerMenu;
         private readonly UIMenu _settingsMenu;
-        private readonly UIMenu _serverMenu;
         private readonly MenuPool _menuPool;
 
         private string _clientIp;
@@ -50,7 +49,6 @@ namespace GTACoOp
         private string _password;
         private bool _lastDead;
         private bool _wasTyping;
-        private bool _serverRunning = false;
         private DebugWindow _debug;
 
         // STATS
@@ -66,6 +64,7 @@ namespace GTACoOp
         private bool debug;
 
         public static Debug DebugLogger;
+        private static Logger _logger;
 
         private bool _isGoingToCar;
 
@@ -109,7 +108,16 @@ namespace GTACoOp
             ReturnsEntityNeedsModel2 = 4,
             ReturnsEntityNeedsModel3 = 5,
         }
-        public string ReadableScriptVersion()
+
+        public static Logger Logger
+        {
+            get
+            {
+                return _logger;
+            }
+        }
+
+        public static string ReadableScriptVersion()
         {
              return Regex.Replace(Regex.Replace(LocalScriptVersion.ToString(), "VERSION_", "", RegexOptions.IgnoreCase), "_", ".", RegexOptions.IgnoreCase);
         }
@@ -127,7 +135,7 @@ namespace GTACoOp
 			_waveInput.DeviceNumber = 0;
             _waveInput.DataAvailable += SendVoiceData;
             _waveInput.WaveFormat = new WaveFormat(44200, 2);
-            _waveInput.RecordingStopped += (object sender, EventArgs e) =>
+            _waveInput.RecordingStopped += (object sender, StoppedEventArgs e) =>
             {
                 _waveInput.Dispose();
                 _waveInput = null;
@@ -141,7 +149,6 @@ namespace GTACoOp
             _waveOutput.Init(_playBuffer);
             _waveOutput.Play();
 #endif
-
             PlayerSettings = Util.ReadSettings(Program.Location + Path.DirectorySeparatorChar + "ClientSettings.xml");
             _threadJumping = new Queue<Action>();
 
@@ -178,8 +185,8 @@ namespace GTACoOp
             };
 
             Tick += OnTick;
+            Aborted += OnShutdown;
             KeyDown += OnKeyDown;
-            Aborted += OnAbort;
 
             KeyUp += (sender, args) =>
             {
@@ -200,12 +207,15 @@ namespace GTACoOp
             _mainMenu = new UIMenu("GTA CooP", "MAIN MENU");
             _settingsMenu = new UIMenu("GTA CooP", "CLIENT SETTINGS");
             _serverBrowserMenu = new UIMenu("GTA CooP", "SERVER BROWSER");
-            //_serverMenu = new UIMenu("Co-oP", "SERVER SETTINGS");
             //_playerMenu = new UIMenu("Co-oP", "PLAYER OPTIONS");
 
-            /*var browserItem = new UIMenuItem("Server Browser");
+            var browserItem = new UIMenuItem("Server Browser");
             browserItem.Activated += (sender, item) => RebuildServerBrowser();
-            _serverBrowserMenu.SetMenuWidthOffset(300);*/
+
+            var lanItem = new UIMenuItem("LAN");
+            lanItem.Activated += (sender, item) => DiscoverLan();
+
+            _serverBrowserMenu.SetMenuWidthOffset(300);
 
             var listenItem = new UIMenuItem("Server IP");
             listenItem.SetRightLabel(PlayerSettings.LastIP);
@@ -290,35 +300,28 @@ namespace GTACoOp
                 }
             };
 
-            var teleportItem = new UIMenuItem("Teleport");
-            teleportItem.Activated += (menu, item) =>
-            {
-                _menuPool.CloseAllMenus();
-                if (Game.IsWaypointActive)
-                    Teleport(World.GetWaypointPosition());
-                else
-                    UI.Notify("Select teleport destination.");
-            };
-
             var settItem = new UIMenuItem("Client Settings");
 
-            var aboutItem = new UIMenuItem("About");
+            var aboutItem = new UIMenuItem("~g~GTA V~w~ Coop mod v" + ReadableScriptVersion() + " by ~b~community~w~");
             aboutItem.Activated += (menu, item) =>
             {
-                UI.Notify("GTA V Coop mod by Guad, Bluscream, TheIndra and wolfmitchell.");
-                UI.Notify("Mod Version: " + ReadableScriptVersion());
+                UI.Notify("GTA V Coop mod version " + ReadableScriptVersion());
+                UI.Notify("Credits: Guad, Bluscream, wolfmitchell, TheIndra, oldnapalm, EntenKoeniq");
+                UI.Notify("Website: www.gtacoop.com");
             };
 
-            //_mainMenu.AddItem(browserItem);
+            _mainMenu.AddItem(browserItem);
+            _mainMenu.AddItem(lanItem);
             _mainMenu.AddItem(connectItem);
-            //_mainMenu.AddItem(listenItem);
-            //_mainMenu.AddItem(portItem);
-            //_mainMenu.AddItem(_passItem);
-            _mainMenu.AddItem(teleportItem);
+            _mainMenu.AddItem(listenItem);
+            _mainMenu.AddItem(portItem);
+            _mainMenu.AddItem(_passItem);
             _mainMenu.AddItem(settItem);
             _mainMenu.AddItem(aboutItem);
 
-            //_mainMenu.BindMenuToItem(_serverBrowserMenu, browserItem);
+            _mainMenu.BindMenuToItem(_serverBrowserMenu, browserItem);
+            _mainMenu.BindMenuToItem(_serverBrowserMenu, lanItem);
+
             _mainMenu.BindMenuToItem(_settingsMenu, settItem);
 
             var nameItem = new UIMenuItem("Display Name");
@@ -335,10 +338,10 @@ namespace GTACoOp
             };
 
 #if VOICE
-            var inputDeviceItem = new UIMenuListItem("Input device", GetInputDevices(), 0);
+            var inputDeviceItem = WaveIn.DeviceCount > 0 ? new UIMenuListItem("Input device", GetInputDevices(), 0) : null;
 #endif
 
-            /*var masterItem = new UIMenuItem("Master Server");
+            var masterItem = new UIMenuItem("Master Server");
             masterItem.SetRightLabel(PlayerSettings.MasterServerAddress);
             masterItem.Activated += (menu, item) =>
             {
@@ -362,18 +365,6 @@ namespace GTACoOp
                     Util.SaveSettings(null);
                     backupMasterItem.SetRightLabel(PlayerSettings.BackupMasterServerAddress);
                 }
-            };*/
-
-            var disableTrafficItem = new UIMenuCheckboxItem("Disable Traffic", PlayerSettings.DisableTraffic);
-            disableTrafficItem.CheckboxEvent += (item, check) =>
-            {
-                if (check && IsOnServer())
-                {
-                    var pos = Game.Player.Character.Position;
-                    Function.Call(Hash.CLEAR_AREA_OF_VEHICLES, pos.X, pos.Y, pos.Z, 1000f, 0);
-                }
-                PlayerSettings.DisableTraffic = check;
-                Util.SaveSettings(null);
             };
 
             var chatLogItem = new UIMenuCheckboxItem("Log Chats", PlayerSettings.ChatLog);
@@ -391,7 +382,7 @@ namespace GTACoOp
                 Util.SaveSettings(null);
             };
 
-            /*var npcItem = new UIMenuCheckboxItem("Share NPC's With Players", PlayerSettings.SyncWorld);
+            var npcItem = new UIMenuCheckboxItem("Share NPC's With Players", PlayerSettings.SyncWorld);
             npcItem.CheckboxEvent += (item, check) =>
             {
                 if (!check && _client != null)
@@ -409,7 +400,7 @@ namespace GTACoOp
                 }
                 PlayerSettings.SyncWorld = check;
                 Util.SaveSettings(null);
-            };*/
+            };
 
             /*var trafficItem = new UIMenuCheckboxItem("Enable Traffic When Sharing", PlayerSettings.SyncTraffic, "May affect performance.");
             trafficItem.CheckboxEvent += (item, check) =>
@@ -418,12 +409,12 @@ namespace GTACoOp
                 Util.SaveSettings(null);
             };*/
 
-            /*var trafficItem = new UIMenuListItem("Share Traffic With Players", new List<dynamic>(Enum.GetNames(typeof(TrafficMode))), 0);
+            var trafficItem = new UIMenuListItem("Share Traffic With Players", new List<dynamic>(Enum.GetNames(typeof(TrafficMode))), 0);
             trafficItem.OnListChanged += (item, index) =>
             {
                 PlayerSettings.SyncTraffic = (TrafficMode) Enum.Parse(typeof(TrafficMode), item.Items[index].ToString());
                 Util.SaveSettings(null);
-            };*/
+            };
 
             var autoConnectItem = new UIMenuCheckboxItem("Auto Connect On Startup", PlayerSettings.AutoConnect);
             autoConnectItem.CheckboxEvent += (item, check) =>
@@ -465,24 +456,11 @@ namespace GTACoOp
                 }
             };
 
-            /*var autoRegisterItem = new UIMenuCheckboxItem("Auto Register", PlayerSettings.AutoRegister);
+            var autoRegisterItem = new UIMenuCheckboxItem("Auto Register", PlayerSettings.AutoRegister);
             autoRegisterItem.CheckboxEvent += (item, check) =>
             {
                 PlayerSettings.AutoRegister = check;
                 Util.SaveSettings(null);
-            };
-
-            var versionItem = new UIMenuListItem("Version", new List<dynamic>(Enum.GetNames(typeof(ScriptVersion))), 0);
-            versionItem.OnListChanged += (item, index) =>
-            {
-                LocalScriptVersion = (ScriptVersion) Enum.Parse(typeof(ScriptVersion), item.Items[index].ToString());
-                //_mainMenu.Clear();_mainMenu.RefreshIndex();
-            };*/
-
-            var debugItem = new UIMenuCheckboxItem("Debug", false);
-            debugItem.CheckboxEvent += (item, check) =>
-            {
-                debug = check;
             };
 
             var netGraphItem = new UIMenuCheckboxItem("Show Network Info", PlayerSettings.ShowNetGraph);
@@ -494,21 +472,26 @@ namespace GTACoOp
                 Util.SaveSettings(null);
             };
 
+            var debugItem = new UIMenuCheckboxItem("Debug", false);
+            debugItem.CheckboxEvent += (item, check) =>
+            {
+                debug = check;
+            };
+
             _settingsMenu.AddItem(nameItem);
-            //_settingsMenu.AddItem(npcItem);
-            //_settingsMenu.AddItem(trafficItem);
-            _settingsMenu.AddItem(disableTrafficItem);
+            _settingsMenu.AddItem(npcItem);
+            _settingsMenu.AddItem(trafficItem);
 #if VOICE
-            _settingsMenu.AddItem(inputDeviceItem);
+            if (inputDeviceItem != null)
+                _settingsMenu.AddItem(inputDeviceItem);
 #endif
             _settingsMenu.AddItem(chatLogItem);
             _settingsMenu.AddItem(hidePasswordsItem);
             _settingsMenu.AddItem(autoConnectItem);
             _settingsMenu.AddItem(autoReconnectItem);
             _settingsMenu.AddItem(autoLoginItem);
-            //_settingsMenu.AddItem(autoRegisterItem);
-            //_settingsMenu.AddItem(masterItem);
-            //_settingsMenu.AddItem(versionItem);
+            _settingsMenu.AddItem(autoRegisterItem);
+            _settingsMenu.AddItem(masterItem);
             _settingsMenu.AddItem(debugItem);
             _settingsMenu.AddItem(netGraphItem);
 
@@ -523,88 +506,86 @@ namespace GTACoOp
 #endregion
 
             _debug = new DebugWindow();
+            _logger = new Logger();
 
             DebugLogger = new Debug();
             DebugLogger.Enabled = PlayerSettings.ShowNetGraph;
 
-            //UI.Notify("~g~GTA V Coop mod v" + ReadableScriptVersion() + " by Guad, Bluscream, TheIndra and wolfmitchell loaded successfully.~w~");
+            UI.Notify("~g~GTA V Coop mod v" + ReadableScriptVersion() + " loaded successfully.~w~");
             if (PlayerSettings.AutoConnect && !String.IsNullOrWhiteSpace(PlayerSettings.LastIP) && PlayerSettings.LastPort != -1 && PlayerSettings.LastPort != 0) { 
                 ConnectToServer(PlayerSettings.LastIP.ToString(), PlayerSettings.LastPort);
             }
 
             _playerList = new PlayerList();
-
-            Util.NativeMemory();
-            Util.DisableSlowMotion();
         }
 
-        /*private void RebuildServerBrowser()
+        private void RebuildServerBrowser()
         {
             _serverBrowserMenu.Clear();
             _serverBrowserMenu.RefreshIndex();
-            if (string.IsNullOrEmpty(PlayerSettings.MasterServerAddress))
-                return;
 
-            string response = String.Empty;
+            if (string.IsNullOrEmpty(PlayerSettings.MasterServerAddress))
+            {
+                UI.Notify("No master server has been configured.");
+                return;
+            }
+
+            string body = null;
             try
             {
-                using (var wc = new WebClient())
+                // WebClient? what year is this?
+                using(var wc = new WebClient())
                 {
-                    response = wc.DownloadString(PlayerSettings.MasterServerAddress);
+                    wc.Headers.Add("User-Agent", "Mozilla/5.0 (GTA Coop " + ReadableScriptVersion() + ")");
+                    body = wc.DownloadString(PlayerSettings.MasterServerAddress);
                 }
             }
-            catch (Exception e)
+            catch(Exception e)
             {
-                UI.Notify("~r~~h~ERROR~h~~w~~n~Could not contact master server. Trying Fallback Server.");
-                if (Main.PlayerSettings.Logging)
-                {
-                    var logOutput = "===== EXCEPTION CONTACTING MASTER SERVER @ " + DateTime.UtcNow + " ======\n";
-                    logOutput += "Message: " + e.Message;
-                    logOutput += "\nData: " + e.Data;
-                    logOutput += "\nStack: " + e.StackTrace;
-                    logOutput += "\nSource: " + e.Source;
-                    logOutput += "\nTarget: " + e.TargetSite;
-                    if (e.InnerException != null)
-                        logOutput += "\nInnerException: " + e.InnerException.Message;
-                    logOutput += "\n";
-                    File.AppendAllText("scripts\\GTACOOP.log", logOutput);
-                }
+                UI.Notify("~r~Error: ~s~Failed to contact master server, please check your configured master server");
+                _logger.WriteException("Failed to connect to master " + PlayerSettings.MasterServerAddress, e);
+
+                // backup master server
                 try
                 {
                     using (var wc = new WebClient())
                     {
-                        response = wc.DownloadString(PlayerSettings.BackupMasterServerAddress);
+                        wc.Headers.Add("User-Agent", "Mozilla/5.0 (GTA Coop " + ReadableScriptVersion() + ")");
+                        body = wc.DownloadString(PlayerSettings.BackupMasterServerAddress);
+
+                        UI.Notify("Backup master server is online, using that one.");
                     }
                 }
-                catch (Exception ex)
+                catch(Exception ex)
                 {
-                    UI.Notify("~r~~h~ERROR~h~~w~~n~Could not contact backup master server. Please retry later...");
-                    if (Main.PlayerSettings.Logging)
-                    {
-                        var logOutput = "===== EXCEPTION CONTACTING BACKUP MASTER SERVER @ " + DateTime.UtcNow + " ======\n";
-                        logOutput += "Message: " + ex.Message;
-                        logOutput += "\nData: " + ex.Data;
-                        logOutput += "\nStack: " + ex.StackTrace;
-                        logOutput += "\nSource: " + ex.Source;
-                        logOutput += "\nTarget: " + ex.TargetSite;
-                        if (e.InnerException != null)
-                            logOutput += "\nInnerException: " + e.InnerException.Message;
-                        logOutput += "\n";
-                        File.AppendAllText("scripts\\GTACOOP.log", logOutput);
-                    }
+                    UI.Notify("~r~Error: ~s~Failed to contact backup master server.");
+                    _logger.WriteException("Failed to connect to master " + PlayerSettings.BackupMasterServerAddress, ex);
                 }
             }
-            if (string.IsNullOrWhiteSpace(response))
+
+            if (body == null)
                 return;
 
-            var dejson = JsonConvert.DeserializeObject<MasterServerList>(response) as MasterServerList;
+            // deserialize master server response
 
-            if (dejson == null) return;
+            MasterServerList response;
+            try
+            {
+                response = JsonConvert.DeserializeObject<MasterServerList>(body);
+            }
+            catch(JsonException e)
+            {
+                UI.Notify("~r~Error: ~s~Master server returned unusual response. Check error log for details.");
+                _logger.WriteException("Failed to parse master server response", e);
 
-            Console.WriteLine("Servers returned by master server: " + dejson.list.Count().ToString());
-            _serverBrowserMenu.Subtitle.Caption = "Servers listed: ~g~~h~" + dejson.list.Count().ToString();
-            var item = new UIMenuItem(dejson.list.Count().ToString() + " Servers listed.");
+                return;
+            }
+
+            Console.WriteLine("Servers returned by master server: " + response.List.Count);
+            _serverBrowserMenu.Subtitle.Caption = "Servers listed: ~g~~h~" + response.List.Count;
+            var item = new UIMenuItem(response.List.Count + " Servers listed.");
             item.SetLeftBadge(UIMenuItem.BadgeStyle.Star);
+
             if (_client == null)
             {
                 var port = GetOpenUdpPort();
@@ -620,22 +601,41 @@ namespace GTACoOp
                 DebugLogger.NetClient = _client;
             }
 
-            foreach (var server in dejson.list)
+            foreach (var server in response.List)
             {
                 var split = server.Split(':');
-                if (split.Length != 2) continue;
+
                 int port;
-                if (!int.TryParse(split[1], out port))
+                // take the last : since IPv6 addresses are like [::1]:4499
+                if (!int.TryParse(split[split.Length - 1], out port))
                     continue;
                 _client.DiscoverKnownPeer(split[0], port);
             }
+        }
 
-            if (debug)
+        private void DiscoverLan()
+        {
+            _serverBrowserMenu.Clear();
+            _serverBrowserMenu.RefreshIndex();
+
+            if (_client == null)
             {
-                // add localhost to server browser if debug
-                _client.DiscoverKnownPeer("localhost", 44499);
+                var port = GetOpenUdpPort();
+                if (port == 0)
+                {
+                    UI.Notify("No available UDP port was found.");
+                    return;
+                }
+                _config.Port = port;
+                _client = new NetClient(_config);
+                _client.Start();
+
+                DebugLogger.NetClient = _client;
             }
-        }*/
+
+            _client.DiscoverLocalPeers(4499);
+            _serverBrowserMenu.Subtitle.Caption = "Servers on LAN";
+        }
 
         public static Dictionary<int, int> CheckPlayerVehicleMods()
         {
@@ -711,18 +711,36 @@ namespace GTACoOp
                 obj.PlayerHealth = player.Health;
                 obj.VehicleHealth = veh.Health;
                 obj.VehicleSeat = Util.GetPedSeat(player);
-                obj.IsPressingHorn = Game.Player.IsPressingHorn;
-                obj.IsSirenActive = veh.SirenActive;
                 obj.VehicleMods = CheckPlayerVehicleMods();
-                obj.IsEngineRunning = veh.EngineRunning;
                 obj.WheelSpeed = veh.WheelSpeed;
                 obj.Steering = veh.SteeringAngle;
                 obj.Speed = veh.Speed;
-
-                obj.RadioStation = (int)Game.RadioStation;
                 obj.Plate = veh.NumberPlate;
+                obj.Livery = Function.Call<int>(Hash.GET_VEHICLE_LIVERY, veh);
 
                 obj.PedProps = CheckPlayerProps();
+                obj.RadioStation = (int)Game.RadioStation;
+
+                if (veh.Model.IsPlane)
+                    obj.LandingGearState = veh.LandingGear;
+
+                if (Game.Player.IsPressingHorn)
+                    obj.Flag |= (byte)VehicleDataFlags.PressingHorn;
+
+                if (veh.SirenActive)
+                    obj.Flag |= (byte)VehicleDataFlags.SirenActive;
+
+                if (veh.HighBeamsOn)
+                    obj.Flag |= (byte)VehicleDataFlags.HighBeamsOn;
+
+                if (veh.LightsOn)
+                    obj.Flag |= (byte)VehicleDataFlags.LightsOn;
+
+                if (veh.EngineRunning)
+                    obj.Flag |= (byte)VehicleDataFlags.EngineRunning;
+
+                if (veh.IsInBurnout())
+                    obj.Flag |= (byte)VehicleDataFlags.InBurnout;
 
                 var bin = SerializeBinary(obj);
 
@@ -739,7 +757,7 @@ namespace GTACoOp
             else
             {
                 bool aiming = Game.IsControlPressed(0, GTA.Control.Aim);
-                bool shooting = Function.Call<bool>(Hash.IS_PED_SHOOTING, player.Handle);
+                bool shooting = player.IsShooting && player.Weapons.Current?.AmmoInClip != 0;
 
                 GTA.Math.Vector3 aimCoord = new GTA.Math.Vector3();
                 if (aiming || shooting)
@@ -753,12 +771,17 @@ namespace GTACoOp
                 obj.PedModelHash = player.Model.Hash;
                 obj.WeaponHash = (int)player.Weapons.Current.Hash;
                 obj.PlayerHealth = player.Health;
-                obj.IsAiming = aiming;
-                obj.IsShooting = shooting;
-                obj.IsJumping = Function.Call<bool>(Hash.IS_PED_JUMPING, player.Handle);
-                obj.IsParachuteOpen = Function.Call<int>(Hash.GET_PED_PARACHUTE_STATE, Game.Player.Character.Handle) == 2;
 
                 obj.PedProps = CheckPlayerProps();
+
+                if (aiming)
+                    obj.Flag |= (byte)PedDataFlags.IsAiming;
+                if (shooting)
+                    obj.Flag |= (byte)PedDataFlags.IsShooting;
+                if (Function.Call<bool>(Hash.IS_PED_JUMPING, player.Handle))
+                    obj.Flag |= (byte)PedDataFlags.IsJumping;
+                if (Function.Call<int>(Hash.GET_PED_PARACHUTE_STATE, Game.Player.Character.Handle) == 2)
+                    obj.Flag |= (byte)PedDataFlags.IsParachuteOpen;
 
                 var bin = SerializeBinary(obj);
 
@@ -794,10 +817,28 @@ namespace GTACoOp
                 obj.VehicleSeat = Util.GetPedSeat(ped);
                 obj.Name = ped.Handle.ToString();
                 obj.Speed = veh.Speed;
-                obj.IsSirenActive = veh.SirenActive;
                 obj.WheelSpeed = veh.WheelSpeed;
                 obj.Steering = veh.SteeringAngle;
-                obj.IsEngineRunning = veh.EngineRunning;
+                obj.Plate = veh.NumberPlate;
+                obj.Livery = Function.Call<int>(Hash.GET_VEHICLE_LIVERY, veh);
+
+                if (veh.Model.IsPlane)
+                    obj.LandingGearState = veh.LandingGear;
+
+                if (veh.SirenActive)
+                    obj.Flag |= (byte)VehicleDataFlags.SirenActive;
+
+                if (veh.HighBeamsOn)
+                    obj.Flag |= (byte)VehicleDataFlags.HighBeamsOn;
+
+                if (veh.LightsOn)
+                    obj.Flag |= (byte)VehicleDataFlags.LightsOn;
+
+                if (veh.EngineRunning)
+                    obj.Flag |= (byte)VehicleDataFlags.EngineRunning;
+
+                if (veh.IsInBurnout())
+                    obj.Flag |= (byte)VehicleDataFlags.InBurnout;
 
                 var bin = SerializeBinary(obj);
 
@@ -813,7 +854,7 @@ namespace GTACoOp
             }
             else
             {
-                bool shooting = Function.Call<bool>(Hash.IS_PED_SHOOTING, ped.Handle);
+                bool shooting = ped.IsShooting && ped.Weapons.Current?.AmmoInClip != 0;
 
                 GTA.Math.Vector3 aimCoord = new GTA.Math.Vector3();
                 if (shooting)
@@ -827,10 +868,13 @@ namespace GTACoOp
                 obj.WeaponHash = (int)ped.Weapons.Current.Hash;
                 obj.PlayerHealth = ped.Health;
                 obj.Name = ped.Handle.ToString();
-                obj.IsAiming = false;
-                obj.IsShooting = shooting;
-                obj.IsJumping = Function.Call<bool>(Hash.IS_PED_JUMPING, ped.Handle);
-                obj.IsParachuteOpen = Function.Call<int>(Hash.GET_PED_PARACHUTE_STATE, ped.Handle) == 2;
+
+                if (shooting)
+                    obj.Flag |= (byte)PedDataFlags.IsShooting;
+                if (Function.Call<bool>(Hash.IS_PED_JUMPING, ped.Handle))
+                    obj.Flag |= (byte)PedDataFlags.IsJumping;
+                if (Function.Call<int>(Hash.GET_PED_PARACHUTE_STATE, ped.Handle) == 2)
+                    obj.Flag |= (byte)PedDataFlags.IsParachuteOpen;
 
                 var bin = SerializeBinary(obj);
 
@@ -876,8 +920,6 @@ namespace GTACoOp
                 _chat.Tick();
                 _playerList.Tick(!_menuPool.IsAnyMenuOpen());
 
-                if (_serverRunning) 
-
                 if (_isGoingToCar && Game.IsControlJustPressed(0, Control.PhoneCancel))
                 {
                     Game.Player.Character.Task.ClearAll();
@@ -886,43 +928,30 @@ namespace GTACoOp
 
                 if (IsOnServer())
                 {
-                    if (!_mainMenu.MenuItems[0].Text.Equals("Disconnect"))
+                    if (!_mainMenu.MenuItems[2].Text.Equals("Disconnect"))
                     {
-                        _mainMenu.MenuItems[0].Text = "Disconnect";
+                        _mainMenu.MenuItems[2].Text = "Disconnect";
                     }
-                    /*if (_settingsMenu.MenuItems[0].Enabled)
+                    if (_settingsMenu.MenuItems[0].Enabled)
                     {
                         _settingsMenu.MenuItems[0].Enabled = false;
-                    }*/
+                    }
                 }
                 else
                 {
-                    if (!_mainMenu.MenuItems[0].Text.Equals("Connect"))
+                    if (_mainMenu.MenuItems[2].Text.Equals("Disconnect"))
                     {
-                        _mainMenu.MenuItems[0].Text = "Connect";
+                        _mainMenu.MenuItems[2].Text = "Connect";
                     }
-                    /*if (!_settingsMenu.MenuItems[0].Enabled)
+                    if (!_settingsMenu.MenuItems[0].Enabled)
                     {
                         _settingsMenu.MenuItems[0].Enabled = true;
-                    }*/
+                    }
                 }
 
-                if (_serverRunning)
-                {
-                    //Program.ServerInstance.Tick();
-                    //if(!_serverMenu.MenuItems[8].Text.Equals("Stop Server"))
-                        //_serverMenu.MenuItems[8].Text = "Stop Server";
-                }
-                else
-                {
-                    //if (!_serverMenu.MenuItems[8].Text.Equals("Start Server"))
-                        //_serverMenu.MenuItems[8].Text = "Start Server";
-                }
                 if (debug)
                 {
-                    //Debug();
-                    _debug.Visible = true;
-                    _debug.Draw();
+                    Debug();
                 }
                 ProcessMessages();
                 DebugLogger.Tick();
@@ -945,7 +974,7 @@ namespace GTACoOp
                 if (time > 50 && _lastDead)
                     _lastDead = false;
 
-                /*if (!PlayerSettings.SyncWorld)
+                if (!PlayerSettings.SyncWorld)
                 {
                     Function.Call(Hash.SET_PED_DENSITY_MULTIPLIER_THIS_FRAME, 0f);
                     Function.Call(Hash.SET_SCENARIO_PED_DENSITY_MULTIPLIER_THIS_FRAME, 0f, 0f);
@@ -970,15 +999,7 @@ namespace GTACoOp
                 {
                     Function.Call((Hash)0x2F9A292AD0A3BD89);
                     Function.Call((Hash)0x5F3B7749C112D552);
-                }*/
-
-                if (PlayerSettings.DisableTraffic)
-                {
-                    Function.Call(Hash.SET_VEHICLE_DENSITY_MULTIPLIER_THIS_FRAME, 0f);
-                    Function.Call(Hash.SET_RANDOM_VEHICLE_DENSITY_MULTIPLIER_THIS_FRAME, 0f);
-                    Function.Call(Hash.SET_PARKED_VEHICLE_DENSITY_MULTIPLIER_THIS_FRAME, 0f);
                 }
-
                 Function.Call(Hash.SET_TIME_SCALE, 1f);
 
                 /*string stats = string.Format("{0}Kb (D)/{1}Kb (U), {2}Msg (D)/{3}Msg (U)", _bytesReceived / 1000,
@@ -1010,26 +1031,33 @@ namespace GTACoOp
             }catch(Exception ex)
             {
                 UI.Notify("<ERROR> Could not handle this tick: " + ex.ToString());
-                if(Main.PlayerSettings.Logging)
-                    File.AppendAllText("scripts\\GTACOOP.log", "[" + DateTime.UtcNow + "] <ERROR> Could not handle this tick: " + ex.Message+"\n");
+                _logger.WriteException("Could not handle tick", ex);
             }
         }
-
-        private void OnAbort(object sender, EventArgs e)
+		
+        private void OnShutdown(object sender, EventArgs e)
         {
-            Tick -= OnTick;
+            if (IsOnServer())
+                _client.Disconnect("Connection closed by peer.");
 
-            if (Opponents != null)
+#if VOICE
+            if (_waveOutput != null)
             {
-                Opponents.ToList().ForEach(pair => pair.Value.Clear());
-                Opponents.Clear();
+                _waveOutput.Stop();
+                _waveOutput.Dispose();
             }
 
-            if (Npcs != null)
+            if (_waveInput != null)
             {
-                Npcs.ToList().ForEach(pair => pair.Value.Clear());
-                Npcs.Clear();
+                _waveInput.StopRecording();
+                _waveInput.Dispose();
             }
+
+            if (_waveWriter != null)
+            {
+                _waveWriter.Dispose();
+            }
+#endif
         }
 
         public static bool IsOnServer()
@@ -1124,23 +1152,15 @@ namespace GTACoOp
             msg.Write(bin.Length);
             msg.Write(bin);
 
-            var host = IPAddress.TryParse(ip, out IPAddress address) ? address.ToString() : Dns.GetHostAddresses(ip).FirstOrDefault(addr => addr.AddressFamily == AddressFamily.InterNetwork).ToString();
-            _client.Connect(host, port == 0 ? Port : port, msg);
+            _client.Connect(ip, port == 0 ? Port : port, msg);
 
-            //var pos = Game.Player.Character.Position;
-            //Function.Call(Hash.CLEAR_AREA_OF_PEDS, pos.X, pos.Y, pos.Z, 100f, 0);
-            //Function.Call(Hash.CLEAR_AREA_OF_VEHICLES, pos.X, pos.Y, pos.Z, 100f, 0);
+            var pos = Game.Player.Character.Position;
+            Function.Call(Hash.CLEAR_AREA_OF_PEDS, pos.X, pos.Y, pos.Z, 100f, 0);
+            Function.Call(Hash.CLEAR_AREA_OF_VEHICLES, pos.X, pos.Y, pos.Z, 100f, 0);
 
-            //Function.Call(Hash.SET_GARBAGE_TRUCKS, 0);
-            //Function.Call(Hash.SET_RANDOM_BOATS, 0);
-            //Function.Call(Hash.SET_RANDOM_TRAINS, 0);
-
-            if (PlayerSettings.DisableTraffic)
-            {
-                var pos = Game.Player.Character.Position;
-                Function.Call(Hash.CLEAR_AREA_OF_VEHICLES, pos.X, pos.Y, pos.Z, 1000f, 0);
-            }
-
+            Function.Call(Hash.SET_GARBAGE_TRUCKS, 0);
+            Function.Call(Hash.SET_RANDOM_BOATS, 0);
+            Function.Call(Hash.SET_RANDOM_TRAINS, 0);
             _lastIP = ip; _lastPort = port;
         }
 
@@ -1209,18 +1229,22 @@ namespace GTACoOp
                                     Opponents[data.Id].VehicleSeat = data.VehicleSeat;
                                     Opponents[data.Id].IsInVehicle = true;
                                     Opponents[data.Id].Latency = data.Latency;
-
                                     Opponents[data.Id].VehicleMods = data.VehicleMods;
-                                    Opponents[data.Id].IsHornPressed = data.IsPressingHorn;
-                                    Opponents[data.Id].Speed = data.Speed;
-                                    Opponents[data.Id].Siren = data.IsSirenActive;
 
-                                    Opponents[data.Id].IsEngineRunning = data.IsEngineRunning;
+                                    Opponents[data.Id].IsHornPressed = (data.Flag & (byte)VehicleDataFlags.PressingHorn) > 0;
+                                    Opponents[data.Id].Siren = (data.Flag & (byte)VehicleDataFlags.SirenActive) > 0;
+                                    Opponents[data.Id].IsInBurnout = (data.Flag & (short)VehicleDataFlags.InBurnout) > 0;
+                                    Opponents[data.Id].HighBeamsOn = (data.Flag & (short)VehicleDataFlags.HighBeamsOn) > 0;
+                                    Opponents[data.Id].LightsOn = (data.Flag & (short)VehicleDataFlags.LightsOn) > 0;
+                                    Opponents[data.Id].IsEngineRunning = (data.Flag & (short)VehicleDataFlags.EngineRunning) > 0;
+
+                                    Opponents[data.Id].Speed = data.Speed;
                                     Opponents[data.Id].WheelSpeed = data.WheelSpeed;
                                     Opponents[data.Id].Steering = data.Steering;
-
                                     Opponents[data.Id].RadioStation = data.RadioStation;
                                     Opponents[data.Id].Plate = data.Plate;
+                                    Opponents[data.Id].LandingGear = data.LandingGearState;
+                                    Opponents[data.Id].Livery = data.Livery;
                                     Opponents[data.Id].PedProps = data.PedProps;
                                 }
                             }
@@ -1254,11 +1278,11 @@ namespace GTACoOp
                                     Opponents[data.Id].IsInVehicle = false;
                                     Opponents[data.Id].AimCoords = data.AimCoords.ToVector();
                                     Opponents[data.Id].CurrentWeapon = data.WeaponHash;
-                                    Opponents[data.Id].IsAiming = data.IsAiming;
-                                    Opponents[data.Id].IsJumping = data.IsJumping;
-                                    Opponents[data.Id].IsShooting = data.IsShooting;
+                                    Opponents[data.Id].IsAiming = (data.Flag & (byte)PedDataFlags.IsAiming) > 0;
+                                    Opponents[data.Id].IsJumping = (data.Flag & (byte)PedDataFlags.IsJumping) > 0;
+                                    Opponents[data.Id].IsShooting = (data.Flag & (byte)PedDataFlags.IsShooting) > 0;
                                     Opponents[data.Id].Latency = data.Latency;
-                                    Opponents[data.Id].IsParachuteOpen = data.IsParachuteOpen;
+                                    Opponents[data.Id].IsParachuteOpen = (data.Flag & (byte)PedDataFlags.IsParachuteOpen) > 0;
                                     Opponents[data.Id].PedProps = data.PedProps;
                                 }
                             }
@@ -1296,11 +1320,21 @@ namespace GTACoOp
                                     Npcs[data.Name].VehicleSeat = data.VehicleSeat;
                                     Npcs[data.Name].IsInVehicle = true;
 
-                                    Npcs[data.Name].Steering = data.Steering;
+                                    Npcs[data.Name].IsHornPressed = (data.Flag & (byte)VehicleDataFlags.PressingHorn) > 0;
+                                    Npcs[data.Name].Siren = (data.Flag & (byte)VehicleDataFlags.SirenActive) > 0;
+                                    Npcs[data.Name].IsInBurnout = (data.Flag & (short)VehicleDataFlags.InBurnout) > 0;
+                                    Npcs[data.Name].HighBeamsOn = (data.Flag & (short)VehicleDataFlags.HighBeamsOn) > 0;
+                                    Npcs[data.Name].LightsOn = (data.Flag & (short)VehicleDataFlags.LightsOn) > 0;
+                                    Npcs[data.Name].IsEngineRunning = (data.Flag & (short)VehicleDataFlags.EngineRunning) > 0;
 
-                                    Npcs[data.Name].IsHornPressed = data.IsPressingHorn;
                                     Npcs[data.Name].Speed = data.Speed;
-                                    Npcs[data.Name].Siren = data.IsSirenActive;
+                                    Npcs[data.Name].WheelSpeed = data.WheelSpeed;
+                                    Npcs[data.Name].Steering = data.Steering;
+                                    Npcs[data.Name].RadioStation = data.RadioStation;
+                                    Npcs[data.Name].Plate = data.Plate;
+                                    Npcs[data.Name].LandingGear = data.LandingGearState;
+                                    Npcs[data.Name].Livery = data.Livery;
+                                    Npcs[data.Name].PedProps = data.PedProps;
                                 }
                             }
                             break;
@@ -1329,10 +1363,10 @@ namespace GTACoOp
                                     Npcs[data.Name].IsInVehicle = false;
                                     Npcs[data.Name].AimCoords = data.AimCoords.ToVector();
                                     Npcs[data.Name].CurrentWeapon = data.WeaponHash;
-                                    Npcs[data.Name].IsAiming = data.IsAiming;
-                                    Npcs[data.Name].IsJumping = data.IsJumping;
-                                    Npcs[data.Name].IsShooting = data.IsShooting;
-                                    Npcs[data.Name].IsParachuteOpen = data.IsParachuteOpen;
+                                    Npcs[data.Name].IsAiming = (data.Flag & (byte)PedDataFlags.IsAiming) > 0;
+                                    Npcs[data.Name].IsJumping = (data.Flag & (byte)PedDataFlags.IsJumping) > 0;
+                                    Npcs[data.Name].IsShooting = (data.Flag & (byte)PedDataFlags.IsShooting) > 0;
+                                    Npcs[data.Name].IsParachuteOpen = (data.Flag & (byte)PedDataFlags.IsParachuteOpen) > 0;
                                 }
                             }
                             break;
@@ -1361,7 +1395,7 @@ namespace GTACoOp
                                             return;
                                         }
                                     }
-                                    /*if (data.Message.ToString().Equals("You can register an account using /register (password)"))
+                                    if (data.Message.ToString().Equals("You can register an account using /register (password)"))
                                     {
                                         if (!String.IsNullOrWhiteSpace(PlayerSettings.AutoLogin) && PlayerSettings.AutoRegister)
                                         {
@@ -1378,7 +1412,7 @@ namespace GTACoOp
                                             _client.SendMessage(Msg, NetDeliveryMethod.ReliableOrdered, 0);
                                             return;
                                         }
-                                    }*/
+                                    }
                                     _chat.AddMessage(sender, data.Message);
                                     /*lock (_threadJumping)
                                     {
@@ -1503,9 +1537,13 @@ namespace GTACoOp
                     {
                         case NetConnectionStatus.InitiatedConnect:
                             UI.Notify("Connecting...");
+                            UpdateStatusText("Connecting to server");
+
                             break;
                         case NetConnectionStatus.Connected:
                             UI.Notify("Connection successful!");
+                            UpdateStatusText(null);
+
                             Util.DisplayHelpText("Press ~INPUT_MULTIPLAYER_INFO~ to view a list of online players");
 #if VOICE
                             _waveInput.StartRecording();
@@ -1523,6 +1561,11 @@ namespace GTACoOp
                         case NetConnectionStatus.Disconnected:
                             var reason = msg.ReadString();
                             UI.Notify("You have been disconnected" + (string.IsNullOrEmpty(reason) ? " from the server." : ": " + reason));
+                            UpdateStatusText(null);
+
+#if VOICE
+                            _waveInput.StopRecording();
+#endif
 
                             lock (Opponents)
                             {
@@ -1532,7 +1575,7 @@ namespace GTACoOp
                                     Opponents.Clear();
                                 }
                             }
-                 
+
                             lock (Npcs)
                             {
                                 if (Npcs != null)
@@ -1541,7 +1584,7 @@ namespace GTACoOp
                                     Npcs.Clear();
                                 }
                             }
-                            
+
                             lock (_dcNatives)
                                 if (_dcNatives != null && _dcNatives.Any())
                                 {
@@ -1579,30 +1622,38 @@ namespace GTACoOp
                     var len = msg.ReadInt32();
                     var bin = msg.ReadBytes(len);
                     var data = DeserializeBinary<DiscoveryResponse>(bin) as DiscoveryResponse;
+
                     if (data == null) return;
-                    //MaxMind.GeoIP2.Responses.CountryResponse geoIP;
-                    string _description;
-                    /*try
+
+                    var database = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "geoip.mmdb");
+                    string description = msg.SenderEndPoint.Address.ToString() + ":" + data.Port;
+
+                    try
                     {
-                        using (var reader = new DatabaseReader(Program.Location + Path.DirectorySeparatorChar + "geoip.mmdb"))
+                        using (var reader = new DatabaseReader(database))
                         {
-                            geoIP = reader.Country(msg.SenderEndPoint.Address.ToString());
-                            data.ServerName = "["+geoIP.Continent.Code+"/"+geoIP.Country.IsoCode+"] "+data.ServerName;
-                            _description = "[" + geoIP.Continent.Name + "/" + geoIP.Country.Name + "] " + msg.SenderEndPoint.Address.ToString() + ":" + data.Port;
+                            var country = reader.Country(msg.SenderEndPoint.Address.ToString());
+                            description = $"[{country.Continent.Code}/{country.Country.IsoCode}] " + description;
                         }
                     }
-                    catch (Exception ex)
+                    catch(AddressNotFoundException)
                     {
-                        UI.Notify("GeoIP: "+ex.Message);*/
-                    _description = msg.SenderEndPoint.Address.ToString() + ":" + data.Port;
-                    //}
+                    }
+                    catch (Exception e)
+                    {
+                        UI.Notify("GeoIP2 failed, check error log for details.");
+                        _logger.WriteException("Failed GeoIP2", e);
+                    }
+
                     var item = new UIMenuItem(data.ServerName);
-                    TextInfo _gamemode = new System.Globalization.CultureInfo("en-US", false).TextInfo;
-                    string __gamemode = _gamemode.ToTitleCase(data.Gamemode.ToString());
-                    var gamemode = data.Gamemode == null ? "Unknown" : __gamemode;
+
+                    TextInfo textinfo = new CultureInfo("en-US", false).TextInfo;
+                    string title = textinfo.ToTitleCase(data.Gamemode.ToString());
+
+                    var gamemode = data.Gamemode == null ? "Unknown" : title;
 
                     item.SetRightLabel(gamemode + " | " + data.PlayerCount + "/" + data.MaxPlayers);
-                    item.Description = _description;
+                    item.Description = description;
 
                     if (data.PasswordProtected)
                         item.SetLeftBadge(UIMenuItem.BadgeStyle.Lock);
@@ -1657,21 +1708,12 @@ namespace GTACoOp
 
         private void Debug()
         {
-            var player = Game.Player.Character;
-
-            var debugText = "";
-
-            if (player.IsInVehicle())
-            {
-                debugText += "\n\n\n\n\nRPM: " + Game.Player.Character.CurrentVehicle.EngineRunning.ToString();
-            }
-
-            new UIResText(debugText, new Point(10, 10), 0.5f).Draw();
 
             _debug.Visible = true;
             _debug.Draw();
 
-            // ignore
+#if DEBUGSYNCPED
+            var player = Game.Player.Character;
             if (_debugSyncPed == null)
             {
                 _debugSyncPed = new SyncPed(player.Model.Hash, player.Position, player.Rotation, false);
@@ -1706,7 +1748,7 @@ namespace GTACoOp
                 else
                 {
                     bool aiming = Game.IsControlPressed(0, GTA.Control.Aim);
-                    bool shooting = Function.Call<bool>(Hash.IS_PED_SHOOTING, player.Handle);
+                    bool shooting = player.IsShooting && player.Weapons.Current?.AmmoInClip != 0;
 
                     GTA.Math.Vector3 aimCoord = new GTA.Math.Vector3();
                     if (aiming || shooting)
@@ -1743,9 +1785,9 @@ namespace GTACoOp
                 Function.Call(Hash.SET_ENTITY_NO_COLLISION_ENTITY, _debugSyncPed.MainVehicle.Handle, player.CurrentVehicle.Handle, false);
                 Function.Call(Hash.SET_ENTITY_NO_COLLISION_ENTITY, player.CurrentVehicle.Handle, _debugSyncPed.MainVehicle.Handle, false);
             }
-
+#endif
         }
-        
+
 #endregion
 
         public void DecodeNativeCall(NativeData obj)
@@ -2150,28 +2192,6 @@ namespace GTACoOp
             return range.Except(portsInUse).FirstOrDefault();
         }
 
-        private void Teleport(Vector3 location)
-        {
-            int i = 0;
-            float groundHeight;
-            location.Z = -50;
-            do
-            {
-                Wait(50);
-                groundHeight = World.GetGroundHeight(location);
-                if (groundHeight == 0)
-                    location.Z += 50;
-                else
-                    location.Z = groundHeight;
-                if (Game.Player.Character.CurrentVehicle != null)
-                    Game.Player.Character.CurrentVehicle.Position = location;
-                else
-                    Game.Player.Character.Position = location;
-                i++;
-            }
-            while (groundHeight == 0 && i < 20);
-        }
-
 #if VOICE
         public static List<Object> GetInputDevices()
         {
@@ -2185,10 +2205,22 @@ namespace GTACoOp
             return list;
         }
 #endif
+
+        public void UpdateStatusText(string text)
+        {
+            if(text == null)
+            {
+                Util.HideBusySpinner();
+                return;
+            }
+
+            Util.ShowBusySpinner(text);
+        }
     }
 
     public class MasterServerList
     {
-        public List<string> list { get; set; }
+        [JsonProperty("list")]
+        public List<string> List { get; set; }
     }
 }

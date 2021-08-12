@@ -12,21 +12,32 @@ using GTAServer.PluginAPI.Entities;
 using GTAServer.Users;
 using System.Runtime.InteropServices;
 using GTAServer.Logging;
+using ProtoBuf;
 
 namespace GTAServer
 {
     public class ServerManager
     {
+        private const string SENTRY_DSN = "https://61668555fb9846bd8a2451366f50e5d3@sentry.io/1320932";
+
         private static ServerConfiguration _gameServerConfiguration;
         private static GameServer _gameServer;
         private static ILogger _logger;
         private static readonly List<IPlugin> _plugins = new List<IPlugin>();
+
+#if !BUILD_WASM
         private static readonly string _location = System.AppContext.BaseDirectory;
+#endif
+#if BUILD_WASM
+        private static readonly string _location = "/home/web_user/gtaserver.core";
+#endif
 
         private static bool _debugMode = false;
         private static int _tickEvery = 10;
 
+#if !BUILD_WASM
         private static UserModule _userModule;
+#endif
 
         private static CancellationTokenSource _cancellationToken;
         private static AutoResetEvent _autoResetEvent = new AutoResetEvent(false);
@@ -64,7 +75,29 @@ namespace GTAServer
                 LoadServerConfiguration(Path.Combine(_location, "Configuration", "serverSettings.xml"));
             if (!_debugMode) _debugMode = _gameServerConfiguration.DebugMode;
 
+            // initialize error tracking
+            if (!_debugMode)
+            {
+                using var sentry = SentrySdk.Init(config => 
+                {
+                    config.Dsn = SENTRY_DSN;
+
+                    // write minidumps on Windows
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) config.AddExceptionProcessor(new MiniDump());
+                });
+
+                ConfigureErrorTracking();
+            }
+
+            // continue
+            Start();
+        }
+
+        public static void Start()
+        {
             Util.LoggerFactory = new LoggerFactory();
+            Util.CreateHttpClient();
+
             if (_debugMode)
             {
 
@@ -75,42 +108,8 @@ namespace GTAServer
                 Util.LoggerFactory.AddProvider(new ConsoleLoggerProvider(LogLevel.Information));
             }
             _logger = Util.LoggerFactory.CreateLogger<ServerManager>();
+
             DoDebugWarning();
-
-            // enable Sentry
-            if(!_debugMode)
-            {
-                SentrySdk.Init(config =>
-                {
-                    config.Dsn = new Dsn("https://61668555fb9846bd8a2451366f50e5d3@sentry.io/1320932");
-
-                    // minidumps are only written on Windows as Linux has no such functionality
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                    {
-                        config.AddExceptionProcessor(new MiniDump());
-                    }
-                });
-
-                SentrySdk.ConfigureScope(scope =>
-                {
-                    // add configuration to crash reports
-                    scope.SetExtra("configuration", _gameServerConfiguration);
-
-                    // if server is ran on Windows we attempt to find a local discord client
-                    // we will then get the username of the current user and include this in the event
-                    // assuming developers need more information about a crash they can contact the user
-                    // (this can be disabled by settings 'AnonymousCrashes' to true in the server configuration)
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && !_gameServerConfiguration.AnonymousCrashes)
-                    {
-                        var user = Discord.GetDiscordUser();
-                        if (user != null)
-                        {
-                            scope.User.Id = user.Id;
-                            scope.User.Username = $"{user.Name}#{user.Discriminator}";
-                        }
-                    }
-                });
-            }
 
             if (_gameServerConfiguration.ServerVariables.Any(v => v.Key == "tickEvery"))
             {
@@ -130,12 +129,12 @@ namespace GTAServer
             _logger.LogInformation(LogEvent.Setup, "Server preparing to start...");
 
             _gameServer = new GameServer(_gameServerConfiguration.Port, _gameServerConfiguration.ServerName,
-                _gameServerConfiguration.GamemodeName, _debugMode, _gameServerConfiguration.UPnP)
+                _gameServerConfiguration.GamemodeName, _debugMode, _gameServerConfiguration)
             {
                 Password = _gameServerConfiguration.Password,
                 AnnounceSelf = _gameServerConfiguration.AnnounceSelf,
                 AllowNicknames = _gameServerConfiguration.AllowNicknames,
-                AllowOutdatedClients = _gameServerConfiguration.AllowOutdatedClients,
+                AllowOutdatedClients = false, //_gameServerConfiguration.AllowOutdatedClients,
                 MaxPlayers = _gameServerConfiguration.MaxClients,
                 Motd = _gameServerConfiguration.Motd,
                 RconPassword = _gameServerConfiguration.RconPassword
@@ -158,6 +157,9 @@ namespace GTAServer
                 }
             }
 
+            RegisterCommands();
+
+#if !BUILD_WASM
             // TODO future refactor
             if (_gameServerConfiguration.UseGroups)
             {
@@ -166,9 +168,8 @@ namespace GTAServer
 				
                 _gameServer.PermissionProvider = _userModule;
             }
+#endif
             _gameServer.Metrics = new PrometheusMetrics();
-
-            RegisterCommands();
 
             _logger.LogInformation(LogEvent.Setup, "Plugins loaded. Enabling plugins...");
             foreach (var plugin in _plugins)
@@ -185,22 +186,25 @@ namespace GTAServer
                 _cancellationToken = new CancellationTokenSource();
                 var console = new ConsoleThread
                 {
-                    CancellationToken = _cancellationToken.Token,
-                    GameServer = _gameServer
+                    CancellationToken = _cancellationToken.Token
                 };
 
+#if !BUILD_WASM
                 Thread c = new Thread(new ThreadStart(console.ThreadProc)) { Name = "Server console thread" };
                 c.Start();
+#endif
 
             }
-
-            Console.CancelKeyPress += Console_CancelKeyPress;
 
             // ready
             _logger.LogInformation(LogEvent.Setup, "Starting server main loop, ready to accept connections.");
 
             _timer = new Timer(DoServerTick, _gameServer, 0, _tickEvery);
+
+#if !BUILD_WASM
+            Console.CancelKeyPress += Console_CancelKeyPress;
             _autoResetEvent.WaitOne();
+#endif
         }
 
         public static void DoServerTick(object serverObject)
@@ -211,6 +215,7 @@ namespace GTAServer
             {
                 server.Tick();
             }
+            catch(ProtoException) { }
             catch (Exception e)
             {
                 _logger.LogError(LogEvent.Tick, e, "Exception while ticking");
@@ -220,7 +225,9 @@ namespace GTAServer
                 else
                 {
                     e.Data.Add("TickException", true);
+#if !BUILD_WASM
                     SentrySdk.CaptureException(e);
+#endif
                 }
             }
         }
@@ -230,7 +237,9 @@ namespace GTAServer
             _logger.LogInformation("SIGINT received - exiting");
             _cancellationToken?.Cancel();
 
+#if !BUILD_WASM
             _userModule?.Stop();
+#endif
 
             _timer.Dispose();
             _autoResetEvent.Set();
@@ -268,20 +277,63 @@ namespace GTAServer
             _gameServer.RegisterCommands<AdminCommands>();
             _gameServer.RegisterCommands<InfoCommands>();
         }
+
+        /// <summary>
+        /// Executes a command on the current <see cref="GameServer"/> instance,
+        /// Called by ConsoleThread on native and by JS in WebAssembly
+        /// </summary>
+        /// <param name="cmd"></param>
+        /// <returns>Whether the command existed</returns>
+        public static bool ExecuteCommand(string cmd, GameServer server = null, ICommandSender sender = null)
+        {
+            server = server ?? _gameServer;
+
+            if (sender == null)
+            {
+                sender = new ConsoleCommandSender
+                {
+                    GameServer = server
+                };
+            }
+
+            var arguments = Util.SplitCommandString(cmd);
+
+            Dictionary<Command, Action<CommandContext, List<string>>> commands;
+            lock (server)
+            {
+                commands = server.Commands;
+
+                // check if the command exists
+                if (arguments.Count == 0 || !commands.Any(x => x.Key.Name == arguments[0])) return false;
+
+                // invoke the command
+                var command = commands.First(x => x.Key.Name == arguments[0]);
+                var context = new CommandContext { Sender = sender, GameServer = _gameServer };
+
+                command.Value.Invoke(context, arguments.Skip(1).ToList());
+
+                return true;
+            }
+
+        }
+
+        private static void ConfigureErrorTracking()
+        {
+            SentrySdk.ConfigureScope(scope =>
+            {
+                // add configuration to crash reports
+                scope.SetExtra("configuration", _gameServerConfiguration);
+                scope.SetExtra("path", AppContext.BaseDirectory);
+            });
+        }
     }
 
     internal class ConsoleThread
     {
         public CancellationToken CancellationToken { get; set; }
-        public GameServer GameServer { get; set; }
 
         public void ThreadProc()
         {
-            var sender = new ConsoleCommandSender
-            {
-                GameServer = GameServer
-            };
-
             // continue until we're told to stop
             while (!CancellationToken.IsCancellationRequested)
             {
@@ -290,24 +342,8 @@ namespace GTAServer
 
                 var input = Console.ReadLine();
                 if (input == null) continue;
-                // TODO this needs to take quotes into account
-                var arguments = Util.SplitCommandString(input);
 
-                Dictionary<string, Action<CommandContext, List<string>>> commands;
-                lock (GameServer)
-                {
-                    commands = GameServer.Commands;
-
-                    // continue if the command exists
-                    if (arguments.Count == 0 || !commands.ContainsKey(arguments[0])) continue;
-
-                    // invoke the command
-                    commands[arguments[0]].Invoke(new CommandContext
-                    {
-                        Sender = sender,
-                        GameServer = GameServer
-                    }, arguments.Skip(1).ToList());
-                }
+                ServerManager.ExecuteCommand(input);
             }
         }
     }
