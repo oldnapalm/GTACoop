@@ -9,7 +9,8 @@ namespace GTAServer.ProtocolMessages {
         IsJumping = 1 << 0,
         IsShooting = 1 << 1,
         IsAiming = 1 << 2,
-        IsParachuteOpen = 1 << 3
+        IsParachuteOpen = 1 << 3,
+        IsInParachuteFreeFall = 1 << 4
     }
 
     [ProtoContract]

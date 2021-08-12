@@ -784,6 +784,8 @@ namespace GTACoOp
                     obj.Flag |= (byte)PedDataFlags.IsJumping;
                 if (Function.Call<int>(Hash.GET_PED_PARACHUTE_STATE, Game.Player.Character.Handle) == 2)
                     obj.Flag |= (byte)PedDataFlags.IsParachuteOpen;
+                if (Function.Call<bool>(Hash.IS_PED_IN_PARACHUTE_FREE_FALL, player.Handle))
+                    obj.Flag |= (byte)PedDataFlags.IsInParachuteFreeFall;
 
                 var bin = SerializeBinary(obj);
 
@@ -877,6 +879,8 @@ namespace GTACoOp
                     obj.Flag |= (byte)PedDataFlags.IsJumping;
                 if (Function.Call<int>(Hash.GET_PED_PARACHUTE_STATE, ped.Handle) == 2)
                     obj.Flag |= (byte)PedDataFlags.IsParachuteOpen;
+                if (Function.Call<bool>(Hash.IS_PED_IN_PARACHUTE_FREE_FALL, ped.Handle))
+                    obj.Flag |= (byte)PedDataFlags.IsInParachuteFreeFall;
 
                 var bin = SerializeBinary(obj);
 
@@ -1285,6 +1289,7 @@ namespace GTACoOp
                                     Opponents[data.Id].IsShooting = (data.Flag & (byte)PedDataFlags.IsShooting) > 0;
                                     Opponents[data.Id].Latency = data.Latency;
                                     Opponents[data.Id].IsParachuteOpen = (data.Flag & (byte)PedDataFlags.IsParachuteOpen) > 0;
+                                    Opponents[data.Id].IsInParachuteFreeFall = (data.Flag & (byte)PedDataFlags.IsInParachuteFreeFall) > 0;
                                     Opponents[data.Id].PedProps = data.PedProps;
                                 }
                             }
@@ -1369,6 +1374,7 @@ namespace GTACoOp
                                     Npcs[data.Name].IsJumping = (data.Flag & (byte)PedDataFlags.IsJumping) > 0;
                                     Npcs[data.Name].IsShooting = (data.Flag & (byte)PedDataFlags.IsShooting) > 0;
                                     Npcs[data.Name].IsParachuteOpen = (data.Flag & (byte)PedDataFlags.IsParachuteOpen) > 0;
+                                    Npcs[data.Name].IsInParachuteFreeFall = (data.Flag & (byte)PedDataFlags.IsInParachuteFreeFall) > 0;
                                 }
                             }
                             break;

@@ -70,6 +70,7 @@ namespace GTACoOp
         }
 
         public bool IsParachuteOpen;
+        public bool IsInParachuteFreeFall;
 
         public double AverageLatency
         {
@@ -602,7 +603,7 @@ namespace GTACoOp
                                 AimCoords.Z, 1500, (uint) FiringPattern.FullAuto);
                         }
 
-                        if (!IsAiming && !IsShooting && !IsJumping)
+                        if (!IsAiming && !IsShooting && !IsJumping && !IsInParachuteFreeFall)
                         {
                             float distance = Character.Position.DistanceTo(Position);
                             if (distance <= 0.15f || distance > 7.0f) // Still or to far away
@@ -626,6 +627,14 @@ namespace GTACoOp
                                 Function.Call(Hash.TASK_GO_STRAIGHT_TO_COORD, Character, Position.X, Position.Y, Position.Z, 4.0f, -1, Character.Heading, 1.0f);
                                 Function.Call(Hash.SET_PED_DESIRED_MOVE_BLEND_RATIO, Character, 2.0f);
                             }
+                        }
+
+                        if (IsInParachuteFreeFall)
+                        {
+                            if (!Function.Call<bool>(Hash.IS_PED_IN_PARACHUTE_FREE_FALL, Character))
+                                Function.Call(Hash.TASK_SKY_DIVE, Character);
+                            Character.Position = dest - new Vector3(0, 0, 1f);
+                            Character.Quaternion = Rotation.ToQuaternion();
                         }
                     }
                     _lastJumping = IsJumping;
