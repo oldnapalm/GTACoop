@@ -142,6 +142,9 @@ namespace Race
                         }
                     }
                 }
+
+                if (!GameServer.Clients.Any())
+                    Session.State = State.Voting;
             }
         }
 
