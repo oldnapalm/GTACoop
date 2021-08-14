@@ -190,25 +190,6 @@ namespace GTACoOp
             bank = 0 */
         }
 
-        public static T Clamp<T>(T min, T value, T max) where T : IComparable
-        {
-            if (value.CompareTo(min) < 0) return min;
-            if (value.CompareTo(max) > 0) return max;
-
-            return value;
-        }
-
-        public static float Unlerp(double left, double center, double right)
-        {
-            return (float)((center - left) / (right - left));
-        }
-
-        // Dirty & dangerous
-        public static dynamic Lerp(dynamic from, float fAlpha, dynamic to)
-        {
-            return ((to - from) * fAlpha + from);
-        }
-
         public static Vector3 LinearVectorLerp(Vector3 start, Vector3 end, int currentTime, int duration)
         {
             return new Vector3()
@@ -223,54 +204,6 @@ namespace GTACoOp
         {
             float change = end - start;
             return change * currentTime / duration + start;
-        }
-
-        public static float Denormalize(this float h)
-        {
-            return h < 0f ? h + 360f : h;
-        }
-
-        public static Vector3 ToRadians(this Vector3 i)
-        {
-            return new Vector3()
-            {
-                X = ToRadians(i.X),
-                Y = ToRadians(i.Y),
-                Z = ToRadians(i.Z),
-            };
-        }
-
-        public static float ToRadians(this float val)
-        {
-            return (float)(Math.PI / 180) * val;
-        }
-
-        public static Quaternion ToQuaternion(this Vector3 vect)
-        {
-            vect = new Vector3()
-            {
-                X = vect.X.Denormalize() * -1,
-                Y = vect.Y.Denormalize() - 180f,
-                Z = vect.Z.Denormalize() - 180f,
-            };
-
-            vect = vect.ToRadians();
-
-            float rollOver2 = vect.Z * 0.5f;
-            float sinRollOver2 = (float)Math.Sin((double)rollOver2);
-            float cosRollOver2 = (float)Math.Cos((double)rollOver2);
-            float pitchOver2 = vect.Y * 0.5f;
-            float sinPitchOver2 = (float)Math.Sin((double)pitchOver2);
-            float cosPitchOver2 = (float)Math.Cos((double)pitchOver2);
-            float yawOver2 = vect.X * 0.5f; // pitch
-            float sinYawOver2 = (float)Math.Sin((double)yawOver2);
-            float cosYawOver2 = (float)Math.Cos((double)yawOver2);
-            Quaternion result = new Quaternion();
-            result.X = cosYawOver2 * cosPitchOver2 * cosRollOver2 + sinYawOver2 * sinPitchOver2 * sinRollOver2;
-            result.Y = cosYawOver2 * cosPitchOver2 * sinRollOver2 - sinYawOver2 * sinPitchOver2 * cosRollOver2;
-            result.Z = cosYawOver2 * sinPitchOver2 * cosRollOver2 + sinYawOver2 * cosPitchOver2 * sinRollOver2;
-            result.W = sinYawOver2 * cosPitchOver2 * cosRollOver2 - cosYawOver2 * sinPitchOver2 * sinRollOver2;
-            return result;
         }
 
         public static void ShowBusySpinner(string text)

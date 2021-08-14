@@ -109,7 +109,7 @@ namespace GTACoOp
         [ProtoMember(7)]
         public LVector3 Position { get; set; }
         [ProtoMember(8)]
-        public LVector3 Quaternion { get; set; }
+        public LQuaternion Quaternion { get; set; }
         [ProtoMember(9)]
         public int VehicleSeat { get; set; }
         [ProtoMember(10)]
@@ -164,7 +164,7 @@ namespace GTACoOp
         [ProtoMember(4)]
         public LVector3 Position { get; set; }
         [ProtoMember(5)]
-        public LVector3 Quaternion { get; set; }
+        public LQuaternion Quaternion { get; set; }
         [ProtoMember(6)]
         public LVector3 AimCoords { get; set; }
         [ProtoMember(7)]

@@ -23,8 +23,7 @@ namespace GTACoOp
         public MaxMind.GeoIP2.Responses.CountryResponse geoIP;
         public Ped Character;
         public Vector3 Position;
-        public Vector3 Rotation;
-        public Vector3 VehicleVelocity;
+        public Quaternion Rotation;
         public bool IsInVehicle;
         public bool IsJumping;
         public int ModelHash;
@@ -41,6 +40,8 @@ namespace GTACoOp
 
         public int VehicleHealth;
         public int VehicleHash;
+        public Quaternion VehicleRotation;
+        public Vector3 VehicleVelocity;
         public int VehiclePrimaryColor;
         public int VehicleSecondaryColor;
         public string Name;
@@ -56,7 +57,7 @@ namespace GTACoOp
         public float WheelSpeed;
         public string Plate;
         public int RadioStation;
-        private DateTime _stopTime;
+        private int _stopTime;
         private bool _lastBurnout;
 
         public float Speed
@@ -93,11 +94,6 @@ namespace GTACoOp
             }
         }
 
-        public int TicksSinceLastUpdate
-        {
-            get { return Environment.TickCount - LastUpdateReceived; }
-        }
-
         public Dictionary<int, int> VehicleMods
         {
             get { return _vehicleMods; }
@@ -130,17 +126,6 @@ namespace GTACoOp
             }
         }
 
-        private Vector3? _lastVehicleRotation;
-        public Vector3 VehicleRotation
-        {
-            get { return _vehicleRotation; }
-            set
-            {
-                _lastVehicleRotation = _vehicleRotation;
-                _vehicleRotation = value;
-            }
-        }
-
         private bool _lastVehicle;
         private uint _switch;
         private bool _lastAiming;
@@ -154,7 +139,6 @@ namespace GTACoOp
         private int _relGroup;
         private DateTime _enterVehicleStarted;
         private Vector3 _vehiclePosition;
-        private Vector3 _vehicleRotation;
         private Dictionary<int, int> _vehicleMods;
         private Dictionary<int, int> _pedProps;
 
@@ -166,7 +150,7 @@ namespace GTACoOp
         private bool _lastHorn;
         private Prop _parachuteProp;
 
-        public SyncPed(int hash, Vector3 pos, Vector3 rot, bool blip = true)
+        public SyncPed(int hash, Vector3 pos, Quaternion rot, bool blip = true)
         {
             Position = pos;
             Rotation = rot;
@@ -178,8 +162,6 @@ namespace GTACoOp
             _relGroup = World.AddRelationshipGroup("SYNCPED");
             World.SetRelationshipBetweenGroups(Relationship.Neutral, _relGroup, Game.Player.Character.RelationshipGroup);
             World.SetRelationshipBetweenGroups(Relationship.Neutral, Game.Player.Character.RelationshipGroup, _relGroup);
-
-            StartInterpolation();
         }
 
         public void SetBlipName(Blip blip, string text)
@@ -311,7 +293,7 @@ namespace GTACoOp
                         Function.Call(Hash.SET_VEHICLE_COLOURS, MainVehicle, VehiclePrimaryColor, VehicleSecondaryColor);
                         MainVehicle.Livery = Livery;
 
-                        MainVehicle.Quaternion = VehicleRotation.ToQuaternion();
+                        MainVehicle.Quaternion = VehicleRotation;
                         MainVehicle.IsInvincible = true;
                         Character.Task.WarpIntoVehicle(MainVehicle, (VehicleSeat)VehicleSeat);
 
@@ -353,7 +335,7 @@ namespace GTACoOp
                         else if (MainVehicle != null && GetResponsiblePed(MainVehicle).Handle == Character.Handle)
                         {
                             MainVehicle.Position = VehiclePosition;
-                            MainVehicle.Rotation = VehicleRotation;
+                            MainVehicle.Quaternion = VehicleRotation;
                         }
                     }
                     return;
@@ -470,52 +452,24 @@ namespace GTACoOp
                                 StartPedalingAnim(true);
                         }
 
-                        if (Speed > 0.2f || IsInBurnout)
+                        if ((Speed > 0.2f || IsInBurnout) && MainVehicle.IsInRangeOf(VehiclePosition, 7.0f))
                         {
-                            int currentTime = Environment.TickCount;
-                            float alpha = Util.Unlerp(currentInterop.StartTime, currentTime, currentInterop.FinishTime);
+                            MainVehicle.Velocity = VehicleVelocity + (VehiclePosition - MainVehicle.Position);
 
-                            alpha = Util.Clamp(0f, alpha, 1.5f);
+                            MainVehicle.Quaternion = Quaternion.Slerp(MainVehicle.Quaternion, VehicleRotation, 0.5f);
 
-                            float cAlpha = alpha - currentInterop.LastAlpha;
-                            currentInterop.LastAlpha = alpha;
-
-                            Vector3 comp = Util.Lerp(new Vector3(), cAlpha, currentInterop.vecError);
-
-                            if (alpha == 1.5f)
-                            {
-                                currentInterop.FinishTime = 0;
-                            }
-
-                            Vector3 newPos = VehiclePosition + comp;
-
-                            MainVehicle.Velocity = VehicleVelocity + (newPos - MainVehicle.Position);
-
-                            _stopTime = DateTime.Now;
-                            _carPosOnUpdate = MainVehicle.Position;
+                            _stopTime = Environment.TickCount;
                         }
-                        else if (DateTime.Now.Subtract(_stopTime).TotalMilliseconds <= 1000)
+                        else if ((Environment.TickCount - _stopTime) <= 1000)
                         {
-                            var dir = VehiclePosition - _lastVehiclePos;
-                            var posTarget = Util.LinearVectorLerp(_carPosOnUpdate, VehiclePosition + dir,
-                                (int)DateTime.Now.Subtract(_stopTime).TotalMilliseconds, 1000);
-                            Function.Call(Hash.SET_ENTITY_COORDS_NO_OFFSET, MainVehicle, posTarget.X, posTarget.Y,
-                                posTarget.Z, 0, 0, 0, 0);
+                            Vector3 posTarget = Util.LinearVectorLerp(MainVehicle.Position, VehiclePosition + (VehiclePosition - MainVehicle.Position), (Environment.TickCount - _stopTime), 1000);
+                            MainVehicle.PositionNoOffset = posTarget;
+                            MainVehicle.Quaternion = Quaternion.Slerp(MainVehicle.Quaternion, VehicleRotation, 0.5f);
                         }
                         else
                         {
-                            MainVehicle.PositionNoOffset = VehiclePosition;
-                        }
-
-                        if (_lastVehicleRotation != null)
-                        {
-                            MainVehicle.Quaternion = Quaternion.Slerp(_lastVehicleRotation.Value.ToQuaternion(),
-                                _vehicleRotation.ToQuaternion(),
-                                Math.Min(1.5f, TicksSinceLastUpdate / (float)AverageLatency));
-                        }
-                        else
-                        {
-                            MainVehicle.Quaternion = _vehicleRotation.ToQuaternion();
+                            MainVehicle.Position = VehiclePosition;
+                            MainVehicle.Quaternion = VehicleRotation;
                         }
                     }
                 }
@@ -558,7 +512,7 @@ namespace GTACoOp
                         }
                         Character.FreezePosition = true;
                         Character.Position = Position - new Vector3(0, 0, 1);
-                        Character.Quaternion = Rotation.ToQuaternion();
+                        Character.Quaternion = Rotation;
                         _parachuteProp.Position = Character.Position + new Vector3(0, 0, 3.7f);
                         _parachuteProp.Quaternion = Character.Quaternion;
 
@@ -609,7 +563,7 @@ namespace GTACoOp
                             if (distance <= 0.15f || distance > 7.0f) // Still or to far away
                             {
                                 Character.Position = dest - new Vector3(0, 0, 1f);
-                                Character.Quaternion = Rotation.ToQuaternion();
+                                Character.Quaternion = Rotation;
                             }
                             else if (distance <= 1.25f) // Walking
                             {
@@ -634,7 +588,7 @@ namespace GTACoOp
                             if (!Function.Call<bool>(Hash.IS_PED_IN_PARACHUTE_FREE_FALL, Character))
                                 Function.Call(Hash.TASK_SKY_DIVE, Character);
                             Character.Position = dest - new Vector3(0, 0, 1f);
-                            Character.Quaternion = Rotation.ToQuaternion();
+                            Character.Quaternion = Rotation;
                         }
                     }
                     _lastJumping = IsJumping;
@@ -648,29 +602,6 @@ namespace GTACoOp
                 UI.Notify("Sync error: " + ex.Message);
                 Main.Logger.WriteException("Exception in SyncPed code", ex);
             }
-        }
-
-        struct Interpolation
-        {
-            public Vector3 vecTarget;
-            public Vector3 vecError;
-            public int StartTime;
-            public int FinishTime;
-            public float LastAlpha;
-        }
-
-        private Interpolation currentInterop;
-
-        public void StartInterpolation()
-        {
-            currentInterop = new Interpolation();
-
-            currentInterop.vecTarget = VehiclePosition;
-            currentInterop.vecError = VehiclePosition - _lastVehiclePos;
-            currentInterop.vecError *= Util.Lerp(0.25f, Util.Unlerp(100, 100, 400), 1f);
-            currentInterop.StartTime = Environment.TickCount;
-            currentInterop.FinishTime = Environment.TickCount + 100;
-            currentInterop.LastAlpha = 0f;
         }
 
         public static Ped GetResponsiblePed(Vehicle veh)

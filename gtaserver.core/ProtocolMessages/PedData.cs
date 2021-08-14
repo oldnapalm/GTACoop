@@ -25,7 +25,7 @@ namespace GTAServer.ProtocolMessages {
         [ProtoMember(4)]
         public Vector3 Position { get; set; }
         [ProtoMember(5)]
-        public Vector3 Quaternion { get; set; }
+        public Quaternion Quaternion { get; set; }
         [ProtoMember(6)]
         public Vector3 AimCoords { get; set; }
         [ProtoMember(7)]
