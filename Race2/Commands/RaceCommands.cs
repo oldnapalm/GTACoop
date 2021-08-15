@@ -41,6 +41,13 @@ namespace Race.Commands
         {
             if (Race.Session.State != State.Started) return;
 
+            lock (Race.Session.Players)
+                if (Race.Session.Players.FirstOrDefault(x => x.Client == ctx.Client) != default)
+                {
+                    ctx.Client.SendMessage("You are already in the race");
+                    return;
+                }
+
             Race.Join(ctx.Client);
         }
 
