@@ -36,6 +36,14 @@ namespace Race.Commands
             Race.GameServer.SendChatMessageToAll($"{ctx.Client.DisplayName} voted for {voted.Name}");
         }
 
+        [Command("join")]
+        public static void Join(CommandContext ctx, List<string> args)
+        {
+            if (Race.Session.State != State.Started) return;
+
+            Race.Join(ctx.Client);
+        }
+
         [Command("leave")]
         public static void Leave(CommandContext ctx, List<string> args)
         {
