@@ -273,7 +273,7 @@ namespace GTACoOp
                     }).ToList();
 
 
-                    if (vehs.Any() && vehs[0].Model.Hash == VehicleHash && vehs[0].IsInRangeOf(gPos, 3f) && !Game.Player.Character.IsInVehicle(MainVehicle))
+                    if (vehs.Any() && vehs[0].Model.Hash == VehicleHash && vehs[0].IsInRangeOf(gPos, 3f))
                     {
                         MainVehicle = vehs[0];
                         /*if (Game.Player.Character.IsInVehicle(MainVehicle) &&
@@ -468,7 +468,7 @@ namespace GTACoOp
                         }
                         else
                         {
-                            MainVehicle.Position = VehiclePosition;
+                            MainVehicle.PositionNoOffset = VehiclePosition;
                             MainVehicle.Quaternion = VehicleRotation;
                         }
                     }
