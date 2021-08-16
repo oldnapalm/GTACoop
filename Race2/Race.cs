@@ -99,42 +99,15 @@ namespace Race
                 lock (Session.Players)
                     foreach (var player in Session.Players)
                     {
-                        var current = Session.Map.Checkpoints[player.CheckpointsPassed];
                         // if close/at waypoint
-                        if (System.Numerics.Vector3.Distance(player.Client.Position.ToVector3(), current.ToVector3()) < 10)
+                        if (System.Numerics.Vector3.Distance(player.Client.Position.ToVector3(), Session.Map.Checkpoints[player.CheckpointsPassed].ToVector3()) < 10)
                         {
-                            GameServer.RecallNativeCallOnTickForPlayer(player.Client, "RACE_CHECKPOINT_MARKER");
-                            GameServer.RecallNativeCallOnTickForPlayer(player.Client, "RACE_CHECKPOINT_MARKER_DIR");
+                            RemoveCheckpoint(player.Client);
 
                             if (Session.Map.Checkpoints.Length > player.CheckpointsPassed + 1)
                             {
-                                var next = Session.Map.Checkpoints[player.CheckpointsPassed + 1];
-                                GameServer.SetNativeCallOnTickForPlayer(player.Client, "RACE_CHECKPOINT_MARKER",
-                                    0x28477EC23D892089, 1, next, new Vector3(), new Vector3(),
-                                    new Vector3() { X = 10f, Y = 10f, Z = 2f },
-                                    241, 247, 57, 180, false, false, 2, false, false, false, false);
-
-                                GameServer.SendNativeCallToPlayer(player.Client, 0xFE43368D2AA4F2FC, next.X, next.Y);
-
-                                if (Session.Map.Checkpoints.Length > player.CheckpointsPassed + 2)
-                                {
-                                    var pointTo = Session.Map.Checkpoints[player.CheckpointsPassed + 2];
-                                    var dir = System.Numerics.Vector3.Normalize(pointTo.ToVector3() - next.ToVector3());
-                                    GameServer.SetNativeCallOnTickForPlayer(player.Client, "RACE_CHECKPOINT_MARKER_DIR",
-                                        0x28477EC23D892089, 20, next.X, next.Y, next.Z + 2f, dir.X, dir.Y, dir.Z,
-                                        new Vector3() { X = 60f, Y = 0f, Z = 0f }, new Vector3() { X = 4f, Y = 4f, Z = 4f },
-                                        87, 193, 250, 200, false, false, 2, false, false, false, false);
-                                }
-                                else
-                                {
-                                    var dir = System.Numerics.Vector3.Normalize(next.ToVector3() - current.ToVector3());
-                                    GameServer.SetNativeCallOnTickForPlayer(player.Client, "RACE_CHECKPOINT_MARKER_DIR",
-                                        0x28477EC23D892089, 4, next.X, next.Y, next.Z + 2f, dir.X, dir.Y, dir.Z,
-                                        new Vector3() { X = 0f, Y = 0f, Z = 0f }, new Vector3() { X = 4f, Y = 4f, Z = 4f },
-                                        87, 193, 250, 200, false, false, 2, false, false, false, false);
-                                }
-
                                 player.CheckpointsPassed++;
+                                AddCheckpoint(player.Client, player.CheckpointsPassed);
                             }
                             else
                             {
@@ -188,20 +161,42 @@ namespace Race
             });
             createVehicle.Start();
 
-            var next = Session.Map.Checkpoints[0];
+            AddCheckpoint(client, 0);
+        }
+
+        public static void AddCheckpoint(Client client, int i)
+        {
+            var next = Session.Map.Checkpoints[i];
             GameServer.SetNativeCallOnTickForPlayer(client, "RACE_CHECKPOINT_MARKER",
                 0x28477EC23D892089, 1, next, new Vector3(), new Vector3(),
                 new Vector3() { X = 10f, Y = 10f, Z = 2f },
                 241, 247, 57, 180, false, false, 2, false, false, false, false);
 
-            var pointTo = Session.Map.Checkpoints[1];
-            var dir = System.Numerics.Vector3.Normalize(pointTo.ToVector3() - next.ToVector3());
-            GameServer.SetNativeCallOnTickForPlayer(client, "RACE_CHECKPOINT_MARKER_DIR",
-                0x28477EC23D892089, 20, next.X, next.Y, next.Z + 2f, dir.X, dir.Y, dir.Z,
-                new Vector3() { X = 60f, Y = 0f, Z = 0f }, new Vector3() { X = 4f, Y = 4f, Z = 4f },
-                87, 193, 250, 200, false, false, 2, false, false, false, false);
+            if (Session.Map.Checkpoints.Length > i + 1)
+            {
+                var pointTo = Session.Map.Checkpoints[i + 1];
+                var dir = System.Numerics.Vector3.Normalize(pointTo.ToVector3() - next.ToVector3());
+                GameServer.SetNativeCallOnTickForPlayer(client, "RACE_CHECKPOINT_MARKER_DIR",
+                    0x28477EC23D892089, 20, next.X, next.Y, next.Z + 2f, dir.X, dir.Y, dir.Z,
+                    new Vector3() { X = 60f, Y = 0f, Z = 0f }, new Vector3() { X = 4f, Y = 4f, Z = 4f },
+                    87, 193, 250, 200, false, false, 2, false, false, false, false);
+            }
+            else
+            {
+                var dir = System.Numerics.Vector3.Normalize(next.ToVector3() - Session.Map.Checkpoints[i - 1].ToVector3());
+                GameServer.SetNativeCallOnTickForPlayer(client, "RACE_CHECKPOINT_MARKER_DIR",
+                    0x28477EC23D892089, 4, next.X, next.Y, next.Z + 2f, dir.X, dir.Y, dir.Z,
+                    new Vector3() { X = 0f, Y = 0f, Z = 0f }, new Vector3() { X = 4f, Y = 4f, Z = 4f },
+                    87, 193, 250, 200, false, false, 2, false, false, false, false);
+            }
 
             GameServer.SendNativeCallToPlayer(client, 0xFE43368D2AA4F2FC, next.X, next.Y);
+        }
+
+        public static void RemoveCheckpoint(Client client)
+        {
+            GameServer.RecallNativeCallOnTickForPlayer(client, "RACE_CHECKPOINT_MARKER");
+            GameServer.RecallNativeCallOnTickForPlayer(client, "RACE_CHECKPOINT_MARKER_DIR");
         }
 
         public static void Join(Client client)
@@ -221,8 +216,7 @@ namespace Race
                     Session.Players.Remove(toRemove);
             }
 
-            GameServer.RecallNativeCallOnTickForPlayer(client, "RACE_CHECKPOINT_MARKER");
-            GameServer.RecallNativeCallOnTickForPlayer(client, "RACE_CHECKPOINT_MARKER_DIR");
+            RemoveCheckpoint(client);
 
             if (!Session.Players.Any())
                 Session.State = State.Voting;
