@@ -295,7 +295,7 @@ namespace GTACoOp
 
                         MainVehicle.Quaternion = VehicleRotation;
                         MainVehicle.IsInvincible = true;
-                        Character.Task.WarpIntoVehicle(MainVehicle, (VehicleSeat)VehicleSeat);
+                        Character.SetIntoVehicle(MainVehicle, (VehicleSeat)VehicleSeat);
 
                         /*if (_playerSeat != -2 && !Game.Player.Character.IsInVehicle(_mainVehicle))
                         { // TODO: Fix me.
