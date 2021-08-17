@@ -409,7 +409,10 @@ namespace GTACoOp
                 Util.SaveSettings(null);
             };*/
 
-            var trafficItem = new UIMenuListItem("Share Traffic With Players", new List<dynamic>(Enum.GetNames(typeof(TrafficMode))), 0);
+            var trafficModes = new List<dynamic>(Enum.GetNames(typeof(TrafficMode)));
+            var selectedTraffic = trafficModes.IndexOf(PlayerSettings.SyncTraffic.ToString());
+            if (selectedTraffic < 0) selectedTraffic = 0;
+            var trafficItem = new UIMenuListItem("Share Traffic With Players", trafficModes, selectedTraffic);
             trafficItem.OnListChanged += (item, index) =>
             {
                 PlayerSettings.SyncTraffic = (TrafficMode) Enum.Parse(typeof(TrafficMode), item.Items[index].ToString());
