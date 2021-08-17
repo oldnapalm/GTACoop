@@ -11,6 +11,7 @@ namespace GTACoOp
         public bool SyncWorld { get; set; }
         //public TrafficMode TrafficMode { get; set; }
         public bool DisableTraffic { get; set; }
+        public bool DisablePeds { get; set; }
         public bool Logging { get; set; }
         public bool ChatLog { get; set; }
         public int MaxStreamedNpcs { get; set; }
@@ -41,6 +42,7 @@ namespace GTACoOp
             SyncWorld = false;
             //TrafficMode = TrafficMode.All;
             DisableTraffic = false;
+            DisablePeds = false;
             AutoConnect = false;
             AutoReconnect = true;
             AutoLogin = "";

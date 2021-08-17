@@ -431,6 +431,18 @@ namespace GTACoOp
                 Util.SaveSettings(null);
             };
 
+            var disablePedsItem = new UIMenuCheckboxItem("Disable Peds", PlayerSettings.DisablePeds);
+            disablePedsItem.CheckboxEvent += (item, check) =>
+            {
+                if (check && IsOnServer())
+                {
+                    var pos = Game.Player.Character.Position;
+                    Function.Call(Hash.CLEAR_AREA_OF_PEDS, pos.X, pos.Y, pos.Z, 1000f, 0);
+                }
+                PlayerSettings.DisablePeds = check;
+                Util.SaveSettings(null);
+            };
+
             var autoConnectItem = new UIMenuCheckboxItem("Auto Connect On Startup", PlayerSettings.AutoConnect);
             autoConnectItem.CheckboxEvent += (item, check) =>
             {
@@ -497,6 +509,7 @@ namespace GTACoOp
             _settingsMenu.AddItem(npcItem);
             //_settingsMenu.AddItem(trafficItem);
             _settingsMenu.AddItem(disableTrafficItem);
+            _settingsMenu.AddItem(disablePedsItem);
 #if VOICE
             if (inputDeviceItem != null)
                 _settingsMenu.AddItem(inputDeviceItem);
@@ -1025,7 +1038,13 @@ namespace GTACoOp
                     Function.Call(Hash.SET_PARKED_VEHICLE_DENSITY_MULTIPLIER_THIS_FRAME, 0f);
                 }
 
-                if (PlayerSettings.SyncWorld || PlayerSettings.DisableTraffic)
+                if (PlayerSettings.DisablePeds)
+                {
+                    Function.Call(Hash.SET_PED_DENSITY_MULTIPLIER_THIS_FRAME, 0f);
+                    Function.Call(Hash.SET_SCENARIO_PED_DENSITY_MULTIPLIER_THIS_FRAME, 0f, 0f);
+                }
+
+                if (PlayerSettings.SyncWorld || PlayerSettings.DisableTraffic || PlayerSettings.DisablePeds)
                 {
                     Function.Call((Hash)0x2F9A292AD0A3BD89);
                     Function.Call((Hash)0x5F3B7749C112D552);
@@ -1187,12 +1206,17 @@ namespace GTACoOp
             if (PlayerSettings.DisableTraffic)
             {
                 var pos = Game.Player.Character.Position;
-                //Function.Call(Hash.CLEAR_AREA_OF_PEDS, pos.X, pos.Y, pos.Z, 100f, 0);
                 Function.Call(Hash.CLEAR_AREA_OF_VEHICLES, pos.X, pos.Y, pos.Z, 1000f, 0);
 
                 Function.Call(Hash.SET_GARBAGE_TRUCKS, 0);
                 Function.Call(Hash.SET_RANDOM_BOATS, 0);
                 Function.Call(Hash.SET_RANDOM_TRAINS, 0);
+            }
+
+            if (PlayerSettings.DisablePeds)
+            {
+                var pos = Game.Player.Character.Position;
+                Function.Call(Hash.CLEAR_AREA_OF_PEDS, pos.X, pos.Y, pos.Z, 1000f, 0);
             }
             _lastIP = ip; _lastPort = port;
         }
