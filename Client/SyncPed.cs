@@ -560,10 +560,13 @@ namespace GTACoOp
                         if (!IsAiming && !IsShooting && !IsJumping && !IsInParachuteFreeFall)
                         {
                             float distance = Character.Position.DistanceTo(Position);
-                            if (distance <= 0.15f || distance > 7.0f) // Still or to far away
+                            if (distance <= 0.15f || distance > 7.0f) // Still or too far away
                             {
-                                Character.Position = dest - new Vector3(0, 0, 1f);
-                                Character.Quaternion = Rotation;
+                                if (distance > 7.0f)
+                                {
+                                    Character.Position = dest - new Vector3(0, 0, 1f);
+                                    Character.Quaternion = Rotation;
+                                }
                             }
                             else if (distance <= 1.25f) // Walking
                             {

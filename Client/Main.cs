@@ -382,7 +382,7 @@ namespace GTACoOp
                 Util.SaveSettings(null);
             };
 
-            var npcItem = new UIMenuCheckboxItem("Share NPC's With Players", PlayerSettings.SyncWorld);
+            var npcItem = new UIMenuCheckboxItem("Share NPCs", PlayerSettings.SyncWorld);
             npcItem.CheckboxEvent += (item, check) =>
             {
                 if (!check && _client != null)
@@ -409,10 +409,25 @@ namespace GTACoOp
                 Util.SaveSettings(null);
             };*/
 
-            var trafficItem = new UIMenuListItem("Share Traffic With Players", new List<dynamic>(Enum.GetNames(typeof(TrafficMode))), 0);
+            /*var trafficModes = new List<dynamic>(Enum.GetNames(typeof(TrafficMode)));
+            var selectedTraffic = trafficModes.IndexOf(PlayerSettings.TrafficMode.ToString());
+            if (selectedTraffic < 0) selectedTraffic = 2;
+            var trafficItem = new UIMenuListItem("Traffic Mode", trafficModes, selectedTraffic);
             trafficItem.OnListChanged += (item, index) =>
             {
-                PlayerSettings.SyncTraffic = (TrafficMode) Enum.Parse(typeof(TrafficMode), item.Items[index].ToString());
+                PlayerSettings.TrafficMode = (TrafficMode) Enum.Parse(typeof(TrafficMode), item.Items[index].ToString());
+                Util.SaveSettings(null);
+            };*/
+
+            var disableTrafficItem = new UIMenuCheckboxItem("Disable Traffic", PlayerSettings.DisableTraffic);
+            disableTrafficItem.CheckboxEvent += (item, check) =>
+            {
+                if (check && IsOnServer())
+                {
+                    var pos = Game.Player.Character.Position;
+                    Function.Call(Hash.CLEAR_AREA_OF_VEHICLES, pos.X, pos.Y, pos.Z, 1000f, 0);
+                }
+                PlayerSettings.DisableTraffic = check;
                 Util.SaveSettings(null);
             };
 
@@ -480,7 +495,8 @@ namespace GTACoOp
 
             _settingsMenu.AddItem(nameItem);
             _settingsMenu.AddItem(npcItem);
-            _settingsMenu.AddItem(trafficItem);
+            //_settingsMenu.AddItem(trafficItem);
+            _settingsMenu.AddItem(disableTrafficItem);
 #if VOICE
             if (inputDeviceItem != null)
                 _settingsMenu.AddItem(inputDeviceItem);
@@ -980,12 +996,12 @@ namespace GTACoOp
                 if (time > 50 && _lastDead)
                     _lastDead = false;
 
-                if (!PlayerSettings.SyncWorld)
+                /*if (!PlayerSettings.SyncWorld)
                 {
                     Function.Call(Hash.SET_PED_DENSITY_MULTIPLIER_THIS_FRAME, 0f);
                     Function.Call(Hash.SET_SCENARIO_PED_DENSITY_MULTIPLIER_THIS_FRAME, 0f, 0f);
                 }
-                switch (PlayerSettings.SyncTraffic)
+                switch (PlayerSettings.TrafficMode)
                 {
                     case TrafficMode.Parked:
                         Function.Call(Hash.SET_VEHICLE_DENSITY_MULTIPLIER_THIS_FRAME, 0f);
@@ -1000,8 +1016,16 @@ namespace GTACoOp
                         break;
                     default:
                         break;
+                }*/
+
+                if (PlayerSettings.DisableTraffic)
+                {
+                    Function.Call(Hash.SET_VEHICLE_DENSITY_MULTIPLIER_THIS_FRAME, 0f);
+                    Function.Call(Hash.SET_RANDOM_VEHICLE_DENSITY_MULTIPLIER_THIS_FRAME, 0f);
+                    Function.Call(Hash.SET_PARKED_VEHICLE_DENSITY_MULTIPLIER_THIS_FRAME, 0f);
                 }
-                if(PlayerSettings.SyncWorld || PlayerSettings.SyncTraffic != TrafficMode.All)
+
+                if (PlayerSettings.SyncWorld || PlayerSettings.DisableTraffic)
                 {
                     Function.Call((Hash)0x2F9A292AD0A3BD89);
                     Function.Call((Hash)0x5F3B7749C112D552);
@@ -1160,13 +1184,16 @@ namespace GTACoOp
 
             _client.Connect(ip, port == 0 ? Port : port, msg);
 
-            var pos = Game.Player.Character.Position;
-            Function.Call(Hash.CLEAR_AREA_OF_PEDS, pos.X, pos.Y, pos.Z, 100f, 0);
-            Function.Call(Hash.CLEAR_AREA_OF_VEHICLES, pos.X, pos.Y, pos.Z, 100f, 0);
+            if (PlayerSettings.DisableTraffic)
+            {
+                var pos = Game.Player.Character.Position;
+                //Function.Call(Hash.CLEAR_AREA_OF_PEDS, pos.X, pos.Y, pos.Z, 100f, 0);
+                Function.Call(Hash.CLEAR_AREA_OF_VEHICLES, pos.X, pos.Y, pos.Z, 1000f, 0);
 
-            Function.Call(Hash.SET_GARBAGE_TRUCKS, 0);
-            Function.Call(Hash.SET_RANDOM_BOATS, 0);
-            Function.Call(Hash.SET_RANDOM_TRAINS, 0);
+                Function.Call(Hash.SET_GARBAGE_TRUCKS, 0);
+                Function.Call(Hash.SET_RANDOM_BOATS, 0);
+                Function.Call(Hash.SET_RANDOM_TRAINS, 0);
+            }
             _lastIP = ip; _lastPort = port;
         }
 

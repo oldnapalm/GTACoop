@@ -9,7 +9,8 @@ namespace GTACoOp
         public int LastPort { get; set; }
         public string LastPassword { get; set; }
         public bool SyncWorld { get; set; }
-        public TrafficMode SyncTraffic { get; set; }
+        //public TrafficMode TrafficMode { get; set; }
+        public bool DisableTraffic { get; set; }
         public bool Logging { get; set; }
         public bool ChatLog { get; set; }
         public int MaxStreamedNpcs { get; set; }
@@ -37,8 +38,9 @@ namespace GTACoOp
             LastPassword = "changeme";
             Logging = false;
             ChatLog = false;
-            SyncWorld = true;
-            SyncTraffic = TrafficMode.None;
+            SyncWorld = false;
+            //TrafficMode = TrafficMode.All;
+            DisableTraffic = false;
             AutoConnect = false;
             AutoReconnect = true;
             AutoLogin = "";
