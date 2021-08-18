@@ -1203,21 +1203,15 @@ namespace GTACoOp
 
             _client.Connect(ip, port == 0 ? Port : port, msg);
 
+            var pos = Game.Player.Character.Position;
             if (PlayerSettings.DisableTraffic)
-            {
-                var pos = Game.Player.Character.Position;
                 Function.Call(Hash.CLEAR_AREA_OF_VEHICLES, pos.X, pos.Y, pos.Z, 1000f, 0);
-
-                Function.Call(Hash.SET_GARBAGE_TRUCKS, 0);
-                Function.Call(Hash.SET_RANDOM_BOATS, 0);
-                Function.Call(Hash.SET_RANDOM_TRAINS, 0);
-            }
-
             if (PlayerSettings.DisablePeds)
-            {
-                var pos = Game.Player.Character.Position;
                 Function.Call(Hash.CLEAR_AREA_OF_PEDS, pos.X, pos.Y, pos.Z, 1000f, 0);
-            }
+
+            Function.Call(Hash.SET_GARBAGE_TRUCKS, 0);
+            Function.Call(Hash.SET_RANDOM_BOATS, 0);
+            Function.Call(Hash.SET_RANDOM_TRAINS, 0);
             _lastIP = ip; _lastPort = port;
         }
 

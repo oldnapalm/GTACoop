@@ -264,7 +264,10 @@ namespace GTACoOp
                 if ((!_lastVehicle && IsInVehicle && VehicleHash != 0) || (_lastVehicle && IsInVehicle && (MainVehicle == null || !Character.IsInVehicle(MainVehicle) || MainVehicle.Model.Hash != VehicleHash || VehicleSeat != Util.GetPedSeat(Character))))
                 {
                     if (MainVehicle != null && Util.IsVehicleEmpty(MainVehicle))
+                    {
+                        MainVehicle.Position = MainVehicle.GetOffsetInWorldCoords(new Vector3(0, 0, -100));
                         MainVehicle.Delete();
+                    }
 
                     var vehs = World.GetAllVehicles().OrderBy(v =>
                     {
