@@ -52,10 +52,11 @@ namespace Race
         {
             if (Session.State == State.Voting && GameServer.Clients.Count >= 1)
             {
-                Session.State = State.Starting;
-                Session.Players = new List<Player>();
-                Session.Votes = new Dictionary<Client, string>();
                 Session.NextEvent = DateTime.Now.AddSeconds(15);
+                Session.State = State.Starting;
+                lock (Session.Players)
+                    Session.Players.Clear();
+                Session.Votes = new Dictionary<Client, string>();
                 GameServer.RecallNativeCallOnTickForAll("RACE_CHECKPOINT_MARKER");
                 GameServer.RecallNativeCallOnTickForAll("RACE_CHECKPOINT_MARKER_DIR");
                 GameServer.SendChatMessageToAll("Starting in 15 seconds, use /vote to vote for a map");
