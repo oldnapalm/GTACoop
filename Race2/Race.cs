@@ -69,9 +69,21 @@ namespace Race
                 Session.Map = Maps.First(x => x.Name == map);
                 GameServer.SendChatMessageToAll("Map: " + map + ", use /leave to leave the race");
 
-                lock (GameServer.Clients)
-                    for (int i = 0; i < GameServer.Clients.Count; i++)
-                        SetUpPlayerForRace(GameServer.Clients[i], i, true);
+                Session.Vehicle = (int)Session.Map.AvailableVehicles[new Random().Next(Session.Map.AvailableVehicles.Length)];
+                var addPlayers = new Thread((ThreadStart)delegate
+                {
+                    GameServer.SendNativeCallToAll(0x963D27A58DF860AC, Session.Vehicle); // request model
+                    Thread.Sleep(1000);
+                    int spawnPoint = 0;
+                    lock (GameServer.Clients)
+                        foreach (var client in GameServer.Clients)
+                        {
+                            CreateVehicle(client, spawnPoint, true);
+                            AddCheckpoint(client, 0);
+                            spawnPoint++;
+                        }
+                });
+                addPlayers.Start();
 
                 GameServer.SendNotificationToAll("The race is about to start");
                 GameServer.SendNotificationToAll("Get ready");
@@ -88,7 +100,7 @@ namespace Race
 
                     lock (Session.Players)
                         foreach (var player in Session.Players)
-                            GameServer.SendNativeCallToPlayer(player.Client, 0x428CA6DBD1094446, player.Vehicle, false);
+                            GameServer.SendNativeCallToPlayer(player.Client, 0x428CA6DBD1094446, player.Vehicle, false); // (un)freeze entity position
 
                     Session.RaceStart = Environment.TickCount;
                 });
@@ -138,33 +150,6 @@ namespace Race
             Leave(client);
         }
 
-        private static void SetUpPlayerForRace(Client client, int spawnPoint, bool freeze)
-        {
-            var createVehicle = new Thread((ThreadStart)delegate
-            {
-                var position = Session.Map.SpawnPoints[spawnPoint % Session.Map.SpawnPoints.Length].Position;
-                var heading = Session.Map.SpawnPoints[spawnPoint % Session.Map.SpawnPoints.Length].Heading;
-                var model = (int)Session.Map.AvailableVehicles[new Random().Next(Session.Map.AvailableVehicles.Length)];
-                GameServer.SetPlayerPosition(client, position);
-                GameServer.SetNativeCallOnTickForPlayer(client, "RACE_REQUEST_MODEL", 0x963D27A58DF860AC, model);
-                Thread.Sleep(5000);
-                GameServer.RecallNativeCallOnTickForPlayer(client, "RACE_REQUEST_MODEL");
-                GameServer.GetNativeCallFromPlayer(client, "spawn", 0xAF35D0D2583051B0, new IntArgument(),
-                    delegate (object o)
-                    {
-                        GameServer.SendNativeCallToPlayer(client, 0xF75B0D629E1C063D, new LocalPlayerArgument(), (int)o, -1);
-                        if (freeze)
-                            GameServer.SendNativeCallToPlayer(client, 0x428CA6DBD1094446, (int)o, true);
-                        GameServer.SendNativeCallToPlayer(client, 0xE532F5D78798DAAB, model);
-                        lock (Session.Players)
-                            Session.Players.Add(new Player(client, (int)o));
-                    }, model, position.X, position.Y, position.Z, heading, false, false);
-            });
-            createVehicle.Start();
-
-            AddCheckpoint(client, 0);
-        }
-
         public static void AddCheckpoint(Client client, int i)
         {
             var next = Session.Map.Checkpoints[i];
@@ -191,7 +176,7 @@ namespace Race
                     87, 193, 250, 200, false, false, 2, false, false, false, false);
             }
 
-            GameServer.SendNativeCallToPlayer(client, 0xFE43368D2AA4F2FC, next.X, next.Y);
+            GameServer.SendNativeCallToPlayer(client, 0xFE43368D2AA4F2FC, next.X, next.Y); // set new waypoint
         }
 
         public static void RemoveCheckpoint(Client client)
@@ -200,9 +185,33 @@ namespace Race
             GameServer.RecallNativeCallOnTickForPlayer(client, "RACE_CHECKPOINT_MARKER_DIR");
         }
 
+        public static void CreateVehicle(Client client, int spawnPoint, bool freeze)
+        {
+            var position = Session.Map.SpawnPoints[spawnPoint % Session.Map.SpawnPoints.Length].Position;
+            var heading = Session.Map.SpawnPoints[spawnPoint % Session.Map.SpawnPoints.Length].Heading;
+            GameServer.SetPlayerPosition(client, position);
+            GameServer.GetNativeCallFromPlayer(client, "spawn", 0xAF35D0D2583051B0, new IntArgument(), // create vehicle
+                delegate (object o)
+                {
+                    GameServer.SendNativeCallToPlayer(client, 0xF75B0D629E1C063D, new LocalPlayerArgument(), (int)o, -1); // set ped into vehicle
+                    if (freeze)
+                        GameServer.SendNativeCallToPlayer(client, 0x428CA6DBD1094446, (int)o, true); // freeze entity position
+                    GameServer.SendNativeCallToPlayer(client, 0xE532F5D78798DAAB, Session.Vehicle); // set model as no longer needed
+                    lock (Session.Players)
+                        Session.Players.Add(new Player(client, (int)o));
+                }, Session.Vehicle, position.X, position.Y, position.Z, heading, false, false);
+        }
+
         public static void Join(Client client)
         {
-            SetUpPlayerForRace(client, 0, false);
+            var addPlayer = new Thread((ThreadStart)delegate
+            {
+                GameServer.SendNativeCallToPlayer(client, 0x963D27A58DF860AC, Session.Vehicle); // request model
+                Thread.Sleep(1000);
+                CreateVehicle(client, 0, false);
+                AddCheckpoint(client, 0);
+            });
+            addPlayer.Start();
         }
 
         public static void Leave(Client client)
