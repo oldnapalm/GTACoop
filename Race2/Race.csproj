@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <RootNamespace>Race</RootNamespace>
+    <AssemblyName>race</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\gtaserver.core\gtaserver.core.csproj" />
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="MKDIR &quot;../gtaserver.core/bin/Debug/net5.0/Gamemodes&quot;&#xD;&#xA;COPY &quot;$(TargetPath)&quot; &quot;../gtaserver.core/bin/Debug/net5.0/Gamemodes&quot;&#xD;&#xA;MKDIR &quot;../gtaserver.core/bin/Debug/net5.0/Gamemodes/Maps&quot;&#xD;&#xA;XCOPY /S /Y Maps &quot;../gtaserver.core/bin/Debug/net5.0/Gamemodes/Maps&quot;" />
+  </Target>
+
+</Project>

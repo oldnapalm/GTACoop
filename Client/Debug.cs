@@ -3,6 +3,7 @@ using System;
 using System.Drawing;
 using Lidgren.Network;
 using GTA.Native;
+using System.IO;
 
 namespace GTACoOp
 {
@@ -71,6 +72,57 @@ namespace GTACoOp
         public long GetGameTimer()
         {
             return Function.Call<long>(Hash.GET_GAME_TIMER);
+        }
+    }
+
+    // very basic logger
+    public class Logger : IDisposable
+    {
+        private StreamWriter _handle;
+
+        public Logger()
+        {
+            // %localappdata%\cgmp\gtacoop\error.log
+            // C:\Program Files\ can not always be written
+            // documents might be easier to find for the user?
+            var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "cgmp", "gtacoop");
+
+            if(!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+
+            // TODO this might fail and then entire client is fucked, try to catch
+            _handle = new StreamWriter(path + @"\error.log");
+
+            // yay
+            WriteLine("GTA Coop version " + Main.ReadableScriptVersion());
+        }
+
+        public void Dispose()
+        {
+            _handle.Close();
+
+            GC.SuppressFinalize(this);
+        }
+
+        public void Write(string text)
+        {
+            _handle.Write(text);
+            _handle.Flush();
+        }
+
+        public void WriteLine(string text = "")
+        {
+            _handle.WriteLine(text);
+            _handle.Flush();
+        }
+
+        public void WriteException(string description, Exception e)
+        {
+            _handle.WriteLine(description + ": " + e.Message + "\n" 
+                + e.StackTrace);
+            _handle.Flush();
         }
     }
 }

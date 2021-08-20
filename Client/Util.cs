@@ -187,5 +187,33 @@ namespace GTACoOp
             heading = -2 * atan2(x,w)
             bank = 0 */
         }
+
+        public static Vector3 LinearVectorLerp(Vector3 start, Vector3 end, int currentTime, int duration)
+        {
+            return new Vector3()
+            {
+                X = LinearFloatLerp(start.X, end.X, currentTime, duration),
+                Y = LinearFloatLerp(start.Y, end.Y, currentTime, duration),
+                Z = LinearFloatLerp(start.Z, end.Z, currentTime, duration),
+            };
+        }
+
+        public static float LinearFloatLerp(float start, float end, int currentTime, int duration)
+        {
+            float change = end - start;
+            return change * currentTime / duration + start;
+        }
+
+        public static void ShowBusySpinner(string text)
+        {
+            Function.Call((Hash)0xABA17D7CE615ADBF /* BEGIN_TEXT_COMMAND_BUSYSPINNER_ON */, "STRING");
+            Function.Call((Hash)0x6C188BE134E074AA /* ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME */, text);
+            Function.Call((Hash)0xBD12F8228410D9B4 /* END_TEXT_COMMAND_BUSYSPINNER_ON */, 0);
+        }
+
+        public static void HideBusySpinner()
+        {
+            Function.Call((Hash)0x10D373323E5B9C0D /* BUSYSPINNER_OFF */);
+        }
     }
 }

@@ -13,6 +13,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using GTAServer.ProtocolMessages;
 
 namespace GTAServer
 {
@@ -163,6 +164,13 @@ namespace GTAServer
         public static string GetServerVersion()
         {
             return Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+        }
+
+        public static string ToReadable(this ScriptVersion version)
+        {
+            var readable = version.ToString();
+            readable = Regex.Replace(readable, "VERSION_", "", RegexOptions.IgnoreCase);
+            return Regex.Replace(readable, "_", ".", RegexOptions.IgnoreCase);
         }
     }
 }
