@@ -9,7 +9,8 @@ namespace GTAServer.ProtocolMessages {
         IsJumping = 1 << 0,
         IsShooting = 1 << 1,
         IsAiming = 1 << 2,
-        IsParachuteOpen = 1 << 3
+        IsParachuteOpen = 1 << 3,
+        IsInParachuteFreeFall = 1 << 4
     }
 
     [ProtoContract]
@@ -24,7 +25,7 @@ namespace GTAServer.ProtocolMessages {
         [ProtoMember(4)]
         public Vector3 Position { get; set; }
         [ProtoMember(5)]
-        public Vector3 Quaternion { get; set; }
+        public Quaternion Quaternion { get; set; }
         [ProtoMember(6)]
         public Vector3 AimCoords { get; set; }
         [ProtoMember(7)]

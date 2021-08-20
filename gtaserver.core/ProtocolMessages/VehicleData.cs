@@ -33,7 +33,7 @@ namespace GTAServer.ProtocolMessages
         [ProtoMember(7)]
         public Vector3 Position { get; set; }
         [ProtoMember(8)]
-        public Vector3 Quaternion { get; set; }
+        public Quaternion Quaternion { get; set; }
         [ProtoMember(9)]
         public int VehicleSeat { get; set; }
         [ProtoMember(10)]

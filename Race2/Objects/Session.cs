@@ -13,6 +13,7 @@ namespace Race.Objects
         public List<Player> Players;
         public Map Map;
         public int RaceStart;
+        public int Vehicle;
     }
 
     public class Player
