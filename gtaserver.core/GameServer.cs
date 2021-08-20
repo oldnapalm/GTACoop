@@ -1043,7 +1043,7 @@ namespace GTAServer
             }
 
             Clients.Remove(player);
-            if (msg != null) Server.Recycle(msg);
+            //if (msg != null) Server.Recycle(msg);
         }
 
         public int GetChannelForClient(Client c)
