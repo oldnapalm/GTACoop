@@ -14,7 +14,7 @@ namespace GTAServer.Logging
 
         public ILogger CreateLogger(string categoryName)
         {
-            return new ConsoleLogger(MinLevel);
+            return new ConsoleLogger(categoryName, MinLevel);
         }
 
         public void Dispose()

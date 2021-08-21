@@ -8,6 +8,7 @@ using GTAServer;
 using GTAServer.PluginAPI;
 using GTAServer.PluginAPI.Events;
 using GTAServer.ProtocolMessages;
+using Microsoft.Extensions.Logging;
 using Race.Commands;
 using Race.Objects;
 
@@ -15,6 +16,9 @@ namespace Race
 {
     public class Race : IGamemode
     {
+        public const ulong REQUEST_IPL = 0x41B4893843BBDB74;
+        public const ulong REMOVE_IPL = 0xEE6C5AD3ECE0A82D;
+
         // gamemode information
         public string GamemodeName => "Race";
         public string Name => "Race gamemode";
@@ -23,6 +27,7 @@ namespace Race
 
         public static GameServer GameServer;
         public static Session Session;
+        public static ILogger Logger;
 
         public static List<Map> Maps;
 
@@ -35,6 +40,8 @@ namespace Race
             Session.State = State.Voting;
             Session.Votes = new Dictionary<Client, string>();
             Session.Players = new List<Player>();
+
+            Logger = GTAServer.Util.LoggerFactory.CreateLogger<Race>();
 
             GameServer.RegisterCommands<RaceCommands>();
 
@@ -64,10 +71,26 @@ namespace Race
 
             if (Session.State == State.Starting && DateTime.Now > Session.NextEvent)
             {
+                // do this after the voting stage since else we might unload parts of the map where the player still is
+                if (Session.Map != null)
+                {
+                    UnloadIpls(Session.Map /* previous map */);
+                }
+
                 Session.State = State.Started;
                 var map = Session.Votes.GroupBy(x => x.Value).OrderByDescending(vote => vote.Count()).FirstOrDefault()?.Key ?? Util.GetRandomMap();
                 Session.Map = Maps.First(x => x.Name == map);
+
                 GameServer.SendChatMessageToAll("Map: " + map + ", use /leave to leave the race");
+                Logger.LogInformation("Starting new race with map " + map);
+
+                if (Session.Map.Ipls != null)
+                {
+                    foreach (var ipl in Session.Map.Ipls)
+                    {
+                        GameServer.SendNativeCallToAll(REQUEST_IPL, ipl);
+                    }
+                }
 
                 Session.Vehicle = (int)Session.Map.AvailableVehicles[new Random().Next(Session.Map.AvailableVehicles.Length)];
                 var addPlayers = new Thread((ThreadStart)delegate
@@ -230,6 +253,18 @@ namespace Race
 
             if (!Session.Players.Any())
                 Session.State = State.Voting;
+        }
+
+        private static void UnloadIpls(Map map)
+        {
+            // unload all ipls again
+            if (map.Ipls != null)
+            {
+                foreach (var ipl in map.Ipls)
+                {
+                    GameServer.SendNativeCallToAll(REMOVE_IPL, ipl);
+                }
+            }
         }
     }
 }

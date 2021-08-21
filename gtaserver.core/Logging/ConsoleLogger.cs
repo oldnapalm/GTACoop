@@ -6,9 +6,12 @@ namespace GTAServer.Logging
     class ConsoleLogger : ILogger
     {
         public LogLevel MinLevel { get; set; }
+        private string _categoryName;
 
-        public ConsoleLogger(LogLevel level)
+        public ConsoleLogger(string categoryName, LogLevel level)
         {
+            _categoryName = categoryName;
+
             MinLevel = level;
         }
 
@@ -37,10 +40,13 @@ namespace GTAServer.Logging
             };
 
             Console.ForegroundColor = level.Item1;
-            Console.WriteLine($"{DateTime.Now:hh:mm:ss} {level.Item2} [{eventId.Id,2} {eventId.Name}] {message}");
+
+            var from = eventId == default ? _categoryName : $"{eventId.Id,2} {eventId.Name}";
+            Console.WriteLine($"{DateTime.Now:hh:mm:ss} {level.Item2} [{from}] {message}");
 
             if (exception != null)
             {
+                Console.WriteLine(exception.Message);
                 Console.WriteLine(exception.StackTrace);
             }
 

@@ -7,6 +7,9 @@ namespace Race.Objects
         public Vector3[] Checkpoints;
         public SpawnPoint[] SpawnPoints;
         public VehicleHash[] AvailableVehicles;
+        public string[] Ipls;
+
+        public string Description;
         public string Name;
 
         public Map() { }
