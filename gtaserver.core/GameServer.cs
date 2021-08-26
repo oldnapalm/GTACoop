@@ -206,6 +206,10 @@ namespace GTAServer
             _lastAnnounceDateTime = DateTime.Now;
 
             var client = Util.HttpClient;
+
+            client.DefaultRequestHeaders
+                .TryAddWithoutValidation("User-Agent", "Mozilla/5.0 (GTAServer.core " + Util.GetServerVersion() + ")");
+
             var content = new StringContent(Port.ToString(CultureInfo.InvariantCulture));
 
             for (var master = 0; master < MasterServers.Count; master++)

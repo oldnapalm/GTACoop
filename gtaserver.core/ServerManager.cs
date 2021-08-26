@@ -35,9 +35,7 @@ namespace GTAServer
         private static bool _debugMode = false;
         private static int _tickEvery = 10;
 
-#if !BUILD_WASM
         private static UserModule _userModule;
-#endif
 
         private static CancellationTokenSource _cancellationToken;
         private static AutoResetEvent _autoResetEvent = new AutoResetEvent(false);
@@ -159,7 +157,6 @@ namespace GTAServer
 
             RegisterCommands();
 
-#if !BUILD_WASM
             // TODO future refactor
             if (_gameServerConfiguration.UseGroups)
             {
@@ -168,7 +165,6 @@ namespace GTAServer
 				
                 _gameServer.PermissionProvider = _userModule;
             }
-#endif
             _gameServer.Metrics = new PrometheusMetrics();
 
             _logger.LogInformation(LogEvent.Setup, "Plugins loaded. Enabling plugins...");
@@ -201,10 +197,8 @@ namespace GTAServer
 
             _timer = new Timer(DoServerTick, _gameServer, 0, _tickEvery);
 
-#if !BUILD_WASM
             Console.CancelKeyPress += Console_CancelKeyPress;
             _autoResetEvent.WaitOne();
-#endif
         }
 
         public static void DoServerTick(object serverObject)
@@ -225,9 +219,7 @@ namespace GTAServer
                 else
                 {
                     e.Data.Add("TickException", true);
-#if !BUILD_WASM
                     SentrySdk.CaptureException(e);
-#endif
                 }
             }
         }
@@ -237,9 +229,7 @@ namespace GTAServer
             _logger.LogInformation("SIGINT received - exiting");
             _cancellationToken?.Cancel();
 
-#if !BUILD_WASM
             _userModule?.Stop();
-#endif
 
             _timer.Dispose();
             _autoResetEvent.Set();

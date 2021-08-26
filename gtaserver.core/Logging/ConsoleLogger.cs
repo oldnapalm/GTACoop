@@ -1,18 +1,25 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
+using System.Text.RegularExpressions;
 
 namespace GTAServer.Logging
 {
     class ConsoleLogger : ILogger
     {
         public LogLevel MinLevel { get; set; }
+
         private string _categoryName;
+        private string _parsedCategoryName;
 
         public ConsoleLogger(string categoryName, LogLevel level)
         {
             _categoryName = categoryName;
-
             MinLevel = level;
+
+            // taken from old logger
+            var r = new Regex(@"\.?.+\.(.+)$");
+            var mc = r.Matches(_categoryName);
+            _parsedCategoryName = mc[0].Groups[1].Value;
         }
 
         public bool IsEnabled(LogLevel logLevel)
@@ -41,7 +48,7 @@ namespace GTAServer.Logging
 
             Console.ForegroundColor = level.Item1;
 
-            var from = eventId == default ? _categoryName : $"{eventId.Id,2} {eventId.Name}";
+            var from = eventId == default ? _parsedCategoryName : eventId.Name;
             Console.WriteLine($"{DateTime.Now:hh:mm:ss} {level.Item2} [{from}] {message}");
 
             if (exception != null)
