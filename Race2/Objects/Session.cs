@@ -13,20 +13,23 @@ namespace Race.Objects
         public List<Player> Players;
         public Map Map;
         public int RaceStart;
-        public int Vehicle;
     }
 
     public class Player
     {
         public Client Client;
+        public int VehicleHash;
         public int Vehicle;
         public int CheckpointsPassed;
+        public List<int> RememberedBlips;
+        public List<int> RememberedProps;
 
-        public Player(Client client, int vehicle)
+        public Player(Client client)
         {
             Client = client;
-            Vehicle = vehicle;
             CheckpointsPassed = 0;
+            RememberedBlips = new List<int>();
+            RememberedProps = new List<int>();
         }
     }
 }
