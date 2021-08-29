@@ -212,7 +212,7 @@ namespace Race
 
         private static void OnLeave(Client client)
         {
-            Leave(client);
+            Leave(client, true);
         }
 
         public static void AddCheckpoint(Player player, int i)
@@ -359,7 +359,7 @@ namespace Race
                     Session.Players.Add(new Player(client));
         }
 
-        public static void Leave(Client client)
+        public static void Leave(Client client, bool disconnected)
         {
             if (Session.Votes.ContainsKey(client))
                 Session.Votes.Remove(client);
@@ -369,10 +369,14 @@ namespace Race
                 player = Session.Players.FirstOrDefault(x => x.Client == client);
             if (player != default)
             {
-                RemoveCheckpoint(player);
-                ClearBlips(player);
-                ClearWorld(player);
-                GameServer.SendChatMessageToAll($"{player.Client.DisplayName} left the race");
+                if (!disconnected)
+                {
+                    RemoveCheckpoint(player);
+                    ClearBlips(player);
+                    ClearWorld(player);
+                    GameServer.SendChatMessageToAll($"{player.Client.DisplayName} left the race");
+                }
+
                 lock (Session.Players)
                     Session.Players.Remove(player);
             }
@@ -387,9 +391,10 @@ namespace Race
             Player player;
             lock (Session.Players)
                 player = Session.Players.FirstOrDefault(x => x.Client == client);
-            if (player != default && player.CheckpointsPassed > 0)
+            if (player != default)
             {
-                var last = Session.Map.Checkpoints[player.CheckpointsPassed - 1];
+                var last = player.CheckpointsPassed > 0 ? Session.Map.Checkpoints[player.CheckpointsPassed - 1] :
+                    Session.Map.SpawnPoints[Random.Next(Session.Map.SpawnPoints.Length)].Position;
                 var dir = System.Numerics.Vector3.Normalize(Session.Map.Checkpoints[player.CheckpointsPassed].ToVector3() - last.ToVector3());
                 var heading = (float)(-Math.Atan2(dir.X, dir.Y) * 180.0 / Math.PI);
                 GameServer.SendNativeCallToPlayer(player.Client, SET_ENTITY_COORDS, player.Vehicle, last.X, last.Y, last.Z, 0, 0, 0, 1);

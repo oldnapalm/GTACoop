@@ -47,7 +47,7 @@ namespace Race.Commands
         public static void Leave(CommandContext ctx, List<string> args)
         {
             if (Race.Session.State == State.Started)
-                Race.Leave(ctx.Client);
+                Race.Leave(ctx.Client, false);
         }
 
         [Command("respawn")]
