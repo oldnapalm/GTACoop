@@ -11,7 +11,7 @@ namespace Race.Commands
         [Command("vote")]
         public static void Vote(CommandContext ctx, List<string> args)
         {
-            if (Race.Session.State != State.Voting && Race.Session.State != State.Starting) return;
+            if (Race.Session.State != State.Voting && Race.Session.State != State.Preparing) return;
 
             if (!args.Any())
             {
@@ -39,26 +39,22 @@ namespace Race.Commands
         [Command("join")]
         public static void Join(CommandContext ctx, List<string> args)
         {
-            if (Race.Session.State != State.Started) return;
-
-            lock (Race.Session.Players)
-                if (Race.Session.Players.Any(x => x.Client == ctx.Client))
-                {
-                    ctx.SendMessage("You are already in the race");
-                    return;
-                }
-
-            Race.Join(ctx.Client);
-            ctx.GameServer.SendChatMessageToAll($"{ctx.Client.DisplayName} joined the race");
+            if (Race.Session.State == State.Started)
+                Race.Join(ctx.Client);
         }
 
         [Command("leave")]
         public static void Leave(CommandContext ctx, List<string> args)
         {
-            if (Race.Session.State != State.Started) return;
+            if (Race.Session.State == State.Started)
+                Race.Leave(ctx.Client);
+        }
 
-            Race.Leave(ctx.Client);
-            ctx.GameServer.SendChatMessageToAll($"{ctx.Client.DisplayName} left the race");
+        [Command("respawn")]
+        public static void Restart(CommandContext ctx, List<string> args)
+        {
+            if (Race.Session.State == State.Started)
+                Race.Respawn(ctx.Client);
         }
     }
 }

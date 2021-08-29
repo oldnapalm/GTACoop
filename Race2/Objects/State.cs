@@ -3,8 +3,8 @@
     public enum State
     {
         Voting,
+        Preparing,
         Starting,
-        Started,
-        Finished
+        Started
     }
 }
