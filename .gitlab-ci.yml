@@ -2,6 +2,7 @@ image: mcr.microsoft.com/dotnet/sdk:5.0.102-ca-patch-buster-slim
 
 stages:
     - build
+    - plugins
     
 before_script:
     # https://gitlab.com/TheIndra55/lidgren-network-gen3
@@ -40,3 +41,18 @@ build_linux_arm:
     artifacts:
         paths:
             - "gtaserver.core/publish/arm-Release"
+
+build_plugins:
+    stage: plugins
+    script:
+       - cd ../Race2 # are we still in gtaserver.core directory from before_script?
+       - dotnet publish -c Release -o publish
+       - cd ../DiscordBot # hm
+       - dotnet publish -c Release -o publish
+    artifacts:
+        paths:
+            - "Race2/publish/race.dll"
+            - "Race2/publish/race.pdb"
+            - "Race2/publish/Maps"
+            - "DiscordBot/publish/DiscordBot.dll"
+            - "DiscordBot/publish/DiscordBot.pdb"
