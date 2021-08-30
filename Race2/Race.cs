@@ -130,12 +130,12 @@ namespace Race
                     lock (Session.Players)
                         foreach (var player in Session.Players)
                         {
-                            CreateVehicle(player, spawnPoint, true);
-                            spawnPoint++;
+                            CreateProps(player);
                             AddCheckpoint(player, 0);
                             CreateBlip(player, 0);
                             CreateBlip(player, 1);
-                            CreateProps(player);
+                            CreateVehicle(player, spawnPoint, true);
+                            spawnPoint++;
                         }
                 });
                 setupPlayers.Start();
@@ -343,14 +343,14 @@ namespace Race
                     };
                     GameServer.SendNativeCallToPlayer(client, REQUEST_MODEL, player.VehicleHash);
                     Thread.Sleep(1000);
-                    CreateVehicle(player, Random.Next(Session.Map.SpawnPoints.Length), false);
+                    CreateProps(player);
                     AddCheckpoint(player, 0);
                     CreateBlip(player, 0);
                     CreateBlip(player, 1);
-                    CreateProps(player);
+                    CreateVehicle(player, Random.Next(Session.Map.SpawnPoints.Length), false);
                     lock (Session.Players)
                         Session.Players.Add(player);
-                    GameServer.SendChatMessageToAll($"{player.Client.DisplayName} joined the race");
+                    GameServer.SendChatMessageToAll($"{client.DisplayName} joined the race");
                 });
                 setupPlayer.Start();
             }
@@ -374,7 +374,7 @@ namespace Race
                     RemoveCheckpoint(player);
                     ClearBlips(player);
                     ClearWorld(player);
-                    GameServer.SendChatMessageToAll($"{player.Client.DisplayName} left the race");
+                    GameServer.SendChatMessageToAll($"{client.DisplayName} left the race");
                 }
 
                 lock (Session.Players)
