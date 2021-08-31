@@ -1575,6 +1575,9 @@ namespace GTACoOp
                                 lock (_dcNatives) if (_dcNatives.ContainsKey(data.Id)) _dcNatives.Remove(data.Id);
                             }
                             break;
+                        case PacketType.WorldCleanUpRequest:
+                            WorldCleanUp();
+                            break;
                     }
                 }
                 else if (msg.MessageType == NetIncomingMessageType.ConnectionLatencyUpdated)
@@ -1645,16 +1648,8 @@ namespace GTACoOp
 
                             lock (_tickNatives) if (_tickNatives != null) _tickNatives.Clear();
 
-                            lock (_entityCleanup)
-                            {
-                                _entityCleanup.ForEach(ent => new Prop(ent).Delete());
-                                _entityCleanup.Clear();
-                            }
-                            lock (_blipCleanup)
-                            {
-                                _blipCleanup.ForEach(blip => new Blip(blip).Remove());
-                                _blipCleanup.Clear();
-                            }
+                            WorldCleanUp();
+
                             //if (PlayerSettings.AutoReconnect && !reason.StartsWith("KICKED: ") && !reason.Equals("Connection closed by peer.") && !reason.Equals("Stopping Server") && !reason.Equals("Switching servers."))
                             if (PlayerSettings.AutoConnect && (reason.Equals("Connection timed out") || reason.StartsWith("Could not connect to remote host:")))
                             {
@@ -1748,6 +1743,20 @@ namespace GTACoOp
                     _serverBrowserMenu.CurrentSelection = lastIndx;
                     //_serverBrowserMenu.Subtitle.Caption = "Servers listed: ~g~~h~" + dejson.list.Count().ToString();
                 }
+            }
+        }
+
+        public void WorldCleanUp()
+        {
+            lock (_entityCleanup)
+            {
+                _entityCleanup.ForEach(ent => new Prop(ent).Delete());
+                _entityCleanup.Clear();
+            }
+            lock (_blipCleanup)
+            {
+                _blipCleanup.ForEach(blip => new Blip(blip).Remove());
+                _blipCleanup.Clear();
             }
         }
 

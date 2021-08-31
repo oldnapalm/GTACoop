@@ -26,6 +26,7 @@ namespace GTACoOp
         NativeOnDisconnect = 14,
         NativeOnDisconnectRecall = 15,
         VoiceChatData = 16,
+        WorldCleanUpRequest = 17
     }
 
     public enum ScriptVersion // Please only increment this/add versions on changes that may break the protocol.

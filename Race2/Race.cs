@@ -102,7 +102,9 @@ namespace Race
 
                 lock (Session.Players)
                     foreach (var player in Session.Players)
-                        ClearWorld(player);
+                        ClearWorld(player); // for clients without WorldCleanUpRequest packet support, can be removed on next client update
+
+                GameServer.SendWorldCleanUpToAll();
 
                 var map = Session.Votes.GroupBy(x => x.Value).OrderByDescending(vote => vote.Count()).FirstOrDefault()?.Key ?? Util.GetRandomMap();
                 Session.Map = Maps.First(x => x.Name == map);
@@ -308,9 +310,9 @@ namespace Race
             }
         }
 
+        // for clients without WorldCleanUpRequest packet support, can be removed on next client update
         public static void ClearWorld(Player player)
         {
-            // set zero alpha and disable collision for now, since can't delete the entities
             foreach (var prop in player.RememberedProps)
             {
                 GameServer.SendNativeCallToPlayer(player.Client, SET_ENTITY_ALPHA, prop, 0, false);
@@ -372,8 +374,11 @@ namespace Race
                 if (!disconnected)
                 {
                     RemoveCheckpoint(player);
-                    ClearBlips(player);
-                    ClearWorld(player);
+                    ClearBlips(player); // for clients without WorldCleanUpRequest packet support, can be removed on next client update
+                    ClearWorld(player); // "
+                    GameServer.SendWorldCleanUpToPlayer(client);
+                    if (Session.Map != null)
+                        UnloadIpls(Session.Map, client);
                     GameServer.SendChatMessageToAll($"{client.DisplayName} left the race");
                 }
 
@@ -411,6 +416,13 @@ namespace Race
             if (map.Ipls != null)
                 foreach (var ipl in map.Ipls)
                     GameServer.SendNativeCallToAll(REMOVE_IPL, ipl);
+        }
+
+        private static void UnloadIpls(Map map, Client client)
+        {
+            if (map.Ipls != null)
+                foreach (var ipl in map.Ipls)
+                    GameServer.SendNativeCallToPlayer(client, REMOVE_IPL, ipl);
         }
     }
 }

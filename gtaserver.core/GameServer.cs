@@ -1356,5 +1356,18 @@ namespace GTAServer
             GetNativeCallFromPlayer(player, salt, 0x2202A3F42C8E5F79, new BooleanArgument(), 
                 callback, new LocalPlayerArgument());
 
+        public void SendWorldCleanUpToPlayer(Client player)
+        {
+            var msg = Server.CreateMessage();
+            msg.Write((int)PacketType.WorldCleanUpRequest);
+            player.NetConnection.SendMessage(msg, NetDeliveryMethod.ReliableOrdered, 0);
+        }
+
+        public void SendWorldCleanUpToAll()
+        {
+            var msg = Server.CreateMessage();
+            msg.Write((int)PacketType.WorldCleanUpRequest);
+            Server.SendToAll(msg, NetDeliveryMethod.ReliableOrdered);
+        }
     }
 }

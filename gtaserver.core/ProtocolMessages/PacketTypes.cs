@@ -18,6 +18,7 @@
         NativeTickRecall = 13,
         NativeOnDisconnect = 14,
         NativeOnDisconnectRecall = 15,
-        VoiceChatData = 16
+        VoiceChatData = 16,
+        WorldCleanUpRequest = 17
     }
 }
