@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Map xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<Race xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Checkpoints>
     <Vector3>
       <X>386.788818</X>
@@ -729,4 +729,4 @@
   </Trigger>
   <Name>Alamo</Name>
   <Description>Take a lap around the famous Alamo Sea, known for it's amazing views and dangerous people!</Description>
-</Map>
+</Race>

@@ -1,7 +1,9 @@
 ﻿using GTAServer.ProtocolMessages;
+using System.Xml.Serialization;
 
 namespace Race.Objects
 {
+    [XmlRoot(ElementName = "Race")]
     public class Map
     {
         public Vector3[] Checkpoints;
