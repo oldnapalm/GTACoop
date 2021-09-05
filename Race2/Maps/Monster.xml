@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Map xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<Race xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Checkpoints>
     <Vector3>
       <X>1138.94861</X>
@@ -169,4 +169,4 @@
   </Trigger>
   <Name>Monster</Name>
   <Description>Cool race!</Description>
-</Map>
+</Race>
