@@ -207,9 +207,6 @@ namespace GTAServer
 
             var client = Util.HttpClient;
 
-            client.DefaultRequestHeaders
-                .TryAddWithoutValidation("User-Agent", "Mozilla/5.0 (GTAServer.core " + Util.GetServerVersion() + ")");
-
             var content = new StringContent(Port.ToString(CultureInfo.InvariantCulture));
 
             for (var master = 0; master < MasterServers.Count; master++)
@@ -1236,6 +1233,75 @@ namespace GTAServer
 
             var msg = Server.CreateMessage();
             msg.Write((int)PacketType.NativeTickRecall);
+            msg.Write(bin.Length);
+            msg.Write(bin);
+
+            Server.SendToAll(msg, NetDeliveryMethod.ReliableOrdered);
+        }
+
+        public void SetNativeCallOnDisconnectForPlayer(Client player, string identifier, ulong hash, params object[] arguments)
+        {
+            var obj = new NativeData
+            {
+                Hash = hash,
+                Id = identifier,
+                Arguments = ParseNativeArguments(arguments)
+            };
+
+
+            var bin = Util.SerializeBinary(obj);
+
+            var msg = Server.CreateMessage();
+
+            msg.Write((int)PacketType.NativeOnDisconnect);
+            msg.Write(bin.Length);
+            msg.Write(bin);
+
+            player.NetConnection.SendMessage(msg, NetDeliveryMethod.ReliableOrdered, GetChannelForClient(player));
+        }
+
+        public void SetNativeCallOnDisconnectForAll(string identifier, ulong hash, params object[] arguments)
+        {
+            var obj = new NativeData
+            {
+                Hash = hash,
+                Id = identifier,
+                Arguments = ParseNativeArguments(arguments)
+            };
+
+            var bin = Util.SerializeBinary(obj);
+
+            var msg = Server.CreateMessage();
+
+            msg.Write((int)PacketType.NativeOnDisconnect);
+            msg.Write(bin.Length);
+            msg.Write(bin);
+
+            Server.SendToAll(msg, NetDeliveryMethod.ReliableOrdered);
+        }
+
+        public void RecallNativeCallOnDisconnectForPlayer(Client player, string identifier)
+        {
+            var obj = new NativeData { Id = identifier };
+
+            var bin = Util.SerializeBinary(obj);
+
+            var msg = Server.CreateMessage();
+            msg.Write((int)PacketType.NativeOnDisconnectRecall);
+            msg.Write(bin.Length);
+            msg.Write(bin);
+
+            player.NetConnection.SendMessage(msg, NetDeliveryMethod.ReliableOrdered, GetChannelForClient(player));
+        }
+
+        public void RecallNativeCallOnDisconnectForAll(string identifier)
+        {
+            var obj = new NativeData { Id = identifier };
+
+            var bin = Util.SerializeBinary(obj);
+
+            var msg = Server.CreateMessage();
+            msg.Write((int)PacketType.NativeOnDisconnectRecall);
             msg.Write(bin.Length);
             msg.Write(bin);
 
