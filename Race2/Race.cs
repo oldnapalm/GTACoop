@@ -33,10 +33,14 @@ namespace Race
         public const ulong SET_ENTITY_HEADING = 0x8E2530AA8ADA980E;
         public const ulong SET_ENTITY_ALPHA = 0x44A0870B7E92D7C0;
         public const ulong SET_ENTITY_COMPLETELY_DISABLE_COLLISION = 0x9EBC85ED0FFFE51C;
+        public const ulong SET_OBJECT_TEXTURE_VARIATION = 0x971DA0055324D033;
         public const ulong REQUEST_SCRIPT_AUDIO_BANK = 0x2F844A8B08D76685;
         public const ulong PLAY_SOUND_FRONTEND = 0x67C540AA08E4A6F5;
         public const ulong REQUEST_IPL = 0x41B4893843BBDB74;
         public const ulong REMOVE_IPL = 0xEE6C5AD3ECE0A82D;
+        public const ulong ON_ENTER_MP = 0x0888C3502DBBEEF5;
+        public const ulong ON_ENTER_SP = 0xD7C10C4A637992C9;
+        public const ulong SET_ISLAND_HOPPER_ENABLED = 0x9A9D1BA639675CF1;
 
         // gamemode information
         public string GamemodeName => "Race";
@@ -124,6 +128,8 @@ namespace Race
                     lock (Session.Players)
                         foreach (var player in Session.Players)
                         {
+                            if (player.Client.GameVersion >= 63)
+                                GameServer.SendNativeCallToPlayer(player.Client, SET_ISLAND_HOPPER_ENABLED, "HeistIsland", CayoPericoCheck());
                             player.VehicleHash = (int)Session.Map.AvailableVehicles[Random.Next(Session.Map.AvailableVehicles.Length)];
                             GameServer.SendNativeCallToPlayer(player.Client, REQUEST_MODEL, player.VehicleHash);
                         }
@@ -132,6 +138,7 @@ namespace Race
                     lock (Session.Players)
                         foreach (var player in Session.Players)
                         {
+                            if (player.Client.GameVersion < 63 && CayoPericoCheck()) continue;
                             CreateProps(player);
                             AddCheckpoint(player, 0);
                             CreateBlip(player, 0);
@@ -173,7 +180,7 @@ namespace Race
                         if (player.Client?.Position == null) continue;
 
                         // if close/at waypoint
-                        if (System.Numerics.Vector3.Distance(player.Client.Position.ToVector3(), Session.Map.Checkpoints[player.CheckpointsPassed].ToVector3()) < 10)
+                        if (System.Numerics.Vector3.Distance(player.Client.Position.ToVector3(), Session.Map.Checkpoints[player.CheckpointsPassed].ToVector3()) < 15f)
                         {
                             GameServer.SendNativeCallToPlayer(player.Client, PLAY_SOUND_FRONTEND, 0, "CHECKPOINT_NORMAL", "HUD_MINI_GAME_SOUNDSET");
 
@@ -210,6 +217,12 @@ namespace Race
                 client.SendMessage("The race will start soon, use /vote to vote for a map");
 
             GameServer.SendNativeCallToPlayer(client, REQUEST_SCRIPT_AUDIO_BANK, "HUD_MINI_GAME_SOUNDSET", true);
+
+            if (client.GameVersion >= 63)
+            {
+                GameServer.SendNativeCallToPlayer(client, ON_ENTER_MP, true);
+                GameServer.SetNativeCallOnDisconnectForPlayer(client, "ON_ENTER_SP", ON_ENTER_SP, true);
+            }
         }
 
         private static void OnLeave(Client client)
@@ -303,6 +316,8 @@ namespace Race
                             prop.Rotation.X, prop.Rotation.Y, prop.Rotation.Z, 2, 1);
                         if (prop.Dynamic)
                             GameServer.SendNativeCallToPlayer(player.Client, FREEZE_ENTITY_POSITION, (int)o, true);
+                        if (prop.Texture > 0 && prop.Texture < 16)
+                            GameServer.SendNativeCallToPlayer(player.Client, SET_OBJECT_TEXTURE_VARIATION, (int)o, prop.Texture);
                         GameServer.SendNativeCallToPlayer(player.Client, SET_MODEL_AS_NO_LONGER_NEEDED, prop.Hash);
                         player.RememberedProps.Add((int)o);
                     }, prop.Hash, prop.Position.X, prop.Position.Y, prop.Position.Z, 1, 1, prop.Dynamic);
@@ -333,6 +348,10 @@ namespace Race
 
             if (Session.State == State.Started)
             {
+                if (client.GameVersion >= 63)
+                    GameServer.SendNativeCallToPlayer(client, SET_ISLAND_HOPPER_ENABLED, "HeistIsland", CayoPericoCheck());
+                else if (CayoPericoCheck()) return;
+
                 if (Session.Map.Ipls != null)
                     foreach (var ipl in Session.Map.Ipls)
                         GameServer.SendNativeCallToPlayer(client, REQUEST_IPL, ipl);
@@ -423,6 +442,11 @@ namespace Race
             if (map.Ipls != null)
                 foreach (var ipl in map.Ipls)
                     GameServer.SendNativeCallToPlayer(client, REMOVE_IPL, ipl);
+        }
+
+        private static bool CayoPericoCheck()
+        {
+            return System.Numerics.Vector3.Distance(Session.Map.SpawnPoints[0].Position.ToVector3(), new System.Numerics.Vector3(5031.428f, -5150.907f, 0f)) < 2000f;
         }
     }
 }

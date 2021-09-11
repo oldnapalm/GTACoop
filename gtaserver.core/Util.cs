@@ -74,6 +74,9 @@ namespace GTAServer
             };
 
             HttpClient = new HttpClient(handler);
+
+            HttpClient.DefaultRequestHeaders
+                .TryAddWithoutValidation("User-Agent", "Mozilla/5.0 (GTAServer.core " + Util.GetServerVersion() + ")");
         }
 
         /// <summary>
