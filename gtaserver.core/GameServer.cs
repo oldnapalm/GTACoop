@@ -1149,7 +1149,7 @@ namespace GTAServer
                 Hash = hash,
                 ReturnType = returnType
             };
-            salt = Environment.TickCount.ToString() + salt + player.NetConnection.RemoteUniqueIdentifier.ToString();
+            salt = Environment.TickCount64.ToString() + salt + player.NetConnection.RemoteUniqueIdentifier.ToString();
             obj.Id = salt;
             obj.Arguments = ParseNativeArguments(arguments);
             var bin = Util.SerializeBinary(obj);

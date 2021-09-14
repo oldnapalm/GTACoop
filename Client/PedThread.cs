@@ -25,7 +25,7 @@ namespace GTACoOp
             lock (Main.Opponents) localOpps = new Dictionary<long, SyncPed>(Main.Opponents);
             for (int i = localOpps.Count - 1; i >= 0; i--)
             {
-                if (Environment.TickCount - localOpps.ElementAt(i).Value.LastUpdateReceived > playerThreshold)
+                if (Game.GameTime - localOpps.ElementAt(i).Value.LastUpdateReceived > playerThreshold)
                 {
                     var key = localOpps.ElementAt(i).Key;
                     localOpps[key].Clear();
@@ -37,7 +37,7 @@ namespace GTACoOp
             lock (Main.Npcs) localNpcs = new Dictionary<string, SyncPed>(Main.Npcs);
             for (int i = localNpcs.Count - 1; i >= 0; i--)
             {
-                if (Environment.TickCount - localNpcs.ElementAt(i).Value.LastUpdateReceived > npcThreshold)
+                if (Game.GameTime - localNpcs.ElementAt(i).Value.LastUpdateReceived > npcThreshold)
                 {
                     var key = localNpcs.ElementAt(i).Key;
                     localNpcs[key].Clear();

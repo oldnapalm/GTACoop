@@ -167,7 +167,7 @@ namespace Race
                             GameServer.SendNativeCallToPlayer(player.Client, FREEZE_ENTITY_POSITION, player.Vehicle, false);
 
                     Session.State = State.Started;
-                    Session.RaceStart = Environment.TickCount;
+                    Session.RaceStart = Environment.TickCount64;
                 });
                 countdown.Start();
             }
@@ -200,7 +200,7 @@ namespace Race
                             else
                             {
                                 GameServer.SendNotificationToAll($"~y~{player.Client.DisplayName} ~s~finished the race!");
-                                GameServer.SendNotificationToAll($"Time: {TimeSpan.FromSeconds((Environment.TickCount - Session.RaceStart) / 1000):mm\\:ss}");
+                                GameServer.SendNotificationToAll($"Time: {TimeSpan.FromSeconds((Environment.TickCount64 - Session.RaceStart) / 1000):mm\\:ss}");
 
                                 Session.State = State.Voting;
                             }
