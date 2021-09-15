@@ -119,7 +119,7 @@ namespace Race
                 GameServer.SendChatMessageToAll("Map: " + map);
                 var record = Record(map);
                 if (record.Item1 > 0)
-                    GameServer.SendChatMessageToAll($"Record: {TimeSpan.FromMilliseconds(record.Item1):mm\\:ss\\.ff} by {record.Item2}");
+                    GameServer.SendChatMessageToAll($"Record: {TimeSpan.FromMilliseconds(record.Item1):m\\:ss\\.ff} by {record.Item2}");
                 GameServer.SendChatMessageToAll("Use /respawn to return to the last checkpoint or /leave to leave the race");
                 Logger.LogInformation("Starting new race with map " + map);
 
@@ -210,7 +210,7 @@ namespace Race
                                 Session.State = State.Voting;
 
                                 var time = Environment.TickCount64 - Session.RaceStart;
-                                var msg = $"{player.Client.DisplayName} finished in {TimeSpan.FromMilliseconds(time):mm\\:ss\\.ff}";
+                                var msg = $"{player.Client.DisplayName} finished in {TimeSpan.FromMilliseconds(time):m\\:ss\\.ff}";
                                 var record = Record(Session.Map.Name);
                                 if (record.Item1 > 0 && time < record.Item1)
                                     msg += " (new record)";
