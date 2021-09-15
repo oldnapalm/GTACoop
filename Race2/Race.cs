@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SQLite;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -56,6 +57,7 @@ namespace Race
 
         private readonly XmlSerializer Serializer = new(typeof(Map));
         private static readonly Random Random = new();
+        private static SQLiteConnection Connection;
 
         public bool OnEnable(GameServer gameServer, bool isAfterServerLoad)
         {
@@ -75,6 +77,8 @@ namespace Race
             ConnectionEvents.OnDisconnect.Add(OnLeave);
 
             GameEvents.OnTick.Add(OnTick);
+
+            InitDB();
 
             return true;
         }
@@ -112,7 +116,11 @@ namespace Race
 
                 var map = Session.Votes.GroupBy(x => x.Value).OrderByDescending(vote => vote.Count()).FirstOrDefault()?.Key ?? Util.GetRandomMap();
                 Session.Map = Maps.First(x => x.Name == map);
-                GameServer.SendChatMessageToAll("Map: " + map + ", use /leave to leave the race");
+                GameServer.SendChatMessageToAll("Map: " + map);
+                var record = Record(map);
+                if (record.Item1 > 0)
+                    GameServer.SendChatMessageToAll($"Record: {TimeSpan.FromMilliseconds(record.Item1):mm\\:ss\\.ff} by {record.Item2}");
+                GameServer.SendChatMessageToAll("Use /respawn to return to the last checkpoint or /leave to leave the race");
                 Logger.LogInformation("Starting new race with map " + map);
 
                 if (Session.Map.Ipls != null)
@@ -199,10 +207,17 @@ namespace Race
                             }
                             else
                             {
-                                GameServer.SendNotificationToAll($"~y~{player.Client.DisplayName} ~s~finished the race!");
-                                GameServer.SendNotificationToAll($"Time: {TimeSpan.FromSeconds((Environment.TickCount64 - Session.RaceStart) / 1000):mm\\:ss}");
-
                                 Session.State = State.Voting;
+
+                                var time = Environment.TickCount64 - Session.RaceStart;
+                                var msg = $"{player.Client.DisplayName} finished in {TimeSpan.FromMilliseconds(time):mm\\:ss\\.ff}";
+                                var record = Record(Session.Map.Name);
+                                if (record.Item1 > 0 && time < record.Item1)
+                                    msg += " (new record)";
+                                if (Session.Players.Count > 1)
+                                    msg += $" ({Wins(player.Client.DisplayName) + 1} wins)";
+                                GameServer.SendChatMessageToAll(msg);
+                                SaveTime(Session.Map.Name, player.Client.DisplayName, time, Session.Players.Count > 1 ? 1 : 0);
                             }
                         }
                     }
@@ -447,6 +462,68 @@ namespace Race
         private static bool CayoPericoCheck()
         {
             return System.Numerics.Vector3.Distance(Session.Map.SpawnPoints[0].Position.ToVector3(), new System.Numerics.Vector3(5031.428f, -5150.907f, 0f)) < 2000f;
+        }
+
+        private static void InitDB()
+        {
+            var filename = Path.Combine(AppContext.BaseDirectory, "Gamemodes", "times.db");
+
+            if (!File.Exists(filename))
+                SQLiteConnection.CreateFile(filename);
+
+            var connectionString = new SQLiteConnectionStringBuilder()
+            {
+                DataSource = filename,
+                Version = 3
+            };
+
+            Connection = new SQLiteConnection(connectionString.ToString());
+            Connection.Open();
+
+            new SQLiteCommand(@"
+                CREATE TABLE IF NOT EXISTS `times` (
+                    `Id` INTEGER PRIMARY KEY AUTOINCREMENT,
+                    `Race` TEXT,
+                    `Player` TEXT,
+                    `Time` INTEGER,
+                    `Win` INTEGER
+                );"
+            , Connection).ExecuteNonQuery();
+        }
+
+        private static void SaveTime(string race, string player, long time, int win)
+        {
+            var query = new SQLiteCommand(
+                "INSERT INTO `times` (`Race`, `Player`, `Time`, `Win`) VALUES (@race, @player, @time, @win);", Connection);
+            query.Parameters.AddWithValue("@race", race);
+            query.Parameters.AddWithValue("@player", player);
+            query.Parameters.AddWithValue("@time", time);
+            query.Parameters.AddWithValue("@win", win);
+            query.ExecuteNonQuery();
+        }
+
+        private static Tuple<long, string> Record(string race)
+        {
+            var query = new SQLiteCommand("SELECT * FROM `times` WHERE `race` = @race ORDER BY `time` ASC LIMIT 1;", Connection);
+            query.Parameters.AddWithValue("@race", race);
+
+            Tuple<long, string> record;
+            var reader = query.ExecuteReader();
+            if (reader.Read())
+                record = new((long)reader["Time"], (string)reader["Player"]);
+            else
+                record = new(0, "");
+            reader.Close();
+
+            return record;
+        }
+
+        private static int Wins(string player)
+        {
+            var query = new SQLiteCommand("SELECT COUNT(*) FROM `times` WHERE `player` = @player AND `win` = 1;", Connection);
+            query.Parameters.AddWithValue("@player", player);
+
+            return Convert.ToInt32(query.ExecuteScalar());
         }
     }
 }
