@@ -12,7 +12,7 @@ namespace Race.Objects
 
         public List<Player> Players;
         public Map Map;
-        public int RaceStart;
+        public long RaceStart;
     }
 
     public class Player
