@@ -721,8 +721,8 @@ namespace GTACoOp
 
         public static void SendPlayerData()
         {
-            if (Environment.TickCount - _lastDataSend < 1000 / _tickRate) return;
-            _lastDataSend = Environment.TickCount;
+            if (Game.GameTime - _lastDataSend < 1000 / _tickRate) return;
+            _lastDataSend = Game.GameTime;
 
             var player = Game.Player.Character;
             if (player.IsInVehicle())
@@ -1262,7 +1262,7 @@ namespace GTACoOp
                                     }
 
                                     Opponents[data.Id].Name = data.Name;
-                                    Opponents[data.Id].LastUpdateReceived = Environment.TickCount;
+                                    Opponents[data.Id].LastUpdateReceived = Game.GameTime;
                                     Opponents[data.Id].VehiclePosition =
                                         data.Position.ToVector();
                                     Opponents[data.Id].VehicleVelocity = data.Velocity.ToVector();
@@ -1319,7 +1319,7 @@ namespace GTACoOp
                                     }
 
                                     Opponents[data.Id].Name = data.Name;
-                                    Opponents[data.Id].LastUpdateReceived = Environment.TickCount;
+                                    Opponents[data.Id].LastUpdateReceived = Game.GameTime;
                                     Opponents[data.Id].Position = data.Position.ToVector();
                                     Opponents[data.Id].ModelHash = data.PedModelHash;
                                     Opponents[data.Id].Rotation = data.Quaternion.ToQuaternion();
@@ -1354,7 +1354,7 @@ namespace GTACoOp
                                         Npcs[data.Name].Host = data.Id;
                                     }
 
-                                    Npcs[data.Name].LastUpdateReceived = Environment.TickCount;
+                                    Npcs[data.Name].LastUpdateReceived = Game.GameTime;
                                     Npcs[data.Name].VehiclePosition =
                                         data.Position.ToVector();
                                     Npcs[data.Name].VehicleVelocity = data.Velocity.ToVector();
@@ -1405,7 +1405,7 @@ namespace GTACoOp
                                         Npcs[data.Name].Host = data.Id;
                                     }
 
-                                    Npcs[data.Name].LastUpdateReceived = Environment.TickCount;
+                                    Npcs[data.Name].LastUpdateReceived = Game.GameTime;
                                     Npcs[data.Name].Position = data.Position.ToVector();
                                     Npcs[data.Name].ModelHash = data.PedModelHash;
                                     Npcs[data.Name].Rotation = data.Quaternion.ToQuaternion();

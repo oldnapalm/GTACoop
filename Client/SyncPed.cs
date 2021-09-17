@@ -216,7 +216,7 @@ namespace GTACoOp
                 }
 
 
-                if (Character == null || !Character.Exists() || (!Character.IsInRangeOf(gPos, hRange) && Environment.TickCount - LastUpdateReceived < 5000) || Character.Model.Hash != ModelHash || (Character.IsDead && PedHealth > 0))
+                if (Character == null || !Character.Exists() || (!Character.IsInRangeOf(gPos, hRange) && Game.GameTime - LastUpdateReceived < 5000) || Character.Model.Hash != ModelHash || (Character.IsDead && PedHealth > 0))
                 {
                     if (Character != null) Character.Delete();
 
@@ -329,7 +329,7 @@ namespace GTACoOp
 
                 if (!inRange)
                 {
-                    if (Character != null && Environment.TickCount - LastUpdateReceived < 10000)
+                    if (Character != null && Game.GameTime - LastUpdateReceived < 10000)
                     {
                         if (!IsInVehicle)
                         {
@@ -460,11 +460,11 @@ namespace GTACoOp
 
                             MainVehicle.Quaternion = Quaternion.Slerp(MainVehicle.Quaternion, VehicleRotation, 0.5f);
 
-                            _stopTime = Environment.TickCount;
+                            _stopTime = Game.GameTime;
                         }
-                        else if ((Environment.TickCount - _stopTime) <= 1000)
+                        else if ((Game.GameTime - _stopTime) <= 1000)
                         {
-                            Vector3 posTarget = Util.LinearVectorLerp(MainVehicle.Position, VehiclePosition + (VehiclePosition - MainVehicle.Position), (Environment.TickCount - _stopTime), 1000);
+                            Vector3 posTarget = Util.LinearVectorLerp(MainVehicle.Position, VehiclePosition + (VehiclePosition - MainVehicle.Position), (Game.GameTime - _stopTime), 1000);
                             MainVehicle.PositionNoOffset = posTarget;
                             MainVehicle.Quaternion = Quaternion.Slerp(MainVehicle.Quaternion, VehicleRotation, 0.5f);
                         }
