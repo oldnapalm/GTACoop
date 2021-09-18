@@ -551,7 +551,6 @@ namespace GTACoOp
         private void RebuildServerBrowser()
         {
             _serverBrowserMenu.Clear();
-            _serverBrowserMenu.RefreshIndex();
 
             if (string.IsNullOrEmpty(PlayerSettings.MasterServerAddress))
             {
@@ -1704,10 +1703,6 @@ namespace GTACoOp
                     if (data.PasswordProtected)
                         item.SetLeftBadge(UIMenuItem.BadgeStyle.Lock);
 
-                    int lastIndx = 0;
-                    if (_serverBrowserMenu.Size > 0)
-                        lastIndx = _serverBrowserMenu.CurrentSelection;
-
                     var gMsg = msg;
                     item.Activated += (sender, selectedItem) =>
                     {
@@ -1740,7 +1735,7 @@ namespace GTACoOp
                     };
 
                     _serverBrowserMenu.AddItem(item);
-                    _serverBrowserMenu.CurrentSelection = lastIndx;
+                    _serverBrowserMenu.RefreshIndex();
                     //_serverBrowserMenu.Subtitle.Caption = "Servers listed: ~g~~h~" + dejson.list.Count().ToString();
                 }
             }
