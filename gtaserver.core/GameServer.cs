@@ -599,48 +599,46 @@ namespace GTAServer
                     break;
 
                 case NetConnectionStatus.Disconnected:
-                    lock (Clients)
+                    if (Clients.Contains(client))
                     {
-                        if (Clients.Contains(client))
+                        if (!client.Silent)
                         {
-                            if (!client.Silent)
-                            {
-                                if (client.Kicked)
-                                {
-                                    if (string.IsNullOrEmpty(client.KickReason)) client.KickReason = "Unknown";
-                                    SendNotificationToAll(
-                                        $"Kicked: {client.DisplayName} - Reason: {client.KickReason}");
-                                }
-                                else
-                                {
-                                    SendNotificationToAll(
-                                        $"Player disconnected: {client.DisplayName}");
-                                }
-                            }
-                            var dcMsg = new PlayerDisconnect()
-                            {
-                                Id = client.NetConnection.RemoteUniqueIdentifier
-                            };
-
-                            SendToAll(dcMsg, PacketType.PlayerDisconnect, true);
-
                             if (client.Kicked)
                             {
-                                logger.LogInformation(LogEvent.StatusChange,
-                                    $"Player kicked: {client.DisplayName}@{msg.SenderEndPoint.Address}");
-                                LastKickedClient = client;
-                                LastKickedIP = client.NetConnection.RemoteEndPoint.ToString();
+                                if (string.IsNullOrEmpty(client.KickReason)) client.KickReason = "Unknown";
+                                SendNotificationToAll(
+                                    $"Kicked: {client.DisplayName} - Reason: {client.KickReason}");
                             }
                             else
                             {
-                                logger.LogInformation(LogEvent.StatusChange, $"Player disconnected: {client.DisplayName}@{msg.SenderEndPoint.Address}");
+                                SendNotificationToAll(
+                                    $"Player disconnected: {client.DisplayName}");
                             }
-
-                            Clients.Remove(client);
-                            ConnectionEvents.Disconnect(client);
                         }
-                        break;
+                        var dcMsg = new PlayerDisconnect()
+                        {
+                            Id = client.NetConnection.RemoteUniqueIdentifier
+                        };
+
+                        SendToAll(dcMsg, PacketType.PlayerDisconnect, true);
+
+                        if (client.Kicked)
+                        {
+                            logger.LogInformation(LogEvent.StatusChange,
+                                $"Player kicked: {client.DisplayName}@{msg.SenderEndPoint.Address}");
+                            LastKickedClient = client;
+                            LastKickedIP = client.NetConnection.RemoteEndPoint.ToString();
+                        }
+                        else
+                        {
+                            logger.LogInformation(LogEvent.StatusChange, $"Player disconnected: {client.DisplayName}@{msg.SenderEndPoint.Address}");
+                        }
+
+                        lock (Clients)
+                            Clients.Remove(client);
+                        ConnectionEvents.Disconnect(client);
                     }
+                    break;
                 // resharper was bugging me about not having the below case statements
                 case NetConnectionStatus.None:
                 case NetConnectionStatus.InitiatedConnect:
