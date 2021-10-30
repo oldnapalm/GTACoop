@@ -23,6 +23,7 @@ namespace GTAServer.Users
         private static readonly Dictionary<string, List<Permission>> Groups = new Dictionary<string, List<Permission>>();
 
         private GameServer _gameServer;
+        private GroupsConfiguration _configuration;
 
         public UserModule(GameServer gameServer)
         {
@@ -59,7 +60,19 @@ namespace GTAServer.Users
                 );"
             , _connection).ExecuteNonQuery();
 
-            LoadGroups();
+            try
+            {
+                LoadGroups();
+            }
+            catch(Exception e)
+            {
+                _logger.LogError(e.Message);
+                _logger.LogCritical("Failed to load groups configuration, default permission system and login will be disabled.");
+
+                _gameServer.PermissionProvider = null;
+
+                return;
+            }
 
             ConnectionEvents.OnJoin.Add(OnJoin);
             ConnectionEvents.OnDisconnect.Add(OnLeave);
@@ -104,6 +117,18 @@ namespace GTAServer.Users
                     _logger.LogWarning(LogEvent.UsersMgr, $"An exception occurred while loading group '{group.Name}': {e.Message}");
                 }
             });
+
+            if (!Groups.ContainsKey(groups.Default))
+            {
+                throw new Exception($"Default group '{groups.Default}' does not exist");
+            }
+
+            if (!Groups.ContainsKey(groups.DefaultGuest))
+            {
+                throw new Exception($"Default guest group '{groups.DefaultGuest}' does not exist");
+            }
+
+            _configuration = groups;
         }
 
         public List<Permission> GetPermissions(List<Group> groups, string group)
@@ -184,7 +209,7 @@ namespace GTAServer.Users
                 Id = id,
                 Username = username,
                 Password = hash,
-                Group = "user"
+                Group = _configuration.Default
             });
         }
 
@@ -230,9 +255,9 @@ namespace GTAServer.Users
 
                 if (!Groups.ContainsKey(user.Group))
                 {
-                    SetGroup(user.Id, "user");
+                    SetGroup(user.Id, _configuration.Default);
 
-                    _logger.LogWarning(LogEvent.UsersMgr, $"{user.Username} had an unknown group and has been reset to user");
+                    _logger.LogWarning(LogEvent.UsersMgr, $"{user.Username} had an unknown group and has been reset to " + _configuration.Default);
                 }
 
                 client.SendMessage("Welcome back, use /login (password) to login to your account");
@@ -354,7 +379,7 @@ namespace GTAServer.Users
         public bool HasPermission(Client client, PermissionType type, string permission)
         {
             var user = Users.Find(x => x.Client == client);
-            var group = (user == null) ? "user" : user.Group;
+            var group = (user == null) ? _configuration.DefaultGuest : user.Group;
 
             return Groups[group].Any(x => x.Type == type && x.Name == permission);
         }

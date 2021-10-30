@@ -161,9 +161,9 @@ namespace GTAServer
             if (_gameServerConfiguration.UseGroups)
             {
                 _userModule = new UserModule(_gameServer);
-                _userModule.Start();
-				
                 _gameServer.PermissionProvider = _userModule;
+
+                _userModule.Start();
             }
             _gameServer.Metrics = new PrometheusMetrics();
 

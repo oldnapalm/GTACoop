@@ -13,6 +13,9 @@ namespace GTAServer.Users.Groups
             Groups = groups.ToList();
         }
 
+        public string Default { get; set; } = "user";
+        public string DefaultGuest { get; set; } = "user";
+
         [XmlArray(ElementName = "Groups")]
         [XmlArrayItem(ElementName = "Group")]
         public List<Group> Groups { get; set; } = new List<Group>();
