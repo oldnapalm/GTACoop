@@ -20,7 +20,7 @@ build_windows:
     script:
         # windows 7 is EOL, win10 includes win81
         #- dotnet publish -r win10-x64 -c Release -o publish/windows-Release
-        - dotnet publish -r win10-x64 -c Release -o publish/windows-Release -p:PublishSingleFile=true
+        - dotnet publish -r win10-x64 --self-contained -c Release -o publish/windows-Release -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true
     artifacts:
         paths:
             - "gtaserver.core/publish/windows-Release"
