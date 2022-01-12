@@ -149,7 +149,16 @@ namespace GTACoOp
             _waveOutput.Init(_playBuffer);
             _waveOutput.Play();
 #endif
-            PlayerSettings = Util.ReadSettings(Program.Location + Path.DirectorySeparatorChar + "ClientSettings.xml");
+            try
+            {
+                PlayerSettings = Util.ReadSettings(Program.Location + Path.DirectorySeparatorChar + "ClientSettings.xml");
+            }
+            catch(Exception)
+            {
+                UI.Notify("Failed to open ClientSettings.xml, will use default settings");
+                PlayerSettings = new PlayerSettings();
+            }
+
             _threadJumping = new Queue<Action>();
 
             Opponents = new Dictionary<long, SyncPed>();

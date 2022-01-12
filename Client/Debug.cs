@@ -92,8 +92,14 @@ namespace GTACoOp
                 Directory.CreateDirectory(path);
             }
 
-            // TODO this might fail and then entire client is fucked, try to catch
-            _handle = new StreamWriter(path + @"\error.log");
+            try
+            {
+                _handle = new StreamWriter(path + @"\error.log");
+            }
+            catch(Exception)
+            {
+                _handle = null;
+            }
 
             // yay
             WriteLine("GTA Coop version " + Main.ReadableScriptVersion());
@@ -101,28 +107,28 @@ namespace GTACoOp
 
         public void Dispose()
         {
-            _handle.Close();
+            _handle?.Close();
 
             GC.SuppressFinalize(this);
         }
 
         public void Write(string text)
         {
-            _handle.Write(text);
-            _handle.Flush();
+            _handle?.Write(text);
+            _handle?.Flush();
         }
 
         public void WriteLine(string text = "")
         {
-            _handle.WriteLine(text);
-            _handle.Flush();
+            _handle?.WriteLine(text);
+            _handle?.Flush();
         }
 
         public void WriteException(string description, Exception e)
         {
-            _handle.WriteLine(description + ": " + e.Message + "\n" 
+            _handle?.WriteLine(description + ": " + e.Message + "\n" 
                 + e.StackTrace);
-            _handle.Flush();
+            _handle?.Flush();
         }
     }
 }
