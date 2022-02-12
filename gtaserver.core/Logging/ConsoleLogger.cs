@@ -49,7 +49,7 @@ namespace GTAServer.Logging
             Console.ForegroundColor = level.Item1;
 
             var from = eventId == default ? _parsedCategoryName : eventId.Name;
-            Console.WriteLine($"{DateTime.Now:hh:mm:ss} {level.Item2} [{from}] {message}");
+            Console.WriteLine($"{DateTime.Now:HH:mm:ss} {level.Item2} [{from}] {message}");
 
             if (exception != null)
             {

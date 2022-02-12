@@ -98,7 +98,7 @@ namespace GTAServer
         {
             logger.LogInformation(LogEvent.Start, "Server starting");
 
-            logger.LogDebug(LogEvent.Start, "Loading gamemode");
+            logger.LogDebug(LogEvent.Plugin, "Loading gamemode");
             if (GamemodeName != "none" && !string.IsNullOrEmpty(GamemodeName))
             {
                 var assemblyName = 
@@ -113,7 +113,7 @@ namespace GTAServer
                 }
                 catch (Exception)
                 {
-                    logger.LogWarning(LogEvent.Start, "Given gamemode couldn't be loaded, using none");
+                    logger.LogWarning(LogEvent.Plugin, "Given gamemode couldn't be loaded, using none");
                 }
 
                 if (pluginAssembly != null)
@@ -123,20 +123,20 @@ namespace GTAServer
                     var validTypes = types.Where(t => typeof(IGamemode).IsAssignableFrom(t)).ToArray();
                     if (!validTypes.Any())
                     {
-                        logger.LogError(LogEvent.Start, "No gamemodes found in gamemode assembly, using none");
+                        logger.LogError(LogEvent.Plugin, "No gamemodes found in gamemode assembly, using none");
                         GamemodeName = "none";
                         return;
                     }
                     if (validTypes.Count() > 1)
                     {
-                        logger.LogError(LogEvent.Start, "Multiple valid gamemodes found in gamemode assembly, using none");
+                        logger.LogError(LogEvent.Plugin, "Multiple valid gamemodes found in gamemode assembly, using none");
                         GamemodeName = "none";
                         return;
                     }
                     var gamemode = Activator.CreateInstance(validTypes.First()) as IGamemode;
                     if (gamemode == null)
                     {
-                        logger.LogError(LogEvent.Start,
+                        logger.LogError(LogEvent.Plugin,
                             "Could not create instance of gamemode (Activator.CreateInstance returned null), using none");
                         GamemodeName = "none";
                         return;
@@ -145,7 +145,7 @@ namespace GTAServer
                     gamemode.OnEnable(this, false);
                 }
             }
-            logger.LogDebug(LogEvent.Start, "Gamemode loaded");
+            logger.LogDebug(LogEvent.Plugin, "Gamemode loaded");
 
             try
             {
@@ -169,7 +169,7 @@ namespace GTAServer
                 if(Server.UPnP.ForwardPort(Port, "GTAServer.core server"))
                 {
                     var ip = Server.UPnP.GetExternalIP();
-                    logger.LogInformation(LogEvent.Start, $"Server available on {ip}, Port = {Port}");
+                    logger.LogInformation(LogEvent.UPnP, $"Server available on {ip}, Port = {Port}");
                 }
             }
 

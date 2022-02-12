@@ -22,10 +22,14 @@ namespace GTAServer.Logging
 
         public static EventId Rcon { get; } = new EventId(18, "Rcon");
 
-        public static EventId UsersMgr { get; } = new EventId(19, "UsersMgr");
+        public static EventId UsersMgr { get; } = new EventId(19, "User");
 
         public static EventId PluginLoader { get; } = new EventId(20, "PluginLoader");
 
         public static EventId Chat { get; } = new EventId(21, "Chat");
+
+        public static EventId UPnP { get; } = new EventId(22, "UPnP");
+
+        public static EventId Plugin { get; } = new EventId(23, "Plugin");
     }
 }

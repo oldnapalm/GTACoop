@@ -66,8 +66,8 @@ namespace GTAServer.Users
             }
             catch(Exception e)
             {
-                _logger.LogError(e.Message);
-                _logger.LogCritical("Failed to load groups configuration, default permission system and login will be disabled.");
+                _logger.LogError(LogEvent.UsersMgr, e.Message);
+                _logger.LogCritical(LogEvent.UsersMgr, "Failed to load groups configuration, default permission system and login will be disabled.");
 
                 _gameServer.PermissionProvider = null;
 

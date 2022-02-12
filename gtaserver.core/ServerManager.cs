@@ -25,13 +25,7 @@ namespace GTAServer
         private static ILogger _logger;
         private static readonly List<IPlugin> _plugins = new List<IPlugin>();
 
-#if !BUILD_WASM
         private static readonly string _location = System.AppContext.BaseDirectory;
-#endif
-#if BUILD_WASM
-        private static readonly string _location = "/home/web_user/gtaserver.core";
-#endif
-
         private static bool _debugMode = false;
         private static int _tickEvery = 10;
 
@@ -54,7 +48,6 @@ namespace GTAServer
         {
             if (!_debugMode) return;
             _logger.LogWarning("Note - This build is a debug build. Please do not share this build and report any issues to Mitchell Monahan (@wolfmitchell)");
-            _logger.LogWarning("Furthermore, debug builds will not announce themselves to the master server, regardless of the AnnounceSelf config option.");
             _logger.LogWarning("To help bring crashes to the attention of the server owner and make sure they are reported to me, error catching has been disabled in this build.");
         }
 
@@ -76,7 +69,7 @@ namespace GTAServer
             // initialize error tracking
             if (!_debugMode)
             {
-                using var sentry = SentrySdk.Init(config => 
+                var sentry = SentrySdk.Init(config => 
                 {
                     config.Dsn = SENTRY_DSN;
 
@@ -145,7 +138,7 @@ namespace GTAServer
             _gameServer.Start();
 
             // Plugin Code
-            _logger.LogInformation(LogEvent.Setup, "Loading plugins");
+            _logger.LogInformation(LogEvent.Plugin, "Loading plugins");
             //Plugins = PluginLoader.LoadPlugin("TestPlugin");
             foreach (var pluginName in _gameServerConfiguration.ServerPlugins)
             {
@@ -167,12 +160,12 @@ namespace GTAServer
             }
             _gameServer.Metrics = new PrometheusMetrics();
 
-            _logger.LogInformation(LogEvent.Setup, "Plugins loaded. Enabling plugins...");
+            _logger.LogInformation(LogEvent.Plugin, "Plugins loaded. Enabling plugins...");
             foreach (var plugin in _plugins)
             {
                 if (!plugin.OnEnable(_gameServer, false))
                 {
-                    _logger.LogWarning(LogEvent.Setup, "Plugin " + plugin.Name + " returned false when enabling, marking as disabled, although it may still have hooks registered and called.");
+                    _logger.LogWarning(LogEvent.Plugin, "Plugin " + plugin.Name + " returned false when enabling, marking as disabled, although it may still have hooks registered and called.");
                 }
             }
 
