@@ -383,9 +383,5 @@ namespace GTAServer.Users
 
             return Groups[group].Any(x => x.Type == type && x.Name == permission);
         }
-
-        public string Name => "User module";
-
-        public string Description => "Manages the users group, permissions and authentication";
     }
 }
