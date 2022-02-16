@@ -42,6 +42,9 @@ namespace GTAServer
 
             if (!Directory.Exists(Path.Combine(_location, "Configuration")))
                 Directory.CreateDirectory(Path.Combine(_location, "Configuration"));
+
+            if (!Directory.Exists(Path.Combine(_location, "Data")))
+                Directory.CreateDirectory(Path.Combine(_location, "Data"));
         }
 
         private static void DoDebugWarning()

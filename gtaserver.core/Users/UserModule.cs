@@ -25,26 +25,43 @@ namespace GTAServer.Users
         private GameServer _gameServer;
         private GroupsConfiguration _configuration;
 
+        private string _filename = Path.Combine(AppContext.BaseDirectory, "Data", "Users.db");
+
         public UserModule(GameServer gameServer)
         {
             _gameServer = gameServer;
 
             _logger = Util.LoggerFactory.CreateLogger<UserModule>();
             _logger.LogInformation(LogEvent.UsersMgr, "Loading user storage");
+
+            UpdateDatabase();
+        }
+
+        private void UpdateDatabase()
+        {
+            // migrate old database to new location
+            var filename = Path.Combine(AppContext.BaseDirectory, "users.db");
+
+            if (File.Exists(filename))
+            {
+                _logger.LogInformation("Migrating old database to new location");
+
+                File.Move(filename, _filename);
+            }
+
+            // could be repurposed in future to also migrate database file to newer versions
         }
 
         public void Start()
         {
-            var filename = Path.Combine(System.AppContext.BaseDirectory, "users.db");
-
-            if (!File.Exists(filename))
+            if (!File.Exists(_filename))
             {
-                SQLiteConnection.CreateFile(filename);
+                SQLiteConnection.CreateFile(_filename);
             }
 
             var connectionString = new SQLiteConnectionStringBuilder()
             {
-                DataSource = filename,
+                DataSource = _filename,
                 Version = 3
             };
 
