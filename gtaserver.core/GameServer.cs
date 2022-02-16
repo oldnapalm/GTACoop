@@ -563,6 +563,10 @@ namespace GTAServer
                 return;
             }
 
+            logger.LogTrace(LogEvent.Handshake, "ConnectionRequest");
+            logger.LogTrace(LogEvent.Handshake, "DisplayName " + connReq.DisplayName);
+            logger.LogTrace(LogEvent.Handshake, "Name " + connReq.Name);
+
             lock (Clients)
                 if (Clients.Any(c => c.DisplayName == client.DisplayName))
                 {
