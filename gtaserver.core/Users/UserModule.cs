@@ -236,7 +236,7 @@ namespace GTAServer.Users
         /// <param name="client"></param>
         public void Login(Client client)
         {
-            var user = Users.Single(x => x.Username == client.DisplayName);
+            var user = Users.First(x => x.Username == client.DisplayName);
             user.Client = client;
 
             client.SendMessage("You have been logged in");
@@ -383,7 +383,7 @@ namespace GTAServer.Users
             }
 
             var password = string.Join(" ", args);
-            var user = Users.Single(x => x.Username == ctx.Client.DisplayName);
+            var user = Users.First(x => x.Username == ctx.Client.DisplayName);
             if (!user.PasswordVerify(password))
             {
                 ctx.SendMessage("Password incorrect");
