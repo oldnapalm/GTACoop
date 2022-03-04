@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using GTAServer.PluginAPI.Entities;
 using GTAServer.ProtocolMessages;
 using Lidgren.Network;
 
@@ -206,6 +205,26 @@ namespace GTAServer.PluginAPI.Events
                 msg = result.Data;
             }
             return result;
+        }
+
+        /// <summary>
+        /// Called when a plugin message is received
+        /// </summary>
+        public static List<Func<Client, PluginMessage, PluginResponse>> OnPluginMessage =
+            new List<Func<Client, PluginMessage, PluginResponse>>();
+
+        /// <summary>
+        /// Internal method. Used to trigger OnPluginMessage
+        /// </summary>
+        /// <param name="c">Client who sent the plugin message</param>
+        /// <param name="msg">Plugin message</param>
+        public static void PluginMessage(Client c, PluginMessage msg)
+        {
+            foreach (var f in OnPluginMessage)
+            {
+                var result = f(c, msg);
+                if (!result.ContinuePluginProc) return;
+            }
         }
     }
 }

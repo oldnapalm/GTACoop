@@ -8,7 +8,6 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml.Serialization;
 using GTAServer.PluginAPI;
@@ -904,6 +903,22 @@ namespace GTAServer
                         logger.LogInformation("Player spawned: " + client.DisplayName);
                     }
                     break;
+                case PacketType.PluginMessage:
+                    {
+                        var name = msg.ReadString();
+
+                        var len = msg.ReadInt32();
+                        var data = msg.ReadBytes(len);
+
+                        var message = new PluginMessage
+                        {
+                            Name = name,
+                            Data = data
+                        };
+
+                        PacketEvents.PluginMessage(client, message);
+                    }
+                    break;
                 // The following is normally only received on the client.
                 case PacketType.PlayerDisconnect:
                     break;
@@ -1424,6 +1439,9 @@ namespace GTAServer
             GetNativeCallFromPlayer(player, salt, 0x2202A3F42C8E5F79, new BooleanArgument(), 
                 callback, new LocalPlayerArgument());
 
+        /// <summary>
+        /// Sends a world cleanup request to a player
+        /// </summary>
         public void SendWorldCleanUpToPlayer(Client player)
         {
             var msg = Server.CreateMessage();
@@ -1431,11 +1449,52 @@ namespace GTAServer
             player.NetConnection.SendMessage(msg, NetDeliveryMethod.ReliableOrdered, 0);
         }
 
+        /// <summary>
+        /// Sends a world cleanup request to all players
+        /// </summary>
         public void SendWorldCleanUpToAll()
         {
             var msg = Server.CreateMessage();
             msg.Write((int)PacketType.WorldCleanUpRequest);
             Server.SendToAll(msg, NetDeliveryMethod.ReliableOrdered);
+        }
+
+        /// <summary>
+        /// Sends a plugin message to a player
+        /// </summary>
+        /// <param name="name">The unique plugin message name</param>
+        /// <param name="data">The data of your message</param>
+        /// <param name="reliable">Whether or not the message should be send reliable</param>
+        public void SendPluginMessageToPlayer(Client player, string name, byte[] data, bool reliable = true)
+        {
+            var msg = Server.CreateMessage();
+            msg.Write((int)PacketType.PluginMessage);
+            msg.Write(name);
+            msg.Write(data.Length);
+            msg.Write(data);
+
+            var method = reliable ? NetDeliveryMethod.ReliableOrdered : NetDeliveryMethod.Unreliable;
+
+            player.NetConnection.SendMessage(msg, method, 0);
+        }
+
+        /// <summary>
+        /// Sends a plugin message to all players
+        /// </summary>
+        /// <param name="name">The unique plugin message name</param>
+        /// <param name="data">The data of your message</param>
+        /// <param name="reliable">Whether or not the message should be send reliable</param>
+        public void SendPluginMessageToAll(string name, byte[] data, bool reliable = true)
+        {
+            var msg = Server.CreateMessage();
+            msg.Write((int)PacketType.PluginMessage);
+            msg.Write(name);
+            msg.Write(data.Length);
+            msg.Write(data);
+
+            var method = reliable ? NetDeliveryMethod.ReliableOrdered : NetDeliveryMethod.Unreliable;
+
+            Server.SendToAll(msg, method);
         }
     }
 }

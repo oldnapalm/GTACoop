@@ -1586,6 +1586,17 @@ namespace GTACoOp
                         case PacketType.WorldCleanUpRequest:
                             WorldCleanUp();
                             break;
+                        case PacketType.PluginMessage:
+                            {
+                                var name = msg.ReadString();
+
+                                // read the message data
+                                var len = msg.ReadInt32();
+                                var data = msg.ReadBytes(len);
+
+                                OnPluginMessage(name, data);
+                            }
+                            break;
                     }
                 }
                 else if (msg.MessageType == NetIncomingMessageType.ConnectionLatencyUpdated)
@@ -1761,6 +1772,19 @@ namespace GTACoOp
             {
                 _blipCleanup.ForEach(blip => new Blip(blip).Remove());
                 _blipCleanup.Clear();
+            }
+        }
+
+        private void OnPluginMessage(string name, byte[] data)
+        {
+            // right now only handle built-in plugin messages
+            // could be repurposed for messages for other mods
+
+            var reader = new BinaryReader(new MemoryStream(data));
+
+            switch (name)
+            {
+
             }
         }
 
