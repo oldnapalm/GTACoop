@@ -976,7 +976,7 @@ namespace GTAServer
         /// <summary>
         /// Registers a command to the server
         /// </summary>
-        /// <param name="command">The name of the command</param>
+        /// <param name="name">The name of the command</param>
         /// <param name="callback">The callback which will get triggered while executing the command</param>
         public void RegisterCommand(string name, Action<CommandContext, List<string>> callback)
         {
@@ -985,6 +985,11 @@ namespace GTAServer
             RegisterCommand(command, callback);
         }
 
+        /// <summary>
+        /// Registers a command to the server
+        /// </summary>
+        /// <param name="command">The command entry</param>
+        /// <param name="callback">The callback which will get triggered while executing the command</param>
         public void RegisterCommand(Command command, Action<CommandContext, List<string>> callback)
         {
             if (Commands.ContainsKey(command))
@@ -994,9 +999,9 @@ namespace GTAServer
         }
 
         /// <summary>
-        /// Registers an class with commands
+        /// Registers all commands from a class
         /// </summary>
-        /// <typeparam name="T">The class to look for commands</typeparam>
+        /// <typeparam name="T">The class to load commands from</typeparam>
         public void RegisterCommands<T>()
         {
             var commands = typeof(T).GetMethods().Where(method => method.GetCustomAttributes(typeof(CommandAttribute), false).Any());
@@ -1030,6 +1035,12 @@ namespace GTAServer
             return PermissionProvider.HasPermission(client, type, permission);
         }
 
+        /// <summary>
+        /// Sends a packet to all players
+        /// </summary>
+        /// <param name="dataToSend">The object to be serialized and send</param>
+        /// <param name="packetType">The packet type</param>
+        /// <param name="packetIsImportant">Whether should be send ordered</param>
         public void SendToAll(object dataToSend, PacketType packetType, bool packetIsImportant)
         {
             var data = Util.SerializeBinary(dataToSend);
@@ -1040,6 +1051,13 @@ namespace GTAServer
             Server.SendToAll(msg, packetIsImportant ? NetDeliveryMethod.ReliableOrdered : NetDeliveryMethod.ReliableSequenced);
         }
 
+        /// <summary>
+        /// Sends a packet to all players
+        /// </summary>
+        /// <param name="dataToSend">The object to be serialized and send</param>
+        /// <param name="packetType">The packet type</param>
+        /// <param name="packetIsImportant">Whether should be send ordered</param>
+        /// <param name="clientToExclude">The client this packet should not be send to</param>
         public void SendToAll(object dataToSend, PacketType packetType, bool packetIsImportant, Client clientToExclude)
         {
             var data = Util.SerializeBinary(dataToSend);
@@ -1050,6 +1068,13 @@ namespace GTAServer
             Server.SendToAll(msg, clientToExclude.NetConnection, packetIsImportant ? NetDeliveryMethod.ReliableOrdered : NetDeliveryMethod.ReliableSequenced, GetChannelForClient(clientToExclude));
         }
 
+        /// <summary>
+        /// Deny a player during handshake, this is supposed to be called during a connection request
+        /// </summary>
+        /// <param name="player">The player to deny</param>
+        /// <param name="reason">The reason to be displayed</param>
+        /// <param name="silent">Whether or not the deny should not be display to other clients</param>
+        /// <param name="msg">The orginal incoming message</param>
         public void DenyConnect(Client player, string reason, bool silent = true, NetIncomingMessage msg = null,
             int duraction = 60)
         {
@@ -1070,7 +1095,8 @@ namespace GTAServer
         }
 
         // Native call functions
-        public List<NativeArgument> ParseNativeArguments(params object[] args) // literally copypasted from old gtaserver
+
+        private List<NativeArgument> ParseNativeArguments(params object[] args) // literally copypasted from old gtaserver
         {
             var list = new List<NativeArgument>();
             foreach (var o in args)
@@ -1118,6 +1144,11 @@ namespace GTAServer
             return list;
         }
 
+        /// <summary>
+        /// Sends a native call to the player
+        /// </summary>
+        /// <param name="hash">The hash of the native</param>
+        /// <param name="arguments">Any additional parameters to call the native with</param>
         public void SendNativeCallToPlayer(Client player, ulong hash, params object[] arguments)
         {
             var obj = new NativeData
@@ -1137,6 +1168,11 @@ namespace GTAServer
             player.NetConnection.SendMessage(msg, NetDeliveryMethod.ReliableOrdered, GetChannelForClient(player));
         }
 
+        /// <summary>
+        /// Sends a native call to all players
+        /// </summary>
+        /// <param name="hash">The hash of the native</param>
+        /// <param name="arguments">Any additional parameters to call the native with</param>
         public void SendNativeCallToAll(ulong hash, params object[] arguments)
         {
             var obj = new NativeData
@@ -1158,6 +1194,14 @@ namespace GTAServer
             Server.SendToAll(msg, NetDeliveryMethod.ReliableOrdered);
         }
 
+        /// <summary>
+        /// Sends a native call to the player and receive the return value in a callback
+        /// </summary>
+        /// <param name="salt">Identifier to make this native call unique</param>
+        /// <param name="hash">The hash of the native</param>
+        /// <param name="returnType">The return type of the native</param>
+        /// <param name="callback">The callback to call after the native returned</param>
+        /// <param name="arguments">Any additional parameters to call the native with</param>
         public void GetNativeCallFromPlayer(Client player, string salt, ulong hash, NativeArgument returnType,
             Action<object> callback, params object[] arguments)
         {
@@ -1178,6 +1222,12 @@ namespace GTAServer
             player.NetConnection.SendMessage(msg, NetDeliveryMethod.ReliableOrdered, GetChannelForClient(player));
         }
 
+        /// <summary>
+        /// Instructs a player to call a native on each tick
+        /// </summary>
+        /// <param name="identifier">An unique identifier for this tick native, can be used to recall it later</param>
+        /// <param name="hash">The hash of the native</param>
+        /// <param name="arguments">Any additional parameters to call the native with</param>
         public void SetNativeCallOnTickForPlayer(Client player, string identifier, ulong hash, params object[] arguments)
         {
             var obj = new NativeData
@@ -1202,6 +1252,10 @@ namespace GTAServer
             player.NetConnection.SendMessage(msg, NetDeliveryMethod.ReliableOrdered, GetChannelForClient(player));
         }
 
+        /// <summary>
+        /// Recall a tick native on a player
+        /// </summary>
+        /// <param name="identifier">The unique identifier of the tick native</param>
         public void RecallNativeCallOnTickForPlayer(Client player, string identifier)
         {
             var wrapper = new NativeTickCall { Id = identifier };
@@ -1216,6 +1270,12 @@ namespace GTAServer
             player.NetConnection.SendMessage(msg, NetDeliveryMethod.ReliableOrdered, GetChannelForClient(player));
         }
 
+        /// <summary>
+        /// Instructs all players to call a native on each tick
+        /// </summary>
+        /// <param name="identifier">An unique identifier for this tick native, can be used to recall it later</param>
+        /// <param name="hash">The hash of the native</param>
+        /// <param name="arguments">Any additional parameters to call the native with</param>
         public void SetNativeCallOnTickForAll(string identifier, ulong hash, params object[] arguments)
         {
             var obj = new NativeData
@@ -1242,6 +1302,10 @@ namespace GTAServer
             Server.SendToAll(msg, NetDeliveryMethod.ReliableOrdered);
         }
 
+        /// <summary>
+        /// Recall a tick native on all players
+        /// </summary>
+        /// <param name="identifier">The unique identifier of the tick native</param>
         public void RecallNativeCallOnTickForAll(string identifier)
         {
             var wrapper = new NativeTickCall { Id = identifier };
@@ -1256,6 +1320,12 @@ namespace GTAServer
             Server.SendToAll(msg, NetDeliveryMethod.ReliableOrdered);
         }
 
+        /// <summary>
+        /// Instructs a player to call a native on disconnect
+        /// </summary>
+        /// <param name="identifier">An unique identifier for this disconnect native, can be used to recall it later</param>
+        /// <param name="hash">The hash of the native</param>
+        /// <param name="arguments">Any additional parameters to call the native with</param>
         public void SetNativeCallOnDisconnectForPlayer(Client player, string identifier, ulong hash, params object[] arguments)
         {
             var obj = new NativeData
@@ -1277,6 +1347,12 @@ namespace GTAServer
             player.NetConnection.SendMessage(msg, NetDeliveryMethod.ReliableOrdered, GetChannelForClient(player));
         }
 
+        /// <summary>
+        /// Instructs all players to call a native on disconnect
+        /// </summary>
+        /// <param name="identifier">An unique identifier for this disconnect native, can be used to recall it later</param>
+        /// <param name="hash">The hash of the native</param>
+        /// <param name="arguments">Any additional parameters to call the native with</param>
         public void SetNativeCallOnDisconnectForAll(string identifier, ulong hash, params object[] arguments)
         {
             var obj = new NativeData
@@ -1297,6 +1373,10 @@ namespace GTAServer
             Server.SendToAll(msg, NetDeliveryMethod.ReliableOrdered);
         }
 
+        /// <summary>
+        /// Recall a disconnect native on a player
+        /// </summary>
+        /// <param name="identifier">The unique identifier of the disconnect native</param>
         public void RecallNativeCallOnDisconnectForPlayer(Client player, string identifier)
         {
             var obj = new NativeData { Id = identifier };
@@ -1311,6 +1391,10 @@ namespace GTAServer
             player.NetConnection.SendMessage(msg, NetDeliveryMethod.ReliableOrdered, GetChannelForClient(player));
         }
 
+        /// <summary>
+        /// Recall a disconnect native on all players
+        /// </summary>
+        /// <param name="identifier">The unique identifier of the disconnect native</param>
         public void RecallNativeCallOnDisconnectForAll(string identifier)
         {
             var obj = new NativeData { Id = identifier };
@@ -1367,8 +1451,17 @@ namespace GTAServer
             SendNativeCallToAll(0xF020C96915705B3A, false, true);
         }
 
+        /// <summary>
+        /// Sends a chat message to all players
+        /// </summary>
+        /// <param name="msg">The message to send</param>
         public void SendChatMessageToAll(string msg) => SendChatMessageToAll("", msg);
 
+        /// <summary>
+        /// Sends a chat message to all players
+        /// </summary>
+        /// <param name="sender">The sender in the chat message</param>
+        /// <param name="message">The message to send</param>
         public void SendChatMessageToAll(string sender, string message)
         {
             var chatObj = new ChatData()
@@ -1379,8 +1472,17 @@ namespace GTAServer
             SendToAll(chatObj, PacketType.ChatData, true);
         }
 
+        /// <summary>
+        /// Sends a chat message to a player
+        /// </summary>
+        /// <param name="message">The message to send</param>
         public void SendChatMessageToPlayer(Client player, string message) => SendChatMessageToPlayer(player, "", message);
 
+        /// <summary>
+        /// Sends a chat message to a player
+        /// </summary>
+        /// <param name="sender">The sender in the chat message</param>
+        /// <param name="message">The message to send</param>
         public void SendChatMessageToPlayer(Client player, string sender, string message)
         {
             var chatObj = new ChatData()
@@ -1396,10 +1498,12 @@ namespace GTAServer
             player.NetConnection.SendMessage(msg, NetDeliveryMethod.ReliableOrdered, 0);
         }
 
-        public void GivePlayerWeapon(Client player, uint weaponHash, int ammo, bool equipNow, bool ammoLoaded) =>
-            SendNativeCallToPlayer(player, 0xBF0FD6E56C964FCB, new LocalPlayerArgument(), weaponHash, ammo, equipNow,
-                ammo);
-
+        /// <summary>
+        /// Kicks a player from the server
+        /// </summary>
+        /// <param name="reason">The message displayed in the kick</param>
+        /// <param name="silent">Whether or not the kick should not be displayed to other players</param>
+        /// <param name="sender">The client who kicked the player</param>
         public void KickPlayer(Client player, string reason = null, bool silent = false, Client sender = null)
         {
             player.Kicked = true;
@@ -1409,13 +1513,26 @@ namespace GTAServer
             player.NetConnection.Disconnect("Kicked: " + reason);
         }
 
+        /// <summary>
+        /// Sets the position of a player
+        /// </summary>
+        /// <param name="newPosition">The new position of the player</param>
         public void SetPlayerPosition(Client player, Vector3 newPosition) => 
             SendNativeCallToPlayer(player, 0x06843DA7060A026B, new LocalPlayerArgument(), 
                 newPosition.X, newPosition.Y, newPosition.Z, 1, 0, 0, 1);
 
+        /// <summary>
+        /// Gets the position of a player
+        /// </summary>
+        /// <param name="callback">The callback to call after the position returned</param>
+        /// <param name="salt">Identifier to make this native call unique</param>
         public void GetPlayerPosition(Client player, Action<object> callback, string salt = "salt") =>
             GetNativeCallFromPlayer(player, salt, 0x3FEF770D40960D5A, new Vector3Argument(), 
                 callback, new LocalPlayerArgument(), 0);
+
+        public void GivePlayerWeapon(Client player, uint weaponHash, int ammo, bool equipNow, bool ammoLoaded) =>
+            SendNativeCallToPlayer(player, 0xBF0FD6E56C964FCB, new LocalPlayerArgument(), weaponHash, ammo, equipNow,
+                ammo);
 
         public void HasPlayerControlBeenPressed(Client player, int controlId, Action<object> callback, string salt = "salt") => 
             GetNativeCallFromPlayer(player, salt, 0x580417101DDB492F, new BooleanArgument(), 

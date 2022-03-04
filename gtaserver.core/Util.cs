@@ -19,7 +19,11 @@ namespace GTAServer
 {
     public static class Util
     {
+        /// <summary>
+        /// The server logger factory to produce logger instances
+        /// </summary>
         public static ILoggerFactory LoggerFactory;
+
         internal static HttpClient HttpClient;
 
         public static T DeserializeBinary<T>(byte[] data)
@@ -39,6 +43,11 @@ namespace GTAServer
             }
         }
 
+        /// <summary>
+        /// Removes any Rockstar text formatting from a string
+        /// </summary>
+        /// <param name="input">The string to sanitize</param>
+        /// <returns>The sanitized string</returns>
         public static string SanitizeString(string input)
         {
             input = Regex.Replace(input, "~.~", "", RegexOptions.IgnoreCase);
@@ -164,11 +173,20 @@ namespace GTAServer
             };
         }
 
+        /// <summary>
+        /// Gets the current server version
+        /// </summary>
+        /// <returns>The version of the server</returns>
         public static string GetServerVersion()
         {
             return Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
         }
 
+        /// <summary>
+        /// Converts a <see cref="ScriptVersion"/> to human readable
+        /// </summary>
+        /// <param name="version">The version to convert</param>
+        /// <returns>Human readable form of the version</returns>
         public static string ToReadable(this ScriptVersion version)
         {
             var readable = version.ToString();
