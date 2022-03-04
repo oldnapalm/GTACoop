@@ -768,7 +768,7 @@ namespace GTAServer
                             msgSend.Write(len);
                             msgSend.Write(data);
 
-                            Server.SendToAll(msgSend, NetDeliveryMethod.Unreliable);
+                            Server.SendToAll(msgSend, client.NetConnection, NetDeliveryMethod.Unreliable, 0);
                         }
                     }
                     break;

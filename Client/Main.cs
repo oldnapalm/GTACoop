@@ -138,11 +138,6 @@ namespace GTACoOp
 			_waveInput.DeviceNumber = 0;
             _waveInput.DataAvailable += SendVoiceData;
             _waveInput.WaveFormat = new WaveFormat(44200, 2);
-            _waveInput.RecordingStopped += (object sender, StoppedEventArgs e) =>
-            {
-                _waveInput.Dispose();
-                _waveInput = null;
-            };
 
             var voiceStream = new MemoryStream();
             _waveWriter = new WaveFileWriter(voiceStream, _waveInput.WaveFormat);
@@ -1244,8 +1239,6 @@ namespace GTACoOp
 
                                 var len = msg.ReadInt32();
                                 var data = msg.ReadBytes(len);
-                            
-                                UI.ShowSubtitle(len + " ");
 
                                 _playBuffer.AddSamples(data, 0, data.Length);
                             }
