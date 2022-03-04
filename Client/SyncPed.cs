@@ -126,6 +126,27 @@ namespace GTACoOp
             }
         }
 
+        public bool Blip
+        {
+            set
+            {
+                _blip = value;
+
+                if (_mainBlip != null && !_blip)
+                {
+                    _mainBlip.Remove();
+                    _mainBlip = null;
+                }
+
+                if (Character?.CurrentBlip != null && !_blip)
+                {
+                    Character.CurrentBlip.Remove();
+                }
+
+                // don't have to create the blip here, update code should take care of that
+            }
+        }
+
         private bool _lastVehicle;
         private uint _switch;
         private bool _lastAiming;

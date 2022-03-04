@@ -88,6 +88,9 @@ namespace GTACoOp
 
         private static UIMenuItem _passItem;
 
+        // whether player blips are enabled
+        private bool _blips = true;
+
 #if VOICE
         // NAUDIO
         private static WaveInEvent _waveInput;
@@ -1260,7 +1263,7 @@ namespace GTACoOp
                                     if (!Opponents.ContainsKey(data.Id))
                                     {
                                         var repr = new SyncPed(data.PedModelHash, data.Position.ToVector(),
-                                            data.Quaternion.ToQuaternion());
+                                            data.Quaternion.ToQuaternion(), _blips);
                                         Opponents.Add(data.Id, repr);
 
                                         Opponents[data.Id].Name = data.Name;
@@ -1317,7 +1320,7 @@ namespace GTACoOp
                                     if (!Opponents.ContainsKey(data.Id))
                                     {
                                         var repr = new SyncPed(data.PedModelHash, data.Position.ToVector(),
-                                            data.Quaternion.ToQuaternion());
+                                            data.Quaternion.ToQuaternion(), _blips);
                                         Opponents.Add(data.Id, repr);
 
                                         Opponents[data.Id].Name = data.Name;
@@ -1675,6 +1678,8 @@ namespace GTACoOp
                                 ConnectToServer(_lastIP, _lastPort);
                             }
 
+                            _blips = true;
+
                             // clear chat
                             _chat.Reset();
 
@@ -1784,7 +1789,22 @@ namespace GTACoOp
 
             switch (name)
             {
+                case "builtin:toggleblips":
+                    {
+                        var toggle = reader.ReadBoolean();
 
+                        if (!toggle)
+                        {
+                            UI.Notify("Player blips have been disabled on this server.");
+                        }
+
+                        _blips = toggle;
+                        foreach (var pair in Opponents)
+                        {
+                            pair.Value.Blip = toggle;
+                        }
+                    }
+                    break;
             }
         }
 
