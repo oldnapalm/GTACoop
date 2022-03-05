@@ -2,6 +2,9 @@
 
 namespace GTAServer.PluginAPI.Attributes
 {
+    /// <summary>
+    /// Attribute to be added to command methods
+    /// </summary>
     [AttributeUsage(AttributeTargets.Method)]
     public class CommandAttribute : Attribute
     {

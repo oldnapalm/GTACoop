@@ -14,6 +14,9 @@ using GTAServer.Logging;
 
 namespace GTAServer.Users
 {
+    /// <summary>
+    /// The default permission provider
+    /// </summary>
     public class UserModule : IPermissionProvider
     {
         private ILogger _logger;
@@ -117,7 +120,7 @@ namespace GTAServer.Users
             _connection.Close();
         }
 
-        public void LoadGroups()
+        private void LoadGroups()
         {
             var groups = LoadGroupsConfiguration();
 
@@ -148,7 +151,7 @@ namespace GTAServer.Users
             _configuration = groups;
         }
 
-        public List<Permission> GetPermissions(List<Group> groups, string group)
+        private List<Permission> GetPermissions(List<Group> groups, string group)
         {
             var permissions = new List<Permission>();
 
@@ -177,7 +180,7 @@ namespace GTAServer.Users
             return permissions;
         }
 
-        public GroupsConfiguration LoadGroupsConfiguration()
+        private GroupsConfiguration LoadGroupsConfiguration()
         {
             var ser = new XmlSerializer(typeof(GroupsConfiguration));
             var path = System.AppContext.BaseDirectory + Path.DirectorySeparatorChar + "Configuration" +
@@ -210,7 +213,7 @@ namespace GTAServer.Users
         /// </summary>
         /// <param name="username">The choosen username</param>
         /// <param name="password">The choosen password</param>
-        public void CreateUser(string username, string password)
+        private void CreateUser(string username, string password)
         {
             var hash = BCrypt.Net.BCrypt.HashPassword(password);
             password = null;
@@ -234,7 +237,7 @@ namespace GTAServer.Users
         /// Links the client to associated user
         /// </summary>
         /// <param name="client"></param>
-        public void Login(Client client)
+        private void Login(Client client)
         {
             var user = Users.First(x => x.Username == client.DisplayName);
             user.Client = client;
@@ -242,7 +245,7 @@ namespace GTAServer.Users
             client.SendMessage("You have been logged in");
         }
 
-        public void SetGroup(long id, string group)
+        private void SetGroup(long id, string group)
         {
             var query = new SQLiteCommand("UPDATE `users` SET `Group` = @group WHERE `Id` = @id", _connection);
             query.Parameters.AddWithValue("@id", id);

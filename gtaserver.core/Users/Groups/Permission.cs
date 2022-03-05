@@ -1,11 +1,22 @@
-﻿using System;
+﻿using GTAServer.PluginAPI.Entities;
+using System;
 using System.Linq;
 
 namespace GTAServer.Users.Groups
 {
+    /// <summary>
+    /// Represents a permission in the default permission provider
+    /// </summary>
     public class Permission
     {
+        /// <summary>
+        /// Gets the permisison type
+        /// </summary>
         public PermissionType Type { get; }
+
+        /// <summary>
+        /// Gets the permission
+        /// </summary>
         public string Name { get; }
 
         public Permission(PermissionType type, string permission)
@@ -17,8 +28,8 @@ namespace GTAServer.Users.Groups
         /// <summary>
         /// Parses a string to permission
         /// </summary>
-        /// <param name="permission"></param>
-        /// <returns></returns>
+        /// <param name="permission">The permission string</param>
+        /// <returns>The <see cref="Permission"/> object representing the permission</returns>
         /// <exception cref="InvalidPermissionException"></exception>
         public static Permission Parse(string permission)
         {

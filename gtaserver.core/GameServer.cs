@@ -1075,8 +1075,7 @@ namespace GTAServer
         /// <param name="reason">The reason to be displayed</param>
         /// <param name="silent">Whether or not the deny should not be display to other clients</param>
         /// <param name="msg">The orginal incoming message</param>
-        public void DenyConnect(Client player, string reason, bool silent = true, NetIncomingMessage msg = null,
-            int duraction = 60)
+        public void DenyConnect(Client player, string reason, bool silent = true, NetIncomingMessage msg = null)
         {
             player.NetConnection.Deny(reason);
             logger.LogInformation(LogEvent.Handshake, $"Player rejected from server: {player.DisplayName} for {reason}");

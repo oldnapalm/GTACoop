@@ -2,6 +2,9 @@
 
 namespace GTAServer.PluginAPI.Entities
 {
+    /// <summary>
+    /// Represents a context of an executed command
+    /// </summary>
     public class CommandContext
     {
         /// <summary>
@@ -25,9 +28,9 @@ namespace GTAServer.PluginAPI.Entities
         public ChatData ChatData { get; internal set; }
 
         /// <summary>
-        /// Reply to the client executing the command
+        /// Replies to the sender executing the command
         /// </summary>
-        /// <param name="message"></param>
+        /// <param name="message">The message to send</param>
         public void SendMessage(string message)
         {
             Sender?.SendMessage(message);

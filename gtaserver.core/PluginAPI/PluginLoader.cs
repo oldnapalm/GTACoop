@@ -8,15 +8,23 @@ using Microsoft.Extensions.Logging;
 
 namespace GTAServer.PluginAPI
 {
+    /// <summary>
+    /// Helper class for loading plugins
+    /// </summary>
     public class PluginLoader
     {
-        private static readonly string Location = System.AppContext.BaseDirectory;
-
+        private static readonly string _location = AppContext.BaseDirectory;
         private static ILogger _logger;
+
+        /// <summary>
+        /// Loads a plugin from the 'Plugins' folder by name and returns all loaded <see cref="IPlugin"/> instances
+        /// </summary>
+        /// <param name="targetAssemblyName">The name of the plugin without dll extension</param>
+        /// <returns>All loaded <see cref="IPlugin"/> instances</returns>
         public static List<IPlugin> LoadPlugin(string targetAssemblyName)
         {
             _logger = Util.LoggerFactory.CreateLogger<PluginLoader>();
-            var assemblyName = Location + Path.DirectorySeparatorChar + "Plugins" + Path.DirectorySeparatorChar + targetAssemblyName + ".dll";
+            var assemblyName = _location + Path.DirectorySeparatorChar + "Plugins" + Path.DirectorySeparatorChar + targetAssemblyName + ".dll";
             var pluginList = new List<IPlugin>();
 
             /*_logger.LogTrace(asmName.FullName);

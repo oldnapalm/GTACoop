@@ -87,7 +87,7 @@ namespace GTAServer
             Start();
         }
 
-        public static void Start()
+        private static void Start()
         {
             Util.LoggerFactory = new LoggerFactory();
             Util.CreateHttpClient();
@@ -266,9 +266,8 @@ namespace GTAServer
 
         /// <summary>
         /// Executes a command on the current <see cref="GameServer"/> instance,
-        /// Called by ConsoleThread on native and by JS in WebAssembly
         /// </summary>
-        /// <param name="cmd"></param>
+        /// <param name="cmd">The raw command to execute</param>
         /// <returns>Whether the command existed</returns>
         public static bool ExecuteCommand(string cmd, GameServer server = null, ICommandSender sender = null)
         {
