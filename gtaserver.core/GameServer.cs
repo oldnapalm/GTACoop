@@ -679,7 +679,7 @@ namespace GTAServer
 
         private void HandleClientIncomingData(Client client, NetIncomingMessage msg)
         {
-            if (msg.LengthBytes < 8)
+            if (msg.LengthBytes < 4)
             {
                 logger.LogWarning(LogEvent.Incoming, "Received invalid packet from " + client.DisplayName);
                 return;
