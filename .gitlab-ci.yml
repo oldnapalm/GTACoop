@@ -35,11 +35,11 @@ build_client:
         - windows
         - windows-22h2
     script:
-        - "\"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\VsDevCmd.bat\" -arch=x64 -host_arch=x64"
+        - "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\Tools\\VsDevCmd.bat\" -arch=x64 -host_arch=x64"
         - msbuild /t:restore
         - cd NativeUI
         - msbuild /t:build /restore /p:Configuration=Release /p:OutputPath=bin\Release
-        - cd ..\Client
+        - cd ../Client
         - msbuild /t:build /restore /p:Configuration=Release /p:Platform=AnyCPU /p:BuildProjectReferences=false /p:PostBuildEvent=
     artifacts:
       paths:
