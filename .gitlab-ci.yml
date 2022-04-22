@@ -1,5 +1,8 @@
 image: mcr.microsoft.com/dotnet/sdk:5.0.102-ca-patch-buster-slim
 
+variables:
+  GIT_SUBMODULE_STRATEGY: normal
+
 stages:
     - build
     - plugins
@@ -7,17 +10,16 @@ stages:
 before_script:
     # https://gitlab.com/TheIndra55/lidgren-network-gen3
     - "dotnet nuget add source https://gitlab.com/api/v4/projects/20574571/packages/nuget/index.json -n gitlab"
-    - "cd gtaserver.core"
-    - "dotnet restore"
     
 build_windows:
-    stage: build
+    stage: build_server
     # run in Windows since on crossbuilding on Linux apphost customization doesn't work
     tags:
         - shared-windows
         - windows
-        - windows-2004
+        - windows-22h2
     script:
+        - cd gtaserver.core
         # windows 7 is EOL, win10 includes win81
         #- dotnet publish -r win10-x64 -c Release -o publish/windows-Release
         - dotnet publish -r win10-x64 -c Release -o publish/windows-Release -p:PublishSingleFile=true
@@ -25,18 +27,37 @@ build_windows:
         paths:
             - "gtaserver.core/publish/windows-Release"
 
-build_linux:
-    stage: build
+  build_client:
+    stage: build_client
+    tags:
+      - shared-windows
+      - windows
+      - windows-22h2
     script:
+      - "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\VsDevCmd.bat" -arch=x64 -host_arch=x64
+      - msbuild /t:restore
+      - cd NativeUI
+      - msbuild /t:build /restore /p:Configuration=Release /p:OutputPath=bin\Release
+      - cd ..\Client
+      - msbuild /t:build /restore /p:Configuration=Release /p:Platform=AnyCPU /p:BuildProjectReferences=false /p:PostBuildEvent=
+    artifacts:
+      paths:
+        - "Client/bin/Release"
+
+build_linux:
+    stage: build_server
+    script:
+        - cd gtaserver.core
         - dotnet publish -r ubuntu-x64 -c Release -o publish/linux-Release
     artifacts:
         paths:
             - "gtaserver.core/publish/linux-Release"
 
 build_linux_arm:
-    stage: build
+    stage: build_server
     when: manual
     script:
+        - cd gtaserver.core
         - dotnet publish -r linux-arm -c Release -o publish/arm-Release
     artifacts:
         paths:
@@ -45,7 +66,7 @@ build_linux_arm:
 build_plugins:
     stage: plugins
     script:
-       - cd ../Race2 # are we still in gtaserver.core directory from before_script?
+       - cd Race2
        - dotnet publish -c Release -o publish
        - cd ../DiscordBot # hm
        - dotnet publish -c Release -o publish
