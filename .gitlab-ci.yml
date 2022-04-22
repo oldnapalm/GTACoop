@@ -4,7 +4,8 @@ variables:
   GIT_SUBMODULE_STRATEGY: normal
 
 stages:
-    - build
+    - build_server
+    - build_client
     - plugins
     
 before_script:
@@ -27,19 +28,19 @@ build_windows:
         paths:
             - "gtaserver.core/publish/windows-Release"
 
-  build_client:
+build_client:
     stage: build_client
     tags:
-      - shared-windows
-      - windows
-      - windows-22h2
+        - shared-windows
+        - windows
+        - windows-22h2
     script:
-      - "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\VsDevCmd.bat" -arch=x64 -host_arch=x64
-      - msbuild /t:restore
-      - cd NativeUI
-      - msbuild /t:build /restore /p:Configuration=Release /p:OutputPath=bin\Release
-      - cd ..\Client
-      - msbuild /t:build /restore /p:Configuration=Release /p:Platform=AnyCPU /p:BuildProjectReferences=false /p:PostBuildEvent=
+        - \"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools\VsDevCmd.bat\" -arch=x64 -host_arch=x64
+        - msbuild /t:restore
+        - cd NativeUI
+        - msbuild /t:build /restore /p:Configuration=Release /p:OutputPath=bin\Release
+        - cd ..\Client
+        - msbuild /t:build /restore /p:Configuration=Release /p:Platform=AnyCPU /p:BuildProjectReferences=false /p:PostBuildEvent=
     artifacts:
       paths:
         - "Client/bin/Release"
