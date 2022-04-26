@@ -790,7 +790,7 @@ namespace GTAServer
                             client.LastKnownPosition = vehicleData.Position;
                             client.IsInVehicle = true;
 
-                            SendToAll(vehicleData, PacketType.VehiclePositionData, false, client);
+                            SendToAll(vehicleData, PacketType.VehiclePositionData, NetDeliveryMethod.UnreliableSequenced, client);
                         }
                     }
                     break;
@@ -812,7 +812,7 @@ namespace GTAServer
                             client.LastKnownPosition = pedPosData.Position;
                             client.IsInVehicle = false;
 
-                            SendToAll(pedPosData, PacketType.PedPositionData, false, client);
+                            SendToAll(pedPosData, PacketType.PedPositionData, NetDeliveryMethod.UnreliableSequenced, client);
                         }
                     }
                     break;
@@ -828,7 +828,7 @@ namespace GTAServer
                             vehData = pluginVehData.Data;
 
                             vehData.Id = client.NetConnection.RemoteUniqueIdentifier;
-                            SendToAll(vehData, PacketType.NpcVehPositionData, false, client);
+                            SendToAll(vehData, PacketType.NpcVehPositionData, NetDeliveryMethod.UnreliableSequenced, client);
                         }
                     }
                     break;
@@ -844,7 +844,7 @@ namespace GTAServer
 
                             pedData.Id = msg.SenderConnection.RemoteUniqueIdentifier;
                         }
-                        SendToAll(pedData, PacketType.NpcPedPositionData, false, client);
+                        SendToAll(pedData, PacketType.NpcPedPositionData, NetDeliveryMethod.UnreliableSequenced, client);
                     }
                     break;
                 case PacketType.WorldSharingStop:
@@ -1066,6 +1066,23 @@ namespace GTAServer
             msg.Write(data.Length);
             msg.Write(data);
             Server.SendToAll(msg, clientToExclude.NetConnection, packetIsImportant ? NetDeliveryMethod.ReliableOrdered : NetDeliveryMethod.ReliableSequenced, GetChannelForClient(clientToExclude));
+        }
+
+        /// <summary>
+        /// Sends a packet to all players
+        /// </summary>
+        /// <param name="dataToSend">The object to be serialized and send</param>
+        /// <param name="packetType">The packet type</param>
+        /// <param name="deliveryMethod">The delivery method</param>
+        /// <param name="clientToExclude">The client this packet should not be send to</param>
+        public void SendToAll(object dataToSend, PacketType packetType, NetDeliveryMethod deliveryMethod, Client clientToExclude)
+        {
+            var data = Util.SerializeBinary(dataToSend);
+            var msg = Server.CreateMessage();
+            msg.Write((int)packetType);
+            msg.Write(data.Length);
+            msg.Write(data);
+            Server.SendToAll(msg, clientToExclude.NetConnection, deliveryMethod, GetChannelForClient(clientToExclude));
         }
 
         /// <summary>

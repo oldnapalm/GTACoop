@@ -30,6 +30,7 @@ build_windows:
 
 build_client:
     stage: build_client
+    when: manual
     tags:
         - shared-windows
         - windows
