@@ -24,6 +24,9 @@ namespace GTAServer
         /// </summary>
         public static ILoggerFactory LoggerFactory;
 
+        /// <summary>
+        /// Static instance of HttpClient that can be reused
+        /// </summary>
         internal static HttpClient HttpClient;
 
         public static T DeserializeBinary<T>(byte[] data)
@@ -85,7 +88,7 @@ namespace GTAServer
             HttpClient = new HttpClient(handler);
 
             HttpClient.DefaultRequestHeaders
-                .TryAddWithoutValidation("User-Agent", "Mozilla/5.0 (GTAServer.core " + Util.GetServerVersion() + ")");
+                .TryAddWithoutValidation("User-Agent", "Mozilla/5.0 (GTAServer.core " + GetServerVersion() + ")");
         }
 
         /// <summary>
@@ -96,21 +99,26 @@ namespace GTAServer
         {
             var i = 0;
             var inQuotes = false;
+            var previousCharacter = (char)0;
             var args = new List<string>();
 
             foreach (char rune in command.ToCharArray())
             {
                 if (rune == ' ' && !inQuotes)
                 {
-                    i++;
+                    if (previousCharacter != ' ') i++;
+                    previousCharacter = rune;
                     continue;
                 }
 
                 if (rune == '"')
                 {
                     inQuotes = !inQuotes;
+                    previousCharacter = rune;
                     continue;
                 }
+
+                previousCharacter = rune;
 
                 if (args.ElementAtOrDefault(i) == null) args.Add("");
                 args[i] += rune;
