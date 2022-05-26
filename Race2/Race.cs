@@ -34,6 +34,7 @@ namespace Race
         public const ulong SET_ENTITY_HEADING = 0x8E2530AA8ADA980E;
         public const ulong SET_ENTITY_ALPHA = 0x44A0870B7E92D7C0;
         public const ulong SET_ENTITY_COMPLETELY_DISABLE_COLLISION = 0x9EBC85ED0FFFE51C;
+        public const ulong STOP_ENTITY_FIRE = 0x7F0DD2EBBB651AFF;
         public const ulong SET_OBJECT_TEXTURE_VARIATION = 0x971DA0055324D033;
         public const ulong REQUEST_SCRIPT_AUDIO_BANK = 0x2F844A8B08D76685;
         public const ulong PLAY_SOUND_FRONTEND = 0x67C540AA08E4A6F5;
@@ -438,6 +439,7 @@ namespace Race
                 var heading = (float)(-Math.Atan2(dir.X, dir.Y) * 180.0 / Math.PI);
                 GameServer.SendNativeCallToPlayer(player.Client, SET_ENTITY_COORDS, player.Vehicle, last.X, last.Y, last.Z, 0, 0, 0, 1);
                 GameServer.SendNativeCallToPlayer(player.Client, SET_ENTITY_HEADING, player.Vehicle, heading);
+                GameServer.SendNativeCallToPlayer(player.Client, STOP_ENTITY_FIRE, player.Vehicle);
                 GameServer.SendNativeCallToPlayer(player.Client, SET_PED_INTO_VEHICLE, new LocalPlayerArgument(), player.Vehicle, -1);
                 GameServer.SendNativeCallToPlayer(player.Client, SET_VEHICLE_FIXED, player.Vehicle);
                 GameServer.SendNativeCallToPlayer(player.Client, SET_VEHICLE_ENGINE_ON, player.Vehicle, true, true);
