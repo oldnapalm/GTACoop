@@ -75,6 +75,7 @@ namespace GTAServer
                 var sentry = SentrySdk.Init(config => 
                 {
                     config.Dsn = SENTRY_DSN;
+                    config.AutoSessionTracking = true;
 
                     // write minidumps on Windows
                     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) config.AddExceptionProcessor(new MiniDump());
