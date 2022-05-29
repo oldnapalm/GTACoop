@@ -68,14 +68,14 @@ build_linux_arm:
 build_plugins:
     stage: plugins
     script:
-       - cd Race2
+       - cd Race
        - dotnet publish -c Release -o publish
        - cd ../DiscordBot # hm
        - dotnet publish -c Release -o publish
     artifacts:
         paths:
-            - "Race2/publish/race.dll"
-            - "Race2/publish/race.pdb"
-            - "Race2/publish/Maps"
+            - "Race/publish/race.dll"
+            - "Race/publish/race.pdb"
+            - "Race/publish/Maps"
             - "DiscordBot/publish/DiscordBot.dll"
             - "DiscordBot/publish/DiscordBot.pdb"
