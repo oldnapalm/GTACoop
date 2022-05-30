@@ -51,6 +51,7 @@ namespace GTAServer
         public string Motd { get; set; } = "Welcome to this GTA CooP server!";
         public IPermissionProvider PermissionProvider { get; set; }
         public PrometheusMetrics Metrics { get; set; }
+        public ServerStatistics Statistics { get; set; }
         public bool UPnP { get; set; }
         public string RconPassword { get; set; }
 
@@ -74,6 +75,7 @@ namespace GTAServer
             Name = name;
             Port = port;
             UPnP = config.UPnP;
+            Statistics = new ServerStatistics();
 
             Config = new NetPeerConfiguration("GTAVOnlineRaces") { Port = port, EnableUPnP = UPnP };
             if(config.DualStack)
@@ -496,6 +498,8 @@ namespace GTAServer
             var pluginResponse = ConnectionEvents.ConnectionRequest(client, connReq);
             if (!pluginResponse.ContinueServerProc) return;
             connReq = pluginResponse.Data;
+
+            Statistics.TotalConnections++;
 
             client.DisplayName = connReq.DisplayName;
             client.Name = connReq.Name;

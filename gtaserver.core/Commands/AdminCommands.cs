@@ -68,7 +68,8 @@ namespace GTAServer.Commands
             ctx.SendMessage($"{uptime:hh\\:mm\\:ss} up {Math.Round(uptime.TotalDays)} days\n" +
                 "Sent: " + NetUtility.ToHumanReadable(s.SentBytes) + "\n" +
                 "Received: " + NetUtility.ToHumanReadable(s.ReceivedBytes) + "\n" +
-                "Active connections: " + ctx.GameServer.Server.ConnectionsCount + "\n");
+                "Active connections: " + ctx.GameServer.Server.ConnectionsCount + "\n" +
+                "Total connections: " + ctx.GameServer.Statistics.TotalConnections + "\n");
         }
     }
 }
