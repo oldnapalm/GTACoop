@@ -949,13 +949,24 @@ namespace GTAServer
         }
 
         /// <summary>
-        /// Init a configuration for the current plugin, this will create a (pluginname).xml in the configuration option
+        /// Init a configuration for the current plugin, this will create a (pluginname).xml file in the 'Configuration' folder
         /// </summary>
+        /// <typeparam name="T">The type to serialize/deserialize</typeparam>
         /// <param name="plugin">The current plugin class, the file will be named to the classname</param>
         /// <returns>The provided configuration object</returns>
         public T InitConfiguration<T>(Type plugin)
         {
-            var name = plugin.Name.ToLower();
+            return InitConfiguration<T>(plugin.Name.ToLower());
+        }
+
+        /// <summary>
+        /// Init a configuration with the provided name, this will create a .xml file in the 'Configuration' folder
+        /// </summary>
+        /// <typeparam name="T">The type to serialize/deserialize</typeparam>
+        /// <param name="name">The name of the configuration file without extension</param>
+        /// <returns></returns>
+        public T InitConfiguration<T>(string name)
+        {
             var path = Location + Path.DirectorySeparatorChar + "Configuration" + Path.DirectorySeparatorChar + name + ".xml";
 
             var serializer = new XmlSerializer(typeof(T));

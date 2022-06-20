@@ -1,9 +1,5 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
-using System.Xml.Serialization;
 using Discord;
 using Discord.Webhook;
 using Discord.WebSocket;
@@ -11,6 +7,7 @@ using GTAServer;
 using GTAServer.PluginAPI;
 using GTAServer.PluginAPI.Events;
 using GTAServer.ProtocolMessages;
+using Microsoft.Extensions.Logging;
 
 namespace DiscordBot
 {
@@ -18,7 +15,7 @@ namespace DiscordBot
     {
         public string Token { get; set; }
         public string Webhook { get; set; }
-        public UInt64 Channel { get; set; }
+        public ulong Channel { get; set; }
         public string WelcomeMessage { get; set; }
         public string HelpMessage { get; set; }
 
@@ -30,17 +27,6 @@ namespace DiscordBot
             WelcomeMessage = "";
             HelpMessage = "";
         }
-
-        public static DiscordSettings ReadSettings(string path)
-        {
-            var ser = new XmlSerializer(typeof(DiscordSettings));
-            DiscordSettings settings = null;
-            if (File.Exists(path))
-                using (var stream = File.OpenRead(path)) settings = (DiscordSettings)ser.Deserialize(stream);
-            else
-                using (var stream = File.OpenWrite(path)) ser.Serialize(stream, settings = new DiscordSettings());
-            return settings;
-        }
     }
 
     public class DiscordBot : IPlugin
@@ -48,11 +34,13 @@ namespace DiscordBot
         public string Name => "Discord Bot";
         public string Description => "Discord bridge plugin using Discord.Net";
         public string Author => "oldnapalm";
+
         private GameServer _server;
         private DiscordSettings _settings;
         private DiscordSocketClient _client;
         private DiscordWebhookClient _webhook;
         private IMessageChannel _channel;
+        private ILogger _logger;
 
         private void OnJoin(Client c)
         {
@@ -79,8 +67,10 @@ namespace DiscordBot
         public bool OnEnable(GameServer gameServer, bool isAfterServerLoad)
         {
             _server = gameServer;
-            string configFile = "Configuration" + Path.DirectorySeparatorChar + "discordSettings.xml";
-            _settings = DiscordSettings.ReadSettings(configFile);
+            _logger = Util.LoggerFactory.CreateLogger<DiscordBot>();
+
+            _settings = gameServer.InitConfiguration<DiscordSettings>("discordSettings");
+
             if (_settings.Token != "token" && _settings.Webhook != "webhook URL" && _settings.Channel != 0)
             {
                 MainAsync().GetAwaiter().GetResult();
@@ -88,12 +78,14 @@ namespace DiscordBot
             }
             else
             {
-                Console.WriteLine("Edit Discord settings in " + configFile);
+                _logger.LogInformation("Edit Discord settings in Configuration/discordSettings.xml");
                 return false;
             }
+
             ConnectionEvents.OnJoin.Add(OnJoin);
             ConnectionEvents.OnDisconnect.Add(OnDisconnect);
             GameEvents.OnChatMessage.Add(OnChatMessage);
+
             return true;
         }
 
@@ -111,14 +103,15 @@ namespace DiscordBot
 
         private Task LogAsync(LogMessage log)
         {
-            Console.WriteLine(log.ToString());
+            _logger.Log(log.Severity.ToLogLevel(), log.Message);
+
             return Task.CompletedTask;
         }
 
         private Task ReadyAsync()
         {
             _channel = (IMessageChannel)_client.GetChannel(_settings.Channel);
-            Console.WriteLine($"{_client.CurrentUser} is connected");
+            _logger.LogInformation($"{_client.CurrentUser} is connected");
             return Task.CompletedTask;
         }
 
