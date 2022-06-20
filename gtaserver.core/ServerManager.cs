@@ -243,15 +243,15 @@ namespace GTAServer
             ServerConfiguration cfg = null;
             if (File.Exists(path))
             {
-                using (var stream = File.OpenRead(path)) cfg = (ServerConfiguration)ser.Deserialize(stream);
-                using (
-                    var stream = new FileStream(path, File.Exists(path) ? FileMode.Truncate : FileMode.Create,
-                        FileAccess.ReadWrite)) ser.Serialize(stream, cfg);
+                using var stream = File.OpenRead(path);
+                cfg = (ServerConfiguration)ser.Deserialize(stream);
             }
             else
             {
                 Console.WriteLine("No configuration found, creating a new one.");
-                using (var stream = File.OpenWrite(path)) ser.Serialize(stream, cfg = new ServerConfiguration());
+
+                using var stream = File.OpenWrite(path);
+                ser.Serialize(stream, cfg = new ServerConfiguration());
             }
 
             return cfg;

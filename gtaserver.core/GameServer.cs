@@ -964,14 +964,14 @@ namespace GTAServer
             if (File.Exists(path))
             {
                 cfg = Activator.CreateInstance<T>();
-                using (var stream = File.OpenRead(path)) cfg = (T)serializer.Deserialize(stream);
-                using (
-                    var stream = new FileStream(path, File.Exists(path) ? FileMode.Truncate : FileMode.Create,
-                        FileAccess.ReadWrite)) serializer.Serialize(stream, cfg);
+
+                using var stream = File.OpenRead(path);
+                cfg = (T)serializer.Deserialize(stream);
             }
             else
             {
-                using (var stream = File.OpenWrite(path)) serializer.Serialize(stream, cfg = Activator.CreateInstance<T>());
+                using var stream = File.OpenWrite(path);
+                serializer.Serialize(stream, cfg = Activator.CreateInstance<T>());
             }
 
             return cfg;
