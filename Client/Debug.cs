@@ -101,8 +101,7 @@ namespace GTACoOp
                 _handle = null;
             }
 
-            // yay
-            WriteLine("GTA Coop version " + Main.ReadableScriptVersion());
+            WriteLine("GTA Coop v" + (Util.GetAssemblyVersion() ?? Main.ReadableScriptVersion()));
         }
 
         public void Dispose()
@@ -114,21 +113,30 @@ namespace GTACoOp
 
         public void Write(string text)
         {
-            _handle?.Write(text);
-            _handle?.Flush();
+            // not using ?. here due to compiler generating two if statements
+            if (_handle != null)
+            {
+                _handle.Write(text);
+                _handle.Flush();
+            }
         }
 
         public void WriteLine(string text = "")
         {
-            _handle?.WriteLine(text);
-            _handle?.Flush();
+            if (_handle != null)
+            {
+                _handle.WriteLine(text);
+                _handle.Flush();
+            }
         }
 
         public void WriteException(string description, Exception e)
         {
-            _handle?.WriteLine(description + ": " + e.Message + "\n" 
-                + e.StackTrace);
-            _handle?.Flush();
+            if (_handle != null)
+            {
+                _handle.WriteLine(description + ": " + e.ToString());
+                _handle.Flush();
+            }
         }
     }
 }

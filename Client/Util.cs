@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Windows.Forms;
 using System.Xml.Serialization;
 using GTA;
@@ -214,6 +215,11 @@ namespace GTACoOp
         public static void HideBusySpinner()
         {
             Function.Call((Hash)0x10D373323E5B9C0D /* BUSYSPINNER_OFF */);
+        }
+
+        public static string GetAssemblyVersion()
+        {
+            return Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyFileVersionAttribute>()?.Version;
         }
     }
 }
