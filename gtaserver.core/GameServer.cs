@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Runtime.Loader;
 using System.Text;
 using System.Threading;
+using System.Xml;
 using System.Xml.Serialization;
 using GTAServer.PluginAPI;
 using GTAServer.PluginAPI.Attributes;
@@ -982,7 +983,9 @@ namespace GTAServer
             else
             {
                 using var stream = File.OpenWrite(path);
-                serializer.Serialize(stream, cfg = Activator.CreateInstance<T>());
+
+                var writer = XmlWriter.Create(stream, new XmlWriterSettings { Indent = true });
+                serializer.Serialize(writer, cfg = Activator.CreateInstance<T>());
             }
 
             return cfg;

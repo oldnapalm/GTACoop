@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.IO;
 using System.Linq;
+using System.Xml;
 using System.Xml.Serialization;
 using GTAServer.Commands;
 using Microsoft.Extensions.Logging;
@@ -251,7 +252,9 @@ namespace GTAServer
                 Console.WriteLine("No configuration found, creating a new one.");
 
                 using var stream = File.OpenWrite(path);
-                ser.Serialize(stream, cfg = new ServerConfiguration());
+
+                var writer = XmlWriter.Create(stream, new XmlWriterSettings { Indent = true });
+                ser.Serialize(writer, cfg = new ServerConfiguration());
             }
 
             return cfg;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.SQLite;
 using System.IO;
 using System.Linq;
+using System.Xml;
 using System.Xml.Serialization;
 using GTAServer.PluginAPI.Events;
 using GTAServer.ProtocolMessages;
@@ -196,7 +197,9 @@ namespace GTAServer.Users
                 _logger.LogInformation(LogEvent.UsersMgr, "No groups configuration found, creating a new one");
                 using (var stream = File.OpenWrite(path))
                 {
-                    ser.Serialize(stream, cfg = new GroupsConfiguration(
+                    var writer = XmlWriter.Create(stream, new XmlWriterSettings { Indent = true });
+
+                    ser.Serialize(writer, cfg = new GroupsConfiguration(
                         // default groups
                         new Group("admin", "command.kick", "command.tp", "command.setgroup", "group.user"),
                         new Group("user", "command.login", "command.register", "command.about", "command.help",
