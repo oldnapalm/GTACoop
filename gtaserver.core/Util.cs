@@ -14,6 +14,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using GTAServer.ProtocolMessages;
+using System.Text.Json.Nodes;
 
 namespace GTAServer
 {
@@ -127,23 +128,24 @@ namespace GTAServer
             return args;
         }
 
+        #region telemetry
+
         /// <summary>
-        /// Append **anonymous** telemetry to the master server request, this data is encrypted
+        /// Append encrypted telemetry to the master server request
         /// </summary>
-        /// <param name="request"></param>
+        /// <param name="request">The master server request to append to</param>
         internal static void AppendTelemetry(ref GameServer.MasterRequest request)
         {
-            var rsaKeyInfo = new RSAParameters();
-            rsaKeyInfo.Exponent = new byte[] { 0x01, 0x00, 0x01 };
-
-            if(Modulus == null)
+            // ensure public key
+            if (PublicKey == null)
             {
-                // get public key from assembly
-                var resource = Assembly.GetExecutingAssembly().GetManifestResourceStream("GTAServer.public.pem");
-                Modulus = new byte[resource.Length];
-                resource.Read(Modulus, 0, (int)resource.Length);
+                PublicKey = GetTelemetryPublic();
             }
-            rsaKeyInfo.Modulus = Modulus;
+
+            // create RSA
+            var rsaKeyInfo = new RSAParameters();
+            rsaKeyInfo.Modulus = PublicKey.Item1;
+            rsaKeyInfo.Exponent = PublicKey.Item2;
 
             var rsa = RSA.Create();
             rsa.ImportParameters(rsaKeyInfo);
@@ -157,12 +159,12 @@ namespace GTAServer
             rsa.Dispose();
         }
 
-        internal static byte[] Modulus { get; private set; }
+        private static Tuple<byte[], byte[]> PublicKey { get; set; }
 
         /// <summary>
         /// Get all telemetry data
         /// </summary>
-        /// <returns></returns>
+        /// <returns>The telemetry data</returns>
         private static Dictionary<string, string> GetTelemetryProperties()
         {
             return new Dictionary<string, string>
@@ -180,6 +182,29 @@ namespace GTAServer
 #endif
             };
         }
+
+        /// <summary>
+        /// Gets the telemetry public key embedded in the server binary
+        /// </summary>
+        /// <returns>The public key modulus and exponent</returns>
+        private static Tuple<byte[], byte[]> GetTelemetryPublic()
+        {
+            // loosely based on json web keys
+            var resource = Assembly.GetExecutingAssembly().GetManifestResourceStream("GTAServer.public.json");
+            var key = JsonSerializer.Deserialize<JsonNode>(resource);
+
+            if ((string)key["kty"] != "RSA")
+            {
+                throw new Exception("Invalid telemetry key");
+            }
+
+            var modulus = Convert.FromBase64String((string)key["n"]);
+            var exponent = Convert.FromBase64String((string)key["e"]);
+
+            return new Tuple<byte[], byte[]>(modulus, exponent);
+        }
+
+        #endregion
 
         /// <summary>
         /// Gets the current server version

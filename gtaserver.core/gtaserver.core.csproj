@@ -22,7 +22,7 @@
 
     <PackageReference Include="Microsoft.SourceLink.GitLab" Version="1.1.1" PrivateAssets="All" />
 
-    <EmbeddedResource Include="public.pem" />
+    <EmbeddedResource Include="public.json" />
 
     <TrimmerRootAssembly Include="netstandard" />
   </ItemGroup>

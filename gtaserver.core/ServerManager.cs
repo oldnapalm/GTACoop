@@ -144,7 +144,7 @@ namespace GTAServer
 
             // Plugin Code
             _logger.LogInformation(LogEvent.Plugin, "Loading plugins");
-            //Plugins = PluginLoader.LoadPlugin("TestPlugin");
+
             foreach (var pluginName in _gameServerConfiguration.ServerPlugins)
             {
                 foreach (var loadedPlugin in PluginLoader.LoadPlugin(pluginName))
