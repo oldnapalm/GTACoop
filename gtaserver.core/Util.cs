@@ -15,6 +15,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using GTAServer.ProtocolMessages;
 using System.Text.Json.Nodes;
+using Cgmp.Shared.Preferences;
 
 namespace GTAServer
 {
@@ -169,6 +170,9 @@ namespace GTAServer
         {
             return new Dictionary<string, string>
             {
+                // randomly generated id for this install
+                { "ServerID", InstallationInfo.Instance.ServerId },
+
                 // the version of the operating system
                 { "OSVersion", RuntimeInformation.OSDescription },
 
@@ -225,6 +229,36 @@ namespace GTAServer
             var readable = version.ToString();
             readable = Regex.Replace(readable, "VERSION_", "", RegexOptions.IgnoreCase);
             return Regex.Replace(readable, "_", ".", RegexOptions.IgnoreCase);
+        }
+    }
+
+    // information about the current server installation, backed by a cross preference file
+    internal class InstallationInfo : CrossPreferenceBase
+    {
+        // instance of installation info
+        public static InstallationInfo Instance = (InstallationInfo)Synchronize("Data/Installation.cpf", new InstallationInfo());
+
+        // set the defaults
+        public override void Defaults()
+        {
+            this["server_id"] = Guid.NewGuid().ToString();
+            this["install_time"] = DateTimeOffset.Now.ToString();
+        }
+
+        public string ServerId
+        {
+            get
+            {
+                return this["server_id"];
+            }
+        }
+
+        public string Installed
+        {
+            get
+            {
+                return this["install_time"];
+            }
         }
     }
 }
