@@ -175,20 +175,14 @@ namespace GTAServer
             }
 
             // prepare console
-            if (!_gameServerConfiguration.NoConsole)
+            _cancellationToken = new CancellationTokenSource();
+            var console = new ConsoleThread
             {
-                _cancellationToken = new CancellationTokenSource();
-                var console = new ConsoleThread
-                {
-                    CancellationToken = _cancellationToken.Token
-                };
+                CancellationToken = _cancellationToken.Token
+            };
 
-#if !BUILD_WASM
-                Thread c = new Thread(new ThreadStart(console.ThreadProc)) { Name = "Server console thread" };
-                c.Start();
-#endif
-
-            }
+            Thread c = new Thread(new ThreadStart(console.ThreadProc)) { Name = "Server console thread" };
+            c.Start();
 
             // ready
             _logger.LogInformation(LogEvent.Setup, "Starting server main loop, ready to accept connections.");

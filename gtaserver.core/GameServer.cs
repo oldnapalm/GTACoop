@@ -17,7 +17,6 @@ using GTAServer.ProtocolMessages;
 using Lidgren.Network;
 using Microsoft.Extensions.Logging;
 using GTAServer.PluginAPI.Events;
-using GTAServer.Users.Groups;
 using GTAServer.PluginAPI.Entities;
 using GTAServer.Logging;
 using System.Globalization;
@@ -31,7 +30,12 @@ namespace GTAServer
         public string Location => Directory.GetCurrentDirectory();
         public NetPeerConfiguration Config;
 
-        public List<Client> Clients { get; set; }
+        /// <summary>
+        /// Gets a list of all connected clients
+        /// </summary>
+        public List<Client> Clients { get; private set; }
+
+        // Server settings
         public int MaxPlayers { get; set; }
         public int Port { get; set; }
         public string GamemodeName { get; set; }
@@ -48,13 +52,17 @@ namespace GTAServer
         public bool DebugMode { get; set; }
         public NetServer Server;
         public int CurrentTick { get; set; } = 0;
-
-        public string Motd { get; set; } = "Welcome to this GTA CooP server!";
-        public IPermissionProvider PermissionProvider { get; set; }
-        public PrometheusMetrics Metrics { get; set; }
-        public ServerStatistics Statistics { get; set; }
         public bool UPnP { get; set; }
         public string RconPassword { get; set; }
+        public string Motd { get; set; } = "Welcome to this GTA CooP server!";
+
+        /// <summary>
+        /// Gets or sets the current permission provider
+        /// </summary>
+        public IPermissionProvider PermissionProvider { get; set; }
+
+        public PrometheusMetrics Metrics { get; private set; }
+        public ServerStatistics Statistics { get; private set; }
 
         public readonly Dictionary<Command, Action<CommandContext, List<string>>> Commands = new Dictionary<Command, Action<CommandContext, List<string>>>();
 
@@ -66,6 +74,15 @@ namespace GTAServer
         private int _ticksLastSecond;
 
         private readonly Timer _tpsTimer;
+        
+        /// <summary>
+        /// Creates a new server instance
+        /// </summary>
+        /// <param name="port">The server port</param>
+        /// <param name="name">The server name</param>
+        /// <param name="gamemodeName">The gamemode name</param>
+        /// <param name="isDebug">Whether the server runs in debug mode</param>
+        /// <param name="config">An instance of the server configuration</param>
         public GameServer(int port, string name, string gamemodeName, bool isDebug, ServerConfiguration config)
         {
             logger = Util.LoggerFactory.CreateLogger<GameServer>();
@@ -96,6 +113,9 @@ namespace GTAServer
             _tpsTimer = new Timer(state => CalculateTicksPerSecond(), null, 0, 1000);
         }
 
+        /// <summary>
+        /// Start the server
+        /// </summary>
         public void Start()
         {
             logger.LogInformation(LogEvent.Start, "Server starting");
@@ -251,11 +271,12 @@ namespace GTAServer
             TicksPerSecond = CurrentTick - _ticksLastSecond;
             _ticksLastSecond = CurrentTick;
 
-#if !BUILD_WASM
             Console.Title = "GTAServer - " + Name + " (" + Clients.Count + "/" + MaxPlayers + " players) - Port: " + Port + " - TPS: " + TicksPerSecond;
-#endif
         }
 
+        /// <summary>
+        /// Executes a new server tick
+        /// </summary>
         public void Tick()
         {
             CurrentTick++;
@@ -475,7 +496,12 @@ namespace GTAServer
             }
         }
 
-        internal void RespondRconMessage(IPEndPoint destination, string response)
+        /// <summary>
+        /// Sends an unconnected RCON message to a destination
+        /// </summary>
+        /// <param name="destination">The IP destination</param>
+        /// <param name="response">The response message</param>
+        public void RespondRconMessage(IPEndPoint destination, string response)
         {
             response = "print " + response + "\n";
             var message = new byte[] {0xff, 0xff, 0xff, 0xff}.Concat(
@@ -588,6 +614,7 @@ namespace GTAServer
             channelHail.Write(GetChannelForClient(client));
             client.NetConnection.Approve(channelHail);
         }
+
         private void HandleClientStatusChange(Client client, NetIncomingMessage msg)
         {
             var newStatus = (NetConnectionStatus)msg.ReadByte();
@@ -658,6 +685,7 @@ namespace GTAServer
                     break;
             }
         }
+
         private void HandleClientDiscoveryRequest(Client client, NetIncomingMessage msg)
         {
             var latestScriptVersion = Enum.GetValues(typeof(ScriptVersion)).Cast<ScriptVersion>().Last();
@@ -1123,6 +1151,11 @@ namespace GTAServer
             //if (msg != null) Server.Recycle(msg);
         }
 
+        /// <summary>
+        /// Gets the sequence channel for the client
+        /// </summary>
+        /// <param name="c">The client</param>
+        /// <returns>The channel</returns>
         public int GetChannelForClient(Client c)
         {
             lock (Clients) return (Clients.IndexOf(c) % 31) + 1;
@@ -1446,7 +1479,12 @@ namespace GTAServer
 
         // Stuff for scripting
 
-        // Notification stuff
+        /// <summary>
+        /// Sends a notification to a player
+        /// </summary>
+        /// <param name="player">The player</param>
+        /// <param name="message">The notification message</param>
+        /// <param name="flashing">Whether the notification should blink</param>
         public void SendNotificationToPlayer(Client player, string message, bool flashing = false)
         {
             for (var i = 0; i < message.Length; i += 99)
@@ -1457,6 +1495,11 @@ namespace GTAServer
             }
         }
 
+        /// <summary>
+        /// Sends a notification to all players
+        /// </summary>
+        /// <param name="message">The notification message</param>
+        /// <param name="flashing">Whether the notification should blink</param>
         public void SendNotificationToAll(string message, bool flashing = false)
         {
             for (var i = 0; i < message.Length; i += 99)
@@ -1467,6 +1510,15 @@ namespace GTAServer
             }
         }
 
+        /// <summary>
+        /// Sends a notification to all players with extra options such as image and sender
+        /// </summary>
+        /// <param name="body">The notification message</param>
+        /// <param name="pic">The picture</param>
+        /// <param name="flash">Whether the notification should blink</param>
+        /// <param name="iconType">The icon type</param>
+        /// <param name="sender">The notification title</param>
+        /// <param name="subject">The notification subtitle</param>
         public void SendPictureNotificationToAll(string body, NotificationPicType pic, int flash, NotificationIconType iconType, string sender, string subject)
         {
             //Crash with new LocalPlayerArgument()!
@@ -1476,6 +1528,15 @@ namespace GTAServer
             SendNativeCallToAll(0xF020C96915705B3A, false, true);
         }
 
+        /// <summary>
+        /// Sends a notification to all players with extra options such as image and sender
+        /// </summary>
+        /// <param name="body">The notification message</param>
+        /// <param name="pic">The picture</param>
+        /// <param name="flash">Whether the notification should blink</param>
+        /// <param name="iconType">The icon type</param>
+        /// <param name="sender">The notification title</param>
+        /// <param name="subject">The notification subtitle</param>
         public void SendPictureNotificationToAll(string body, string pic, int flash, int iconType, string sender, string subject)
         {
             //Crash with new LocalPlayerArgument()!
@@ -1564,30 +1625,46 @@ namespace GTAServer
             GetNativeCallFromPlayer(player, salt, 0x3FEF770D40960D5A, new Vector3Argument(), 
                 callback, new LocalPlayerArgument(), 0);
 
+        /// <summary>
+        /// Gives a weapon to a player
+        /// </summary>
+        /// <param name="player">The player</param>
+        /// <param name="weaponHash">The joaat hash of the weapon</param>
+        /// <param name="ammo">The ammo count</param>
+        /// <param name="equipNow">Whether the weapon should be equipped</param>
+        /// <param name="ammoLoaded">Unused</param>
         public void GivePlayerWeapon(Client player, uint weaponHash, int ammo, bool equipNow, bool ammoLoaded) =>
             SendNativeCallToPlayer(player, 0xBF0FD6E56C964FCB, new LocalPlayerArgument(), weaponHash, ammo, equipNow,
                 ammo);
 
+        /// <summary>
+        /// Gets whether a control has been pressed since the last check
+        /// </summary>
+        /// <param name="player">The player</param>
+        /// <param name="controlId">The control ID</param>
+        /// <param name="callback">The callback to call after this call returned</param>
+        /// <param name="salt">Identifier to make this native call unique</param>
         public void HasPlayerControlBeenPressed(Client player, int controlId, Action<object> callback, string salt = "salt") => 
             GetNativeCallFromPlayer(player, salt, 0x580417101DDB492F, new BooleanArgument(), 
                 callback, 0, controlId);
 
+        /// <summary>
+        /// Sets the player health
+        /// </summary>
+        /// <param name="player">The player</param>
+        /// <param name="health">The health level</param>
         public void SetPlayerHealth(Client player, int health) => 
             SendNativeCallToPlayer(player, 0x6B76DC1F3AE6E6A3, new LocalPlayerArgument(), 
                 health + 100);
 
-        public void GetPlayerHealthg(Client player, Action<object> callback, string salt = "salt") => 
+        /// <summary>
+        /// Gets the player health
+        /// </summary>
+        /// <param name="player">The player</param>
+        /// <param name="callback">The callback to call after the health returned</param>
+        /// <param name="salt">Identifier to make this native call unique</param>
+        public void GetPlayerHealth(Client player, Action<object> callback, string salt = "salt") => 
             GetNativeCallFromPlayer(player, salt, 0xEEF059FAD016D209, new IntArgument(),
-                callback, new LocalPlayerArgument());
-
-        public void SetNightVisionForPlayer(Client player, bool status) =>
-            SendNativeCallToPlayer(player, 0x18F621F7A5B1F85D, status);
-
-        public void SetNightVisionForAll(Client player, bool status) =>
-            SendNativeCallToAll(0x18F621F7A5B1F85D, status);
-
-        public void IsNightVisionActive(Client player, Action<object> callback, string salt = "salt") =>
-            GetNativeCallFromPlayer(player, salt, 0x2202A3F42C8E5F79, new BooleanArgument(), 
                 callback, new LocalPlayerArgument());
 
         /// <summary>

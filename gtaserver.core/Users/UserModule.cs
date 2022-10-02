@@ -69,8 +69,21 @@ namespace GTAServer.Users
                 Version = 3
             };
 
-            _connection = new SQLiteConnection(connectionString.ToString());
-            _connection.Open();
+            try
+            {
+                _connection = new SQLiteConnection(connectionString.ToString());
+                _connection.Open();
+
+                // dummy query to make sure database is valid
+                new SQLiteCommand("PRAGMA database_list", _connection).ExecuteNonQuery();
+            }
+            catch (Exception)
+            {
+                _logger.LogCritical(LogEvent.UsersMgr, "Failed to open user database, make sure it's readable by the server or try deleting it.");
+                _gameServer.PermissionProvider = null;
+
+                return;
+            }
 
             new SQLiteCommand(@"
                 CREATE TABLE IF NOT EXISTS `users` (
@@ -85,7 +98,7 @@ namespace GTAServer.Users
             {
                 LoadGroups();
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 _logger.LogError(LogEvent.UsersMgr, e.Message);
                 _logger.LogCritical(LogEvent.UsersMgr, "Failed to load groups configuration, default permission system and login will be disabled.");

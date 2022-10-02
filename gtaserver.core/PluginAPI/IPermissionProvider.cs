@@ -9,11 +9,11 @@ namespace GTAServer.PluginAPI
     public interface IPermissionProvider
     {
         /// <summary>
-        /// Returns if the <see cref="Client"/> has the provided permissions
+        /// Returns whether the <see cref="Client"/> has the provided permissions
         /// </summary>
         /// <param name="type">The permission type</param>
         /// <param name="permission">The permission</param>
-        /// <returns></returns>
+        /// <returns>Whether the client has the permission</returns>
         bool HasPermission(Client client, PermissionType type, string permission);
     }
 }

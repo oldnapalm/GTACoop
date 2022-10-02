@@ -1,5 +1,4 @@
-﻿#if !BUILD_WASM
-using Sentry;
+﻿using Sentry;
 using Sentry.Extensibility;
 using System;
 using System.IO;
@@ -83,4 +82,3 @@ namespace GTAServer
         MiniDumpWithFullMemory = 2
     }
 }
-#endif

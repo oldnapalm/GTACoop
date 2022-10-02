@@ -28,7 +28,6 @@ namespace GTAServer
         public bool UseGroups { get; set; } = true;
         public bool UPnP { get; set; } = true;
         public bool DualStack { get; set; } = false;
-        public bool NoConsole { get; set; } = false;
         public string RconPassword { get; set; } = "";
 
         public List<string> ServerPlugins { get; set; } = new List<string>() {};
