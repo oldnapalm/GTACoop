@@ -77,9 +77,23 @@ namespace GTAServer
                 {
                     config.Dsn = SENTRY_DSN;
                     config.AutoSessionTracking = true;
+                    config.IsGlobalModeEnabled = true;
 
                     // write minidumps on Windows
                     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) config.AddExceptionProcessor(new MiniDump());
+
+                    config.BeforeSend = sentryEvent =>
+                    {
+                        if (_gameServer != null)
+                        {
+                            sentryEvent.SetExtra("players", _gameServer.Clients.Count());
+                        }
+
+
+                        sentryEvent.SetExtra("plugins", _plugins.Select(x => x.Name));
+
+                        return sentryEvent;
+                    };
                 });
 
                 ConfigureErrorTracking();

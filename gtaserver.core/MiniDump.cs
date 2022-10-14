@@ -30,7 +30,7 @@ namespace GTAServer
 
         public void Process(Exception exception, SentryEvent sentryEvent)
         {
-            if ((bool)exception.Data["TickException"])
+            if (exception.Data["TickException"] != null && (bool)exception.Data["TickException"])
             {
                 return;
             }

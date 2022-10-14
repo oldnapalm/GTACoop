@@ -61,7 +61,7 @@ namespace GTAServer
         /// </summary>
         public IPermissionProvider PermissionProvider { get; set; }
 
-        public PrometheusMetrics Metrics { get; private set; }
+        public PrometheusMetrics Metrics { get; set; }
         public ServerStatistics Statistics { get; private set; }
 
         public readonly Dictionary<Command, Action<CommandContext, List<string>>> Commands = new Dictionary<Command, Action<CommandContext, List<string>>>();
@@ -149,7 +149,7 @@ namespace GTAServer
                         GamemodeName = "none";
                         return;
                     }
-                    if (validTypes.Count() > 1)
+                    if (validTypes.Length > 1)
                     {
                         logger.LogError(LogEvent.Plugin, "Multiple valid gamemodes found in gamemode assembly, using none");
                         GamemodeName = "none";
@@ -305,7 +305,7 @@ namespace GTAServer
                 }
                 if (client == null)
                 {
-                    logger.LogDebug(LogEvent.Connection, "Client not found for remote ID " + msg.SenderConnection?.RemoteUniqueIdentifier + ", creating client. Current number of clients: " + Clients.Count());
+                    logger.LogDebug(LogEvent.Connection, "Client not found for remote ID " + msg.SenderConnection?.RemoteUniqueIdentifier + ", creating client. Current number of clients: " + Clients.Count);
                     client = new Client(msg.SenderConnection, this);
                 }
 
