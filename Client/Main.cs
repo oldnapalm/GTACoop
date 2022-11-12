@@ -313,7 +313,7 @@ namespace GTACoOp
             aboutItem.Activated += (menu, item) =>
             {
                 UI.Notify("GTA V Coop mod version " + ReadableScriptVersion());
-                UI.Notify("Credits: Guad, Bluscream, wolfmitchell, TheIndra, oldnapalm, EntenKoeniq");
+                UI.Notify("Credits: Guad, Bluscream, wolfmitchell, TheIndra, oldnapalm, EntenKoeniq, BsCaBl");
                 UI.Notify("Website: www.gtacoop.com");
             };
 
