@@ -18,7 +18,6 @@ build_windows:
     tags:
         - shared-windows
         - windows
-        - windows-22h2
     script:
         - cd gtaserver.core
         # windows 7 is EOL, win10 includes win81
