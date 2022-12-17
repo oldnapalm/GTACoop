@@ -72,6 +72,7 @@ namespace GTAServer
         public ILogger logger;
         private readonly Dictionary<string, Action<object>> _callbacks = new Dictionary<string, Action<object>>();
         private int _ticksLastSecond;
+        private ushort _sequence = 0;
 
         private readonly Timer _tpsTimer;
         
@@ -1277,7 +1278,7 @@ namespace GTAServer
                 Hash = hash,
                 ReturnType = returnType
             };
-            salt = Environment.TickCount64.ToString() + salt + player.NetConnection.RemoteUniqueIdentifier.ToString();
+            salt = Environment.TickCount64.ToString() + salt + player.NetConnection.RemoteUniqueIdentifier.ToString() + _sequence++.ToString();
             obj.Id = salt;
             obj.Arguments = ParseNativeArguments(arguments);
             var bin = Util.SerializeBinary(obj);
