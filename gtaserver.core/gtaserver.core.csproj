@@ -21,10 +21,14 @@
     <PackageReference Include="System.Xml.XmlSerializer" Version="4.3.0" />
 
     <PackageReference Include="Microsoft.SourceLink.GitLab" Version="1.1.1" PrivateAssets="All" />
+  </ItemGroup>
 
+  <ItemGroup>
     <EmbeddedResource Include="public.json" />
 
-    <TrimmerRootAssembly Include="netstandard" />
+    <None Include="eula.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

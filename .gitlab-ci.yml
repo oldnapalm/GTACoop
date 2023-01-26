@@ -5,7 +5,6 @@ variables:
 
 stages:
     - build_server
-    - build_client
     - plugins
     
 before_script:
@@ -14,36 +13,16 @@ before_script:
     
 build_windows:
     stage: build_server
-    # run in Windows since on crossbuilding on Linux apphost customization doesn't work
+    # run on Windows since while crossbuilding on Linux, apphost customization doesn't work
     tags:
         - shared-windows
         - windows
     script:
         - cd gtaserver.core
-        # windows 7 is EOL, win10 includes win81
-        #- dotnet publish -r win10-x64 -c Release -o publish/windows-Release
         - dotnet publish -r win10-x64 -c Release -o publish/windows-Release -p:PublishSingleFile=true
     artifacts:
         paths:
             - "gtaserver.core/publish/windows-Release"
-
-build_client:
-    stage: build_client
-    when: manual
-    tags:
-        - shared-windows
-        - windows
-        - windows-22h2
-    script:
-        - '"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"'
-        - msbuild /t:restore
-        - cd NativeUI
-        - msbuild /t:build /restore /p:Configuration=Release /p:OutputPath=bin\Release
-        - cd ../Client
-        - msbuild /t:build /restore /p:Configuration=Release /p:Platform=AnyCPU /p:BuildProjectReferences=false /p:PostBuildEvent=
-    artifacts:
-      paths:
-        - "Client/bin/Release"
 
 build_linux:
     stage: build_server

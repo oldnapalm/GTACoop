@@ -1,0 +1,10 @@
+This software is made available under the GNU General Public License.
+
+By using this software you agree and consent to collecting of diagnostic and error data by Sentry.
+
+By using the official master server (master.gtacoop.com) you agree and consent to collecting of anonymous telemetry, this data includes:
+- The version of your operating system
+- The server version
+- Your IP address
+
+For removal of your data please submit a request to: contact@gtacoop.com
