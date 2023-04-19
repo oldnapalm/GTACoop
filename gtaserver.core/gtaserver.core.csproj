@@ -12,10 +12,11 @@
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="Lidgren.Network.MultiTarget" Version="2012.1.7.7" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
-    <PackageReference Include="prometheus-net" Version="6.0.0" />
-    <PackageReference Include="protobuf-net" Version="3.1.25" />
-    <PackageReference Include="Sentry" Version="3.23.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
+    <PackageReference Include="prometheus-net" Version="8.0.0" />
+    <PackageReference Include="protobuf-net" Version="3.2.16" />
+    <PackageReference Include="Sentry" Version="3.30.0" />
+    <!-- Stuck on 1.0.112, since newer versions pull in EntityFramework -->
     <PackageReference Include="System.Data.SQLite" Version="1.0.112" />
     <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
     <PackageReference Include="System.Xml.XmlSerializer" Version="4.3.0" />
