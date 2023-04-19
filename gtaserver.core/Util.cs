@@ -58,6 +58,17 @@ namespace GTAServer
             return input;
         }
 
+        public static void AddRange(this List<string> list, IEnumerable<string> collection, bool emitEmpty)
+        {
+            if (emitEmpty)
+            {
+                list.AddRange(collection.Where(x => !string.IsNullOrEmpty(x)));
+                return;
+            }
+
+            list.AddRange(collection);
+        }
+
         internal static void CreateHttpClient()
         {
             var handler = new SocketsHttpHandler

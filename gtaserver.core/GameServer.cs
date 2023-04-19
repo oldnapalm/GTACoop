@@ -22,6 +22,7 @@ using GTAServer.Logging;
 using System.Globalization;
 using System.Text.Json.Serialization;
 using System.Text.Json;
+using System.Net.Http.Json;
 
 namespace GTAServer
 {
@@ -210,6 +211,9 @@ namespace GTAServer
             [JsonPropertyName("version")]
             public int Version { get; set; }
 
+            [JsonPropertyName("server_name")]
+            public string ServerName { get; set; }
+
             [JsonPropertyName("max_players")]
             public int MaxPlayers { get; set; }
 
@@ -243,6 +247,7 @@ namespace GTAServer
                     var request = new MasterRequest
                     {
                         Port = Port,
+                        ServerName = Name,
                         MaxPlayers = MaxPlayers,
                         GamemodeName = GamemodeName,
                         Version = 0
@@ -250,17 +255,16 @@ namespace GTAServer
 
                     try { Util.AppendTelemetry(ref request); } catch (Exception) { }
 
-                    await client.PutAsync(MasterServers[master],
-                        new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json"));
+                    await client.PutAsJsonAsync(MasterServers[master], request);
 
                 }
                 catch (InvalidOperationException)
                 {
-                    logger.LogError(LogEvent.Announce, $"Failed to announce to master {master + 1}: URL is invalid");
+                    logger.LogError(LogEvent.Announce, "Failed to announce to master {master}: URL is invalid", master + 1);
                 }
                 catch (Exception e)
                 {
-                    logger.LogWarning(LogEvent.Announce, $"Failed to announce to master {master + 1}: {e.Message}");
+                    logger.LogWarning(LogEvent.Announce, "Failed to announce to master {master}: {message}", master + 1, e.Message);
                 }
             }
 

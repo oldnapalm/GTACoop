@@ -33,5 +33,14 @@ namespace GTAServer
         public List<string> ServerPlugins { get; set; } = new List<string>() {};
 
         public List<ServerVariable> ServerVariables = new List<ServerVariable>();
+
+        [XmlIgnore]
+        public List<string> MasterServers
+        {
+            get
+            {
+                return new() { PrimaryMasterServer, BackupMasterServer };
+            }
+        }
     }
 }

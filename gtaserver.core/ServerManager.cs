@@ -150,9 +150,8 @@ namespace GTAServer
                 RconPassword = _gameServerConfiguration.RconPassword
             };
 
-            // push master servers (backwards compatible)
-            _gameServer.MasterServers.AddRange(
-                new []{ _gameServerConfiguration.PrimaryMasterServer, _gameServerConfiguration.BackupMasterServer});
+            // Add all master servers
+            _gameServer.MasterServers.AddRange(_gameServerConfiguration.MasterServers, true);
 
             _gameServer.Start();
 
