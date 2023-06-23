@@ -82,18 +82,17 @@ namespace GTAServer
                     // write minidumps on Windows
                     if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) config.AddExceptionProcessor(new MiniDump());
 
-                    config.BeforeSend = sentryEvent =>
+                    config.SetBeforeSend(sentryEvent =>
                     {
                         if (_gameServer != null)
                         {
                             sentryEvent.SetExtra("players", _gameServer.Clients.Count());
                         }
 
-
                         sentryEvent.SetExtra("plugins", _plugins.Select(x => x.Name));
 
                         return sentryEvent;
-                    };
+                    });
                 });
 
                 ConfigureErrorTracking();
