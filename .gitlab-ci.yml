@@ -15,7 +15,7 @@ build_windows:
     stage: build_server
     # run on Windows since while crossbuilding on Linux, apphost customization doesn't work
     tags:
-        - shared-windows
+        - group-windows
         - windows
     script:
         - cd gtaserver.core
