@@ -16,7 +16,7 @@
     <PackageReference Include="prometheus-net" Version="8.0.0" />
     <PackageReference Include="protobuf-net" Version="3.2.26" />
     <PackageReference Include="Sentry" Version="3.33.1" />
-    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.118" />
+    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.117" />
     <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
     <PackageReference Include="System.Xml.XmlSerializer" Version="4.3.0" />
 

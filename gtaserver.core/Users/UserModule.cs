@@ -77,9 +77,9 @@ namespace GTAServer.Users
                 // dummy query to make sure database is valid
                 new SQLiteCommand("PRAGMA database_list", _connection).ExecuteNonQuery();
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                _logger.LogCritical(LogEvent.UsersMgr, "Failed to open user database, make sure it's readable by the server or try deleting it.");
+                _logger.LogCritical(LogEvent.UsersMgr, e, "Failed to open user database, make sure it's readable by the server or try deleting it.");
                 _gameServer.PermissionProvider = null;
 
                 return;
@@ -129,7 +129,6 @@ namespace GTAServer.Users
 
         public void Stop()
         {
-            // TODO save all the unsaved
             _logger.LogInformation(LogEvent.UsersMgr, "Closing database");
             _connection.Close();
         }
