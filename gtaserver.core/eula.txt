@@ -7,4 +7,4 @@ By using the official master server (master.gtacoop.com) you agree and consent t
 - The server version
 - Your IP address
 
-For removal of your data please submit a request to: contact@gtacoop.com
+For removal of your data please submit a request with your IP address to: contact@gtacoop.com
