@@ -1688,7 +1688,7 @@ namespace GTACoOp
 
                     if (data == null) return;
 
-                    var database = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "geoip.mmdb");
+                    var database = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "GeoLite2.mmdb");
                     string description = msg.SenderEndPoint.Address.ToString() + ":" + data.Port;
 
                     try
