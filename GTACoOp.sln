@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Blend for Visual Studio Version 16
-VisualStudioVersion = 16.0.30503.244
+# Blend for Visual Studio Version 17
+VisualStudioVersion = 17.5.33516.290
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GTACoOp", "Client\GTACoOp.csproj", "{1BC495C9-DC44-478A-9E16-3FC482A8B850}"
 EndProject
@@ -20,6 +20,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "gtaserver.core-plugins", "gtaserver.core-plugins", "{1E7C9339-A22A-4124-8B39-00B9CD12E715}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DiscordBot", "DiscordBot\DiscordBot.csproj", "{D4AD964F-9D2F-4ED1-AFD8-79AE35C6D7DB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NoNPC", "NoNPC\NoNPC.csproj", "{BA140327-FC83-4846-AF23-61AFF637D8F2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -83,6 +85,14 @@ Global
 		{D4AD964F-9D2F-4ED1-AFD8-79AE35C6D7DB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D4AD964F-9D2F-4ED1-AFD8-79AE35C6D7DB}.Release|x64.ActiveCfg = Release|Any CPU
 		{D4AD964F-9D2F-4ED1-AFD8-79AE35C6D7DB}.Release|x64.Build.0 = Release|Any CPU
+		{BA140327-FC83-4846-AF23-61AFF637D8F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA140327-FC83-4846-AF23-61AFF637D8F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA140327-FC83-4846-AF23-61AFF637D8F2}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{BA140327-FC83-4846-AF23-61AFF637D8F2}.Debug|x64.Build.0 = Debug|Any CPU
+		{BA140327-FC83-4846-AF23-61AFF637D8F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA140327-FC83-4846-AF23-61AFF637D8F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA140327-FC83-4846-AF23-61AFF637D8F2}.Release|x64.ActiveCfg = Release|Any CPU
+		{BA140327-FC83-4846-AF23-61AFF637D8F2}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -90,6 +100,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{946F653E-62EB-421A-9F5B-65441EE78CD6} = {566C9B77-5952-483C-993C-2A661AC29E73}
 		{D4AD964F-9D2F-4ED1-AFD8-79AE35C6D7DB} = {1E7C9339-A22A-4124-8B39-00B9CD12E715}
+		{BA140327-FC83-4846-AF23-61AFF637D8F2} = {1E7C9339-A22A-4124-8B39-00B9CD12E715}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1D64D057-8DEF-4B16-A3E8-E694B68EE315}

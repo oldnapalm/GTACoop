@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\gtaserver.core\gtaserver.core.csproj" />
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="COPY &quot;$(TargetPath)&quot; &quot;../gtaserver.core/bin/Release/net6.0/Plugins&quot;" />
+  </Target>
+
+</Project>
