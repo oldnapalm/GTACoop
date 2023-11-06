@@ -91,7 +91,11 @@ namespace DiscordBot
 
         public async Task MainAsync()
         {
-            _client = new DiscordSocketClient();
+            var config = new DiscordSocketConfig
+            {
+                GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.GuildMembers | GatewayIntents.MessageContent
+            };
+            _client = new DiscordSocketClient(config);
             _client.Log += LogAsync;
             _client.Ready += ReadyAsync;
             _client.MessageReceived += MessageReceivedAsync;
