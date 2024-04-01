@@ -2,7 +2,7 @@
 GTA Coop is a multiplayer modification for Grand Theft Auto Five, that utilizes none of the online code from Rockstar.
 
 ## Downloads
-Downloads are available from the official [website](https://gtacoop.com/downloads) and from GitLab [Pipelines](https://gitlab.com/cgmp/gta/-/pipelines) page, you can also build from source.
+Downloads are available from the [releases](https://github.com/oldnapalm/GTACoOp/releases) page.
 
 ## Projects
 
