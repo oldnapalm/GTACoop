@@ -6,8 +6,14 @@ Downloads are available from the [releases](https://github.com/oldnapalm/GTACoOp
 
 ## Installation
 
-* Extract [ScriptHookV](http://www.dev-c.com/gtav/scripthookv/) and [ScriptHookVDotNet](https://github.com/crosire/scripthookvdotnet) to your `Grand Theft Auto V` folder.
+* Extract [ScriptHookV](http://www.dev-c.com/gtav/scripthookv/) and [ScriptHookVDotNet](https://github.com/scripthookvdotnet/scripthookvdotnet) to your `Grand Theft Auto V` folder.
 * Extract the `client` archive to the `Grand Theft Auto V\Scripts` folder.
+
+## Keys
+
+* `F9` - Menu
+* `T` - Chat
+* `Z` - Players list
 
 ## Projects
 
