@@ -14,7 +14,7 @@ Downloads are available from the [releases](https://github.com/oldnapalm/GTACoOp
 * `F9` - Menu
 * `T` - Chat
 * `Z` - Players list
-* `G` - Enter in a Vehicle as passenger
+* `G` - Enter in a Vehicle as a passenger
 
 ## Projects
 
