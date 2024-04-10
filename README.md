@@ -4,17 +4,9 @@ GTA Coop is a multiplayer modification for Grand Theft Auto Five, that utilizes 
 ## Downloads
 Downloads are available from the [releases](https://github.com/oldnapalm/GTACoOp/releases) page.
 
-## Installation
+## Installation and usage
 
-* Extract [ScriptHookV](http://www.dev-c.com/gtav/scripthookv/) and [ScriptHookVDotNet](https://github.com/scripthookvdotnet/scripthookvdotnet) to your `Grand Theft Auto V` folder.
-* Extract the `client` archive to the `Grand Theft Auto V\Scripts` folder.
-
-## Keys
-
-* `F9` - Menu
-* `T` - Chat
-* `Z` - Players list
-* `G` - Enter in a Vehicle as passenger
+Please refer to the [Wiki](https://github.com/oldnapalm/GTACoOp/wiki).
 
 ## Projects
 
