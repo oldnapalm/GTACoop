@@ -2,7 +2,7 @@
 using System.Drawing;
 using System.Linq;
 using GTA;
-using NativeUI;
+using LemonUI.Elements;
 
 namespace GTACoOp
 {
@@ -15,12 +15,12 @@ namespace GTACoOp
         {
             if (!Visible) return;
 
-            if (Game.IsControlJustPressed(0, Control.FrontendLeft))
+            if (Game.IsControlJustPressed(Control.FrontendLeft))
             {
                 PlayerIndex--;
             }
 
-            else if (Game.IsControlJustPressed(0, Control.FrontendRight))
+            else if (Game.IsControlJustPressed(Control.FrontendRight))
             {
                 PlayerIndex++;
             }
@@ -53,7 +53,7 @@ namespace GTACoOp
             output += "Net Speed: " + player.Value.Speed + "\n";
 
             
-            new UIResText(output, new Point(500, 10), 0.5f) {Outline = true}.Draw();
+            new ScaledText(new Point(500, 10), output, 0.5f) {Outline = true}.Draw();
         }
     }
 }

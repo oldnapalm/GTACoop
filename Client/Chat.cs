@@ -1,15 +1,9 @@
 ﻿using System;
-using System.Drawing;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using GTA;
 using GTA.Native;
-using NativeUI;
-using Control = GTA.Control;
-using Font = GTA.Font;
 
 namespace GTACoOp
 {
@@ -33,7 +27,7 @@ namespace GTACoOp
             var safezone = Function.Call<float>(Hash.GET_SAFE_ZONE_SIZE);
             var widescreen = Function.Call<bool>(Hash.GET_IS_WIDESCREEN);
             _mainScaleform.CallFunction(
-                "SET_DISPLAY_CONFIG", Game.ScreenResolution.Width, Game.ScreenResolution.Height, safezone, safezone, safezone, safezone, widescreen, false);
+                "SET_DISPLAY_CONFIG", GTA.UI.Screen.Width, GTA.UI.Screen.Height, safezone, safezone, safezone, safezone, widescreen, false);
 
             HasInitialized = true;
         }

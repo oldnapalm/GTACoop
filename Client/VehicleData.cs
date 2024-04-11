@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using GTA;
 using GTA.Math;
-using NativeUI;
 using ProtoBuf;
 
 namespace GTACoOp
@@ -139,7 +138,7 @@ namespace GTACoOp
         [ProtoMember(21)]
         public byte? Flag { get; set; } = 0;
         [ProtoMember(22)]
-        public VehicleLandingGear LandingGearState { get; set; }
+        public VehicleLandingGearState LandingGearState { get; set; }
         [ProtoMember(23)]
         public int Livery { get; set; }
     }

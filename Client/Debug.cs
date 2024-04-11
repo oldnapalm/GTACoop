@@ -1,9 +1,9 @@
-﻿using NativeUI;
-using System;
+﻿using System;
 using System.Drawing;
 using Lidgren.Network;
 using GTA.Native;
 using System.IO;
+using LemonUI.Elements;
 
 namespace GTACoOp
 {
@@ -64,9 +64,9 @@ namespace GTACoOp
                 bytesSent = 0;
             }
 
-            new UIResText("In:    " + NetUtility.ToHumanReadable(lastBytesReceived) + "/s", new Point(1400, 900), 0.5f).Draw();
-            new UIResText("Out:  " + NetUtility.ToHumanReadable(lastBytesSent) + "/s", new Point(1400, 930), 0.5f).Draw();
-            new UIResText("Ping: " + TimeSpan.FromSeconds(Main.Latency).TotalMilliseconds + "ms", new Point(1400, 960), 0.5f).Draw();
+            new ScaledText(new Point(1400, 900), "In:    " + NetUtility.ToHumanReadable(lastBytesReceived) + "/s", 0.5f).Draw();
+            new ScaledText(new Point(1400, 930), "Out:  " + NetUtility.ToHumanReadable(lastBytesSent) + "/s", 0.5f).Draw();
+            new ScaledText(new Point(1400, 960), "Ping: " + TimeSpan.FromSeconds(Main.Latency).TotalMilliseconds + "ms", 0.5f).Draw();
         }
 
         public long GetGameTimer()

@@ -1,23 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Windows.Forms;
 using System.Xml.Serialization;
 using GTA;
 using GTA.Math;
 using GTA.Native;
-//using GTAServer;
+using GTA.UI;
+
 namespace GTACoOp
 {
     public static class Util
     {
         public static void DisplayHelpText(string text)
         {
-            Function.Call(Hash._SET_TEXT_COMPONENT_FORMAT, "STRING");
-            Function.Call(Hash._ADD_TEXT_COMPONENT_STRING, text);
-            Function.Call(Hash._0x238FFE5C7B0498A6, 0, 0, 1, -1);
+            Function.Call(Hash.BEGIN_TEXT_COMMAND_DISPLAY_HELP, "STRING");
+            Function.Call(Hash.ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME, text);
+            Function.Call(Hash.END_TEXT_COMMAND_DISPLAY_HELP, 0, 0, 1, -1);
         }
 
         public static int GetStationId()
@@ -46,7 +45,7 @@ namespace GTACoOp
         {
             if (veh == null) return true;
             if (!veh.IsSeatFree(VehicleSeat.Driver)) return false;
-            for (int i = 0; i < veh.PassengerSeats; i++)
+            for (int i = 0; i < veh.PassengerCapacity; i++)
             {
                 if (!veh.IsSeatFree((VehicleSeat)i))
                     return false;
@@ -57,9 +56,9 @@ namespace GTACoOp
         public static Dictionary<int, int> GetVehicleMods(Vehicle veh)
         {
             var dict = new Dictionary<int, int>();
-            for (int i = 0; i < 50; i++)
+            foreach (VehicleMod mod in veh.Mods.ToArray())
             {
-                dict.Add(i, veh.GetMod((VehicleMod)i));
+                dict.Add((int)mod.Type, mod.Index);
             }
             return dict;
         }
@@ -80,7 +79,7 @@ namespace GTACoOp
         {
             if (ped == null || !ped.IsInVehicle()) return -3;
             if (ped.CurrentVehicle.GetPedOnSeat(VehicleSeat.Driver) == ped) return (int)VehicleSeat.Driver;
-            for (int i = 0; i < ped.CurrentVehicle.PassengerSeats; i++)
+            for (int i = 0; i < ped.CurrentVehicle.PassengerCapacity; i++)
             {
                 if (ped.CurrentVehicle.GetPedOnSeat((VehicleSeat)i) == ped)
                     return i;
@@ -91,7 +90,7 @@ namespace GTACoOp
         public static int GetFreePassengerSeat(Vehicle veh)
         {
             if (veh == null) return -3;
-            for (int i = 0; i < veh.PassengerSeats; i++)
+            for (int i = 0; i < veh.PassengerCapacity; i++)
             {
                 if (veh.IsSeatFree((VehicleSeat)i))
                     return i;
@@ -130,7 +129,7 @@ namespace GTACoOp
                     File.AppendAllText("scripts\\GTACOOP.log", "Saved settings to " + path);
                 }
             } catch (Exception ex) {
-                UI.Notify("Error saving player settings: " + ex.Message);
+                Notification.Show("Error saving player settings: " + ex.Message);
             }
         }
 
@@ -207,14 +206,14 @@ namespace GTACoOp
 
         public static void ShowBusySpinner(string text)
         {
-            Function.Call((Hash)0xABA17D7CE615ADBF /* BEGIN_TEXT_COMMAND_BUSYSPINNER_ON */, "STRING");
-            Function.Call((Hash)0x6C188BE134E074AA /* ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME */, text);
-            Function.Call((Hash)0xBD12F8228410D9B4 /* END_TEXT_COMMAND_BUSYSPINNER_ON */, 0);
+            Function.Call(Hash.BEGIN_TEXT_COMMAND_BUSYSPINNER_ON, "STRING");
+            Function.Call(Hash.ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME, text);
+            Function.Call(Hash.END_TEXT_COMMAND_BUSYSPINNER_ON, 0);
         }
 
         public static void HideBusySpinner()
         {
-            Function.Call((Hash)0x10D373323E5B9C0D /* BUSYSPINNER_OFF */);
+            Function.Call(Hash.BUSYSPINNER_OFF);
         }
 
         public static string GetAssemblyVersion()
