@@ -6,22 +6,15 @@ Downloads are available from the [releases](https://github.com/oldnapalm/GTACoOp
 
 ## Installation and usage
 
-Please refer to the [Wiki](https://github.com/oldnapalm/GTACoOp/wiki).
+Please refer to the [wiki](https://github.com/oldnapalm/GTACoOp/wiki).
 
 ## Projects
 
-* `Client/` Source of the mod and client 
-* `DiscordBot/` Plugin for gtaserver.core to create a bridge between discord and gtaserver.core with chat from both sides. Written by [oldnapalm](https://github.com/oldnapalm)
+* `Client/` Source of the mod and client
+* `DiscordBot/` Plugin for gtaserver.core to create a bridge between discord and gtaserver.core with chat from both sides
 * `Race/` Source of race gamemode for gtaserver.core
 * `gtamasterserver/` Small python web application to run a masterserver
-* `gtaserver.core/` Source of the current server.
-
-## Old
-
-These projects are not maintained and often replaced by newer ones.
-
-* `Server/` Source of the old server
-* `AdminTools/` Source of the old admintools plugin for orginal gtaserver
+* `gtaserver.core/` Source of the server
 
 ## Contributors
 
