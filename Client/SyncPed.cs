@@ -285,20 +285,15 @@ namespace GTACoOp
                 {
                     if (MainVehicle != null && Util.IsVehicleEmpty(MainVehicle))
                     {
-                        MainVehicle.Position = MainVehicle.GetOffsetPosition(new Vector3(0, 0, -100));
+                        MainVehicle.MarkAsNoLongerNeeded();
                         MainVehicle.Delete();
                     }
 
-                    var vehs = World.GetAllVehicles().OrderBy(v =>
+                    var model = new Model(VehicleHash);
+                    var veh = World.GetClosestVehicle(Character.Position, 3f, model);
+                    if (veh != null)
                     {
-                        if (v == null) return float.MaxValue;
-                        return (v.Position - Character.Position).Length();
-                    }).ToList();
-
-
-                    if (vehs.Any() && vehs[0].Model.Hash == VehicleHash && vehs[0].IsInRange(gPos, 3f))
-                    {
-                        MainVehicle = vehs[0];
+                        MainVehicle = veh;
                         /*if (Game.Player.Character.IsInVehicle(MainVehicle) &&
                             VehicleSeat == Util.GetPedSeat(Game.Player.Character))
                         {
@@ -308,7 +303,7 @@ namespace GTACoOp
                     }
                     else
                     {
-                        MainVehicle = World.CreateVehicle(new Model(VehicleHash), gPos, 0);
+                        MainVehicle = World.CreateVehicle(model, gPos);
                     }
 
                     if (MainVehicle != null)
