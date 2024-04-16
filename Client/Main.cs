@@ -715,8 +715,13 @@ namespace GTACoOp
 
                 GTA.Math.Vector3 aimCoord = new GTA.Math.Vector3();
                 if (aiming || shooting)
-                    aimCoord = ScreenRelToWorld(GameplayCamera.Position, GameplayCamera.Rotation,
-                        new Vector2(0, 0));
+                {
+                    var crosshair = World.GetCrosshairCoordinates();
+                    if (crosshair.DidHit)
+                        aimCoord = crosshair.HitPosition;
+                    else
+                        aimCoord = ScreenRelToWorld(GameplayCamera.Position, GameplayCamera.Rotation, new Vector2(0, 0));
+                }
 
                 var obj = new PedData();
                 obj.AimCoords = aimCoord.ToLVector();
