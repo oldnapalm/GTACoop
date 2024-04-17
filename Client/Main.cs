@@ -215,6 +215,7 @@ namespace GTACoOp
             _serverBrowserMenu = new NativeMenu("GTA CooP", "Server Browser");
             _serverBrowserMenu.Width += 300;
             _serverBrowserMenu.UseMouse = false;
+            _serverBrowserMenu.ItemCount = CountVisibility.Always;
             _serverBrowserMenu.Opening += (object sender, System.ComponentModel.CancelEventArgs e) =>
             {
                 RebuildServerBrowser();
@@ -307,12 +308,10 @@ namespace GTACoOp
                 }
             };
 
-            var aboutItem = new NativeItem("~g~GTA V~w~ Coop mod v" + ReadableScriptVersion() + " by ~b~community~w~");
+            var aboutItem = new NativeItem("About", "~g~GTA V~w~ Coop mod v" + ReadableScriptVersion() + " by ~b~community~w~");
             aboutItem.Activated += (menu, item) =>
             {
-                Notification.Show("GTA V Coop mod version " + ReadableScriptVersion());
                 Notification.Show("Credits: Guad, Bluscream, wolfmitchell, TheIndra, oldnapalm, EntenKoeniq, BsCaBl");
-                Notification.Show("Website: www.gtacoop.com");
             };
 
             _mainMenu.AddSubMenu(_serverBrowserMenu);
@@ -530,7 +529,22 @@ namespace GTACoOp
         {
             _serverBrowserMenu.Clear();
 
-            DiscoverLan();
+            if (_client == null)
+            {
+                var port = GetOpenUdpPort();
+                if (port == 0)
+                {
+                    Notification.Show("No available UDP port was found.");
+                    return;
+                }
+                _config.Port = port;
+                _client = new NetClient(_config);
+                _client.Start();
+
+                DebugLogger.NetClient = _client;
+            }
+
+            _client.DiscoverLocalPeers(4499);
 
             if (string.IsNullOrEmpty(PlayerSettings.MasterServerAddress))
             {
@@ -590,24 +604,6 @@ namespace GTACoOp
             }
 
             Console.WriteLine("Servers returned by master server: " + response.List.Count);
-            _serverBrowserMenu.Name = "Servers listed: ~g~~h~" + response.List.Count;
-            var item = new NativeItem(response.List.Count + " Servers listed.");
-            item.LeftBadge = new LemonUI.Elements.ScaledTexture("commonmenu", "shop_new_star");
-
-            if (_client == null)
-            {
-                var port = GetOpenUdpPort();
-                if (port == 0)
-                {
-                    Notification.Show("No available UDP port was found.");
-                    return;
-                }
-                _config.Port = port;
-                _client = new NetClient(_config);
-                _client.Start();
-
-                DebugLogger.NetClient = _client;
-            }
 
             foreach (var server in response.List)
             {
@@ -619,26 +615,6 @@ namespace GTACoOp
                     continue;
                 _client.DiscoverKnownPeer(split[0], port);
             }
-        }
-
-        private void DiscoverLan()
-        {
-            if (_client == null)
-            {
-                var port = GetOpenUdpPort();
-                if (port == 0)
-                {
-                    Notification.Show("No available UDP port was found.");
-                    return;
-                }
-                _config.Port = port;
-                _client = new NetClient(_config);
-                _client.Start();
-
-                DebugLogger.NetClient = _client;
-            }
-
-            _client.DiscoverLocalPeers(4499);
         }
 
         private static int _lastDataSend;
