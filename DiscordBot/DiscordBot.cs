@@ -45,11 +45,13 @@ namespace DiscordBot
         private void OnJoin(Client c)
         {
             SendToDiscord(c.DisplayName + " connected", "Server").GetAwaiter().GetResult();
+            SetGame(_server.Clients.Count).GetAwaiter().GetResult();
         }
 
         private void OnDisconnect(Client c)
         {
             SendToDiscord(c.DisplayName + " disconnected", "Server").GetAwaiter().GetResult();
+            SetGame(_server.Clients.Count).GetAwaiter().GetResult();
         }
 
         private PluginResponse<ChatData> OnChatMessage(Client c, ChatData d)
@@ -139,6 +141,11 @@ namespace DiscordBot
         public async Task SendToDiscord(String message, String name)
         {
             await _webhook.SendMessageAsync(text: message, username: name);
+        }
+
+        public async Task SetGame(int n)
+        {
+            await _client.SetGameAsync(n > 0 ? $"{n} player{(n > 1 ? "s" : "")} online" : null);
         }
     }
 }

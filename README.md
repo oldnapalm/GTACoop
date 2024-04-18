@@ -8,10 +8,16 @@ Downloads are available from the [releases](https://github.com/oldnapalm/GTACoOp
 
 Please refer to the [wiki](https://github.com/oldnapalm/GTACoOp/wiki).
 
+## Discord
+
+Join our [Discord server](https://discord.gg/cJzwx2VSUF).
+
 ## Projects
 
 * `Client/` Source of the mod and client
 * `DiscordBot/` Plugin for gtaserver.core to create a bridge between discord and gtaserver.core with chat from both sides
+* `Freeroam/` Source of freeroam gamemode for gtaserver.core
+* `NoNPC/` Plugin for gtaserver.core to disable NPC sharing
 * `Race/` Source of race gamemode for gtaserver.core
 * `gtamasterserver/` Small python web application to run a masterserver
 * `gtaserver.core/` Source of the server

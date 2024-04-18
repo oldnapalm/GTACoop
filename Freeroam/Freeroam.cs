@@ -4,10 +4,6 @@ using GTAServer.PluginAPI;
 using GTAServer.PluginAPI.Events;
 using GTAServer.ProtocolMessages;
 using GTAServer.Commands;
-using GTAServer.PluginAPI.Entities;
-using GTAServer.Users;
-using System.Threading.Tasks;
-using System.Threading;
 
 namespace Freeroam
 {
@@ -37,6 +33,7 @@ namespace Freeroam
             gameServer.RegisterCommands<FreeroamCommands>();
 
             ConnectionEvents.OnJoin.Add(OnJoin);
+            GameEvents.OnChatMessage.Add(OnChatMessage);
 
             return true;
         }
@@ -47,6 +44,25 @@ namespace Freeroam
             {
                 client.Position = Configuration.SpawnCoordinates;
             }
+        }
+
+        private PluginResponse<ChatData> OnChatMessage(Client c, ChatData d)
+        {
+            bool allow = true;
+
+            if (d.Message.ToLower() == "urtle")
+            {
+                allow = false;
+                c.SendNativeCall(0xE3AD2BDBAEE269AC, c.Position.X, c.Position.Y, c.Position.Z, 0, 1000f, true, false, true, false);
+                GameServer.SendChatMessageToAll($"{c.DisplayName} said urtle and exploded");
+            }
+
+            return new PluginResponse<ChatData>()
+            {
+                ContinuePluginProc = allow,
+                ContinueServerProc = allow,
+                Data = d
+            };
         }
     }
 }
