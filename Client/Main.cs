@@ -619,6 +619,7 @@ namespace GTACoOp
 
         private static int _lastDataSend;
         private static int _tickRate = 60;
+        private static int _lastFullDataSend;
 
         public static void SendPlayerData()
         {
@@ -641,14 +642,18 @@ namespace GTACoOp
                 obj.PlayerHealth = player.Health;
                 obj.VehicleHealth = veh.Health;
                 obj.VehicleSeat = Util.GetPedSeat(player);
-                obj.VehicleMods = Util.GetVehicleMods(veh);
+                if (Game.GameTime >= _lastFullDataSend + 3000)
+                {
+                    _lastFullDataSend = Game.GameTime;
+                    obj.VehicleMods = Util.GetVehicleMods(veh);
+                    obj.PedProps = Util.GetPlayerProps(player);
+                }
                 obj.WheelSpeed = veh.WheelSpeed;
                 obj.Steering = veh.SteeringAngle;
                 obj.Speed = veh.Speed;
                 obj.Plate = veh.Mods.LicensePlate;
                 obj.Livery = veh.Mods.Livery;
 
-                obj.PedProps = Util.GetPlayerProps(player);
                 obj.RadioStation = (int)Game.RadioStation;
 
                 if (veh.Model.IsPlane)
@@ -707,7 +712,11 @@ namespace GTACoOp
                 obj.WeaponHash = (int)player.Weapons.Current.Hash;
                 obj.PlayerHealth = player.Health;
 
-                obj.PedProps = Util.GetPlayerProps(player);
+                if (Game.GameTime >= _lastFullDataSend + 3000)
+                {
+                    _lastFullDataSend = Game.GameTime;
+                    obj.PedProps = Util.GetPlayerProps(player);
+                }
 
                 if (aiming)
                     obj.Flag |= (byte)PedDataFlags.IsAiming;

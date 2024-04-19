@@ -66,11 +66,13 @@ namespace GTACoOp
         public static Dictionary<int, int> GetPlayerProps(Ped ped)
         {
             var props = new Dictionary<int, int>();
-            for (int i = 0; i < 15; i++)
+            for (int i = 0; i < 12; i++)
             {
                 var mod = Function.Call<int>(Hash.GET_PED_DRAWABLE_VARIATION, ped.Handle, i);
                 if (mod == -1) continue;
                 props.Add(i, mod);
+                props.Add(i + 12, Function.Call<int>(Hash.GET_PED_TEXTURE_VARIATION, ped.Handle, i));
+                props.Add(i + 24, Function.Call<int>(Hash.GET_PED_PALETTE_VARIATION, ped.Handle, i));
             }
             return props;
         }

@@ -255,8 +255,11 @@ namespace GTACoOp
                     }
 
                     if (PedProps != null)
-                        foreach (KeyValuePair<int, int> pedprop in PedProps)
-                            Function.Call(Hash.SET_PED_COMPONENT_VARIATION, Character.Handle, pedprop.Key, pedprop.Value, 0, 0);
+                        for (int i = 0; i < 12; i++)
+                            if (PedProps.ContainsKey(i))
+                                Function.Call(Hash.SET_PED_COMPONENT_VARIATION, Character.Handle, i, PedProps[i],
+                                    PedProps.ContainsKey(i + 12) ? PedProps[i + 12] : 0,
+                                    PedProps.ContainsKey(i + 24) ? PedProps[i + 24] : 0);
 
                     return;
                 }
@@ -494,13 +497,11 @@ namespace GTACoOp
                 else
                 {
                     if (PedProps != null && Game.Player.Character.IsInRange(Position, 30f))
-                    {
-                        foreach (KeyValuePair<int, int> prop in PedProps)
-                        {
-                            if (prop.Value != Function.Call<int>(Hash.GET_PED_DRAWABLE_VARIATION, Character.Handle, prop.Key))
-                                Function.Call(Hash.SET_PED_COMPONENT_VARIATION, Character.Handle, prop.Key, prop.Value, 0, 0);
-                        }
-                    }
+                        for (int i = 0; i < 12; i++)
+                            if (PedProps.ContainsKey(i) && PedProps[i] != Function.Call<int>(Hash.GET_PED_DRAWABLE_VARIATION, Character.Handle, i))
+                                Function.Call(Hash.SET_PED_COMPONENT_VARIATION, Character.Handle, i, PedProps[i],
+                                    PedProps.ContainsKey(i + 12) ? PedProps[i + 12] : 0,
+                                    PedProps.ContainsKey(i + 24) ? PedProps[i + 24] : 0);
 
                     if (Character.Weapons.Current.Hash != (WeaponHash) CurrentWeapon)
                     {
