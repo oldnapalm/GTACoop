@@ -337,7 +337,12 @@ namespace GTACoOp
             };
 
 #if VOICE
-            var inputDeviceItem = WaveIn.DeviceCount > 0 ? new UIMenuListItem("Input device", GetInputDevices(), 0) : null;
+            var inputDeviceItem = WaveIn.DeviceCount > 0 ? new NativeListItem<string>("Input device", GetInputDevices().ToArray()) : null;
+            if (inputDeviceItem != null)
+            {
+                inputDeviceItem.SelectedIndex = 0;
+                inputDeviceItem.ItemChanged += (sender, e) => { _waveInput.DeviceNumber = inputDeviceItem.SelectedIndex; };
+            }
 #endif
 
             var masterItem = new NativeItem("Master Server");
@@ -492,7 +497,7 @@ namespace GTACoOp
             _settingsMenu.Add(disablePedsItem);
 #if VOICE
             if (inputDeviceItem != null)
-                _settingsMenu.AddItem(inputDeviceItem);
+                _settingsMenu.Add(inputDeviceItem);
 #endif
             _settingsMenu.Add(chatLogItem);
             _settingsMenu.Add(hidePasswordsItem);
@@ -501,7 +506,9 @@ namespace GTACoOp
             _settingsMenu.Add(autoLoginItem);
             _settingsMenu.Add(autoRegisterItem);
             _settingsMenu.Add(masterItem);
+#if DEBUGSYNCPED
             _settingsMenu.Add(debugItem);
+#endif
             _settingsMenu.Add(netGraphItem);
 
             _menuPool.Add(_mainMenu);
@@ -958,7 +965,7 @@ namespace GTACoOp
 
 #if VOICE
                 // push to talk
-                if (Game.IsControlPressed(0, Control.PushToTalk))
+                if (Game.IsControlPressed(Control.PushToTalk))
                     _isTalking = true;
                 else
                     _isTalking = false;
@@ -1502,7 +1509,7 @@ namespace GTACoOp
 
                             Util.DisplayHelpText("Press ~INPUT_MULTIPLAYER_INFO~ to view a list of online players");
 #if VOICE
-                            _waveInput.StartRecording();
+                            if (WaveIn.DeviceCount > 0) _waveInput.StartRecording();
 #endif
 
                             // close F9 menu when connected
@@ -1520,7 +1527,7 @@ namespace GTACoOp
                             UpdateStatusText(null);
 
 #if VOICE
-                            _waveInput.StopRecording();
+                            if (WaveIn.DeviceCount > 0) _waveInput.StopRecording();
 #endif
 
                             lock (Opponents)
@@ -1702,7 +1709,7 @@ namespace GTACoOp
             var player = Game.Player.Character;
             if (_debugSyncPed == null)
             {
-                _debugSyncPed = new SyncPed(player.Model.Hash, player.Position, player.Rotation, false);
+                _debugSyncPed = new SyncPed(player.Model.Hash, player.Position, player.Quaternion, false);
             }
 
             if (DateTime.Now.Subtract(_artificialLagCounter).TotalMilliseconds >= 300)
@@ -1713,7 +1720,7 @@ namespace GTACoOp
                     var veh = player.CurrentVehicle;
 
                     _debugSyncPed.VehiclePosition = veh.Position;
-                    _debugSyncPed.VehicleRotation = veh.Rotation;
+                    _debugSyncPed.VehicleRotation = veh.Quaternion;
                     _debugSyncPed.VehicleVelocity = veh.Velocity;
                     _debugSyncPed.ModelHash = player.Model.Hash;
                     _debugSyncPed.VehicleHash = veh.Model.Hash;
@@ -1724,16 +1731,16 @@ namespace GTACoOp
                     _debugSyncPed.VehicleSeat = Util.GetPedSeat(player);
                     _debugSyncPed.IsHornPressed = Game.Player.IsPressingHorn;
                     _debugSyncPed.Siren = veh.IsSirenActive;
-                    _debugSyncPed.VehicleMods = CheckPlayerVehicleMods();
+                    _debugSyncPed.VehicleMods = Util.GetVehicleMods(veh);
                     _debugSyncPed.Speed = veh.Speed;
                     _debugSyncPed.Steering = veh.SteeringAngle;
                     _debugSyncPed.IsInVehicle = true;
-                    _debugSyncPed.PedProps = CheckPlayerProps();
+                    _debugSyncPed.PedProps = Util.GetPlayerProps(player);
                     _debugSyncPed.LastUpdateReceived = Environment.TickCount;
                 }
                 else
                 {
-                    bool aiming = Game.IsControlPressed(0, GTA.Control.Aim);
+                    bool aiming = Game.IsControlPressed(GTA.Control.Aim);
                     bool shooting = player.IsShooting && player.Weapons.Current?.AmmoInClip != 0;
 
                     GTA.Math.Vector3 aimCoord = new GTA.Math.Vector3();
@@ -1743,7 +1750,7 @@ namespace GTACoOp
 
                     _debugSyncPed.AimCoords = aimCoord;
                     _debugSyncPed.Position = player.Position;
-                    _debugSyncPed.Rotation = player.Rotation;
+                    _debugSyncPed.Rotation = player.Quaternion;
                     _debugSyncPed.ModelHash = player.Model.Hash;
                     _debugSyncPed.CurrentWeapon = (int)player.Weapons.Current.Hash;
                     _debugSyncPed.PedHealth = player.Health;
@@ -1752,7 +1759,7 @@ namespace GTACoOp
                     _debugSyncPed.IsJumping = Function.Call<bool>(Hash.IS_PED_JUMPING, player.Handle);
                     _debugSyncPed.IsParachuteOpen = Function.Call<int>(Hash.GET_PED_PARACHUTE_STATE, Game.Player.Character.Handle) == 2;
                     _debugSyncPed.IsInVehicle = false;
-                    _debugSyncPed.PedProps = CheckPlayerProps();
+                    _debugSyncPed.PedProps = Util.GetPlayerProps(player);
                     _debugSyncPed.LastUpdateReceived = Environment.TickCount;
                 }
             }
@@ -2187,9 +2194,9 @@ namespace GTACoOp
         }
 
 #if VOICE
-        public static List<Object> GetInputDevices()
+        public static List<string> GetInputDevices()
         {
-            var list = new List<Object>();
+            var list = new List<string>();
 
             for (int n = 0; n < WaveIn.DeviceCount; n++)
             {
