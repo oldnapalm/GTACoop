@@ -485,11 +485,13 @@ namespace GTACoOp
                 Util.SaveSettings(null);
             };
 
+#if DEBUGSYNCPED
             var debugItem = new NativeCheckboxItem("Debug", false);
             debugItem.CheckboxChanged += (item, check) =>
             {
                 debug = debugItem.Checked;
             };
+#endif
 
             _settingsMenu.Add(nameItem);
             _settingsMenu.Add(npcItem);
@@ -890,6 +892,9 @@ namespace GTACoOp
                     if (_settingsMenu.Items[0].Enabled)
                     {
                         _settingsMenu.Items[0].Enabled = false;
+#if VOICE
+                        _settingsMenu.Items[4].Enabled = false;
+#endif
                     }
                 }
                 else
@@ -901,6 +906,9 @@ namespace GTACoOp
                     if (!_settingsMenu.Items[0].Enabled)
                     {
                         _settingsMenu.Items[0].Enabled = true;
+#if VOICE
+                        _settingsMenu.Items[4].Enabled = true;
+#endif
                     }
                 }
 
