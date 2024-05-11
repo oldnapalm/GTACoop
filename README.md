@@ -1,12 +1,16 @@
 # GTA Coop
+
+[![Downloads](https://img.shields.io/github/downloads/oldnapalm/GTACoop/total)](https://github.com/oldnapalm/GTACoop/releases)
+[![Discord](https://discordapp.com/api/guilds/1230281355947020339/widget.png?style=shield)](https://discord.gg/cJzwx2VSUF)
+
 GTA Coop is a multiplayer modification for Grand Theft Auto Five, that utilizes none of the online code from Rockstar.
 
 ## Downloads
-Downloads are available from the [releases](https://github.com/oldnapalm/GTACoOp/releases) page.
+Downloads are available from the [releases](https://github.com/oldnapalm/GTACoop/releases) page.
 
 ## Installation and usage
 
-Please refer to the [wiki](https://github.com/oldnapalm/GTACoOp/wiki).
+Please refer to the [wiki](https://github.com/oldnapalm/GTACoop/wiki).
 
 ## Discord
 
